@@ -3,28 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IBM i IWS 3.0 Web Service</title>
+    <title>IBM i DCM Symptom String & Return Code Search Tool</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 40px; background: #f8fafc; color: #1e293b; }
-        .card { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 600px; margin: auto; }
-        h1 { font-size: 1.5rem; margin-top: 0; color: #0f172a; }
-        a.btn { display: inline-block; margin-top: 12px; padding: 8px 16px; background: #0284c7; color: white; text-decoration: none; border-radius: 4px; font-weight: 500; }
-        a.btn:hover { background: #0369a1; }
-        code { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+        :root {
+            --primary: #0f62fe;
+            --primary-dark: #0043ce;
+            --bg: #f4f7fb;
+            --card-bg: #ffffff;
+            --text-main: #161616;
+            --text-muted: #525252;
+            --border: #e0e0e0;
+            --success-bg: #defbe6;
+            --alert-bg: #fff1f1;
+            --alert-border: #da1e28;
+            --tag-bg: #edf5ff;
+            --tag-text: #0043ce;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text-main); padding: 30px 20px; line-height: 1.5; }
+        .container { max-width: 960px; margin: 0 auto; }
+        
+        .header { margin-bottom: 24px; }
+        .header h1 { font-size: 1.75rem; font-weight: 600; color: #121619; }
+        .header p { color: var(--text-muted); margin-top: 6px; font-size: 0.95rem; }
+
+        .search-card { background: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid var(--border); margin-bottom: 24px; }
+        .input-group { margin-bottom: 16px; }
+        label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: var(--text-main); }
+        textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; font-family: 'Consolas', 'Courier New', monospace; outline: none; }
+        textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(15,98,254,0.15); }
+        
+        .samples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+        .samples span { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+        .sample-btn { background: var(--tag-bg); color: var(--tag-text); border: 1px solid #c9deff; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-family: monospace; }
+        .sample-btn:hover { background: #d0e2ff; }
+
+        .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+        .btn-primary { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: #e0e0e0; color: #161616; border: none; padding: 10px 16px; border-radius: 6px; font-size: 0.95rem; font-weight: 500; cursor: pointer; }
+        .btn-secondary:hover { background: #d1d1d1; }
+
+        .results-container { display: flex; flex-direction: column; gap: 16px; }
+        .result-card { background: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 5px solid var(--primary); border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        
+        .result-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .result-title { font-size: 1.15rem; font-weight: 700; color: #0f172a; }
+        .result-badge { background: #e0e0e0; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; }
+
+        .decomp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .decomp-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; }
+        .decomp-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+        .decomp-val { font-size: 0.95rem; font-weight: 600; margin-top: 2px; color: #0f62fe; font-family: 'Consolas', monospace; }
+        .decomp-sub { font-size: 0.85rem; color: #4b5563; margin-top: 2px; }
+
+        .explanation-box { background: var(--success-bg); border: 1px solid #a7f3d0; border-radius: 6px; padding: 12px 16px; margin-top: 12px; }
+        .explanation-title { font-weight: 700; font-size: 0.85rem; color: #065f46; text-transform: uppercase; margin-bottom: 4px; }
+        .explanation-text { font-size: 0.95rem; color: #064e3b; }
+
+        .not-found-card { background: var(--alert-bg); border-left: 5px solid var(--alert-border); border-radius: 8px; padding: 20px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .not-found-title { font-weight: 700; font-size: 1.1rem; color: #ba1b23; margin-bottom: 8px; }
+        .csp-banner { background: #fff; border: 1px dashed #da1e28; border-radius: 6px; padding: 12px 16px; margin-top: 12px; }
+        .csp-title { font-weight: 700; color: #da1e28; font-size: 0.9rem; margin-bottom: 4px; }
+        .csp-text { font-size: 0.9rem; color: #393939; }
+
+        .formula-card { background: #fff; border-radius: 8px; padding: 16px 20px; border: 1px solid var(--border); margin-top: 24px; font-size: 0.85rem; color: var(--text-muted); }
+        .formula-card strong { color: var(--text-main); }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>IBM i IWS 3.0 Web Service</h1>
-        <p>This web service is running inside the IBM i Integrated Web Services (IWS 3.0 / Liberty profile) container.</p>
-        <p>Portable across <strong>IBM i V7R5</strong> and <strong>IBM i V7R6</strong>.</p>
-        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-        <h3>Endpoints:</h3>
-        <ul>
-            <li><code>GET /api/status</code> - Health & system diagnostics</li>
-            <li><code>POST /api/program/call?lib=...&pgm=...</code> - Execute native IBM i programs</li>
-        </ul>
-        <a class="btn" href="api/status" target="_blank">Check Service Status</a>
+    <div class="container">
+        <div class="header">
+            <h1>IBM i DCM Symptom String & Return Code Search</h1>
+            <p>Running on IBM i IWS 3.0 (Liberty Profile) &bull; Portable across V7R5 / V7R6</p>
+        </div>
+
+        <div class="search-card">
+            <div class="input-group">
+                <label for="symptomInput">Enter Symptom String(s) or Return Code (one per line):</label>
+                <textarea id="symptomInput" rows="4" placeholder="e.g. 5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500"></textarea>
+            </div>
+
+            <div class="samples">
+                <span>Quick Test Examples:</span>
+                <button class="sample-btn" onclick="setSample('5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500')">RC7027500 (Local CA)</button>
+                <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000')">RC5003000 (App Mgr + Util)</button>
+                <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC14000000')">RC14000000 (App Mgr)</button>
+                <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC12000000')">RC12000000 (App Mgr)</button>
+                <button class="sample-btn" onclick="setSample('5770 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC7000100')">RC7000100 (App Mgr + Rtv)</button>
+                <button class="sample-btn" onclick="setAllSamples()">Load All 5 Examples</button>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn-primary" onclick="performSearch()">Search & Deconstruct</button>
+                <button class="btn-secondary" onclick="clearResults()">Clear</button>
+            </div>
+        </div>
+
+        <div id="results" class="results-container"></div>
+
+        <div class="formula-card">
+            <strong>DCM Reason Code Formula:</strong> <code>Point of Failure = xxxyyyyzz</code><br>
+            • <code>xxx</code> (Major Value): Entry Point in Service Program Manager Module (multiples of 1,000,000)<br>
+            • <code>yyyy</code> (Utility Value): Point of failure in Utility Function (defined in <code>qycuutl.H</code>)<br>
+            • <code>zz</code> (Minor Value): Local point of failure inside the Service Program Manager module<br><br>
+            <strong>REST API Available:</strong> <code>POST api/dcm/search</code> or <code>GET api/dcm/decode?symptom=...</code>
+        </div>
     </div>
+
+    <script>
+        async function performSearch() {
+            const input = document.getElementById("symptomInput").value;
+            const lines = input.split(/\r?\n/).filter(l => l.trim().length > 0);
+            const resultsContainer = document.getElementById("results");
+            resultsContainer.innerHTML = "";
+
+            if (lines.length === 0) {
+                resultsContainer.innerHTML = `<div class="not-found-card"><div class="not-found-title">No Input Provided</div><p>Please enter a symptom string in the text box above.</p></div>`;
+                return;
+            }
+
+            try {
+                // Call JAX-RS REST endpoint on server
+                const response = await fetch('api/dcm/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: lines.join('\n')
+                });
+
+                if (!response.ok) {
+                    throw new Error('Server returned HTTP ' + response.status);
+                }
+
+                const results = await response.json();
+                renderResults(results);
+            } catch (err) {
+                console.error('API call failed, falling back to client-side logic:', err);
+                // In case user opened as local file, render error
+                resultsContainer.innerHTML = `<div class="not-found-card"><div class="not-found-title">Error Connecting to API</div><p>${err.message}</p></div>`;
+            }
+        }
+
+        function renderResults(results) {
+            const resultsContainer = document.getElementById("results");
+            resultsContainer.innerHTML = "";
+
+            results.forEach(res => {
+                if (res.success) {
+                    const card = document.createElement("div");
+                    card.className = "result-card";
+                    card.innerHTML = `
+                        <div class="result-header">
+                            <div>
+                                <div class="result-title">${res.serviceProgram} &bull; RC ${res.returnCode}</div>
+                                <div style="font-size:0.85rem; color:#525252; margin-top:2px;">${res.input}</div>
+                            </div>
+                            <span class="result-badge">${res.release !== 'N/A' ? 'OS: ' + res.release : 'IBM i'}</span>
+                        </div>
+                        <div class="decomp-grid">
+                            <div class="decomp-item">
+                                <div class="decomp-label">Service Program</div>
+                                <div class="decomp-val">${res.serviceProgram}</div>
+                                <div class="decomp-sub">${res.serviceProgramName}</div>
+                            </div>
+                            <div class="decomp-item">
+                                <div class="decomp-label">Major Entry Point (xxx)</div>
+                                <div class="decomp-val">${res.majorEntryPointName}</div>
+                                <div class="decomp-sub">Code Value: +${res.majorEntryPointCode}</div>
+                            </div>
+                            <div class="decomp-item">
+                                <div class="decomp-label">Utility Function (yyyy)</div>
+                                <div class="decomp-val">${res.utilityFunctionName || 'None (Direct Module Failure)'}</div>
+                                <div class="decomp-sub">${res.utilityFunctionCategory ? res.utilityFunctionCategory + ' (+' + res.utilityFunctionCode + ')' : 'No utility failure'}</div>
+                            </div>
+                            <div class="decomp-item">
+                                <div class="decomp-label">Local Point of Failure (zz)</div>
+                                <div class="decomp-val">${res.localFailureName || (res.localFailureCode > 0 ? '+' + res.localFailureCode : '00 (Normal Entry)')}</div>
+                                <div class="decomp-sub">${res.localFailureCode > 0 ? 'Local offset in module' : 'No local offset'}</div>
+                            </div>
+                        </div>
+                        <div class="explanation-box">
+                            <div class="explanation-title">Diagnostic Use Case & Root Cause Method</div>
+                            <div class="explanation-text">${res.useCaseExplanation}</div>
+                        </div>
+                    `;
+                    resultsContainer.appendChild(card);
+                } else {
+                    const card = document.createElement("div");
+                    card.className = "not-found-card";
+                    card.innerHTML = `
+                        <div class="not-found-title">Match Not Found: ${res.input || 'Unknown'}</div>
+                        <p style="color:#525252; font-size:0.95rem;">${res.error || 'The entered symptom string or return code could not be mapped to the DCM reference tables.'}</p>
+                        <div class="csp-banner">
+                            <div class="csp-title">Technician Action Reminder:</div>
+                            <div class="csp-text">${res.cspReminder || 'Reminder for technicians: Search iAI assisted support searches in CSP.'}</div>
+                        </div>
+                    `;
+                    resultsContainer.appendChild(card);
+                }
+            });
+        }
+
+        function setSample(str) {
+            document.getElementById("symptomInput").value = str;
+            performSearch();
+        }
+
+        function setAllSamples() {
+            const samples = [
+                "5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500",
+                "5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000",
+                "5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC14000000",
+                "5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC12000000",
+                "5770 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC7000100"
+            ];
+            document.getElementById("symptomInput").value = samples.join("\n");
+            performSearch();
+        }
+
+        function clearResults() {
+            document.getElementById("symptomInput").value = "";
+            document.getElementById("results").innerHTML = "";
+        }
+    </script>
 </body>
 </html>
