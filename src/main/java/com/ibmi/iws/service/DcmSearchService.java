@@ -5,8 +5,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Service to deconstruct IBM i Digital Certificate Manager (DCM) symptom strings
- * into entry points, utility functions, and diagnostic use cases.
+ * Robust Multi-Tier Search & Deconstruction Service for IBM i Digital Certificate Manager (DCM).
+ * Supports exact symptom strings, partial return codes, regex/keyword queries, and closest-match suggestions.
  */
 public class DcmSearchService {
 
@@ -301,52 +301,69 @@ public class DcmSearchService {
         utilityFunctions.put(code, new UtilityInfo(name, category));
     }
 
-    public Map<String, Object> decode(String symptomString) {
+    public Map<String, Object> decode(String rawInput) {
         Map<String, Object> result = new LinkedHashMap<>();
-        if (symptomString == null || symptomString.trim().isEmpty()) {
+        if (rawInput == null || rawInput.trim().isEmpty()) {
             result.put("success", false);
-            result.put("error", "Empty symptom string provided.");
+            result.put("error", "Empty search input provided.");
             result.put("cspReminder", "Reminder for technicians: Search iAI assisted support searches in CSP.");
             return result;
         }
 
-        String input = symptomString.trim();
+        String input = rawInput.trim();
         result.put("input", input);
 
-        Pattern pattern = Pattern.compile("(?:(\\d{4})\\s+)?SP/(\\w+)\\s+MOD/(\\w+)\\s+RC(\\d+)", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(input);
+        // Pattern 1: Standard IBM symptom string
+        Pattern symptomPat = Pattern.compile("(?:(\\d{4})\\s+)?(?:SP/)?([A-Z0-9_]+)\\s+(?:MOD/)?([A-Z0-9_]+)\\s+(?:RC)?(\\d+)", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = symptomPat.matcher(input);
 
-        if (!matcher.find()) {
-            result.put("success", false);
-            result.put("error", "Invalid or unrecognized symptom string format.");
-            result.put("cspReminder", "Reminder for technicians: Search iAI assisted support searches in CSP.");
-            return result;
+        if (matcher.find()) {
+            String release = matcher.group(1) != null ? matcher.group(1) : "N/A";
+            String sp = matcher.group(2).toUpperCase();
+            String mod = matcher.group(3).toUpperCase();
+            long rc = Long.parseLong(matcher.group(4));
+            return deconstructWithProgram(input, release, sp, mod, rc);
         }
 
-        String release = matcher.group(1) != null ? matcher.group(1) : "N/A";
-        String sp = matcher.group(2).toUpperCase();
-        String mod = matcher.group(3).toUpperCase();
-        long rc;
-        try {
-            rc = Long.parseLong(matcher.group(4));
-        } catch (NumberFormatException e) {
-            result.put("success", false);
-            result.put("error", "Invalid numeric return code.");
-            result.put("cspReminder", "Reminder for technicians: Search iAI assisted support searches in CSP.");
-            return result;
+        // Pattern 2: Service Program + RC
+        Pattern spRcPat = Pattern.compile("([A-Z0-9_]+)\\s+(?:RC)?(\\d+)", Pattern.CASE_INSENSITIVE);
+        Matcher spRcMatcher = spRcPat.matcher(input);
+        if (spRcMatcher.find() && programs.containsKey(spRcMatcher.group(1).toUpperCase())) {
+            String sp = spRcMatcher.group(1).toUpperCase();
+            long rc = Long.parseLong(spRcMatcher.group(2));
+            return deconstructWithProgram(input, "N/A", sp, sp, rc);
         }
+
+        // Pattern 3: Pure numeric return code
+        Pattern numPat = Pattern.compile("^(?:RC\\s*)?(\\d+)$", Pattern.CASE_INSENSITIVE);
+        Matcher numMatcher = numPat.matcher(input);
+        if (numMatcher.find()) {
+            long rc = Long.parseLong(numMatcher.group(1));
+            return findBestGlobalMatch(input, rc);
+        }
+
+        // Pattern 4: Keyword / Regex search
+        return searchKeyword(input);
+    }
+
+    private Map<String, Object> deconstructWithProgram(String raw, String release, String sp, String mod, long rc) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("input", raw);
+        result.put("release", release);
+        result.put("serviceProgram", sp);
+        result.put("module", mod);
+        result.put("returnCode", rc);
 
         ProgramInfo prog = programs.get(sp);
         if (prog == null) {
             result.put("success", false);
-            result.put("release", release);
-            result.put("serviceProgram", sp);
-            result.put("module", mod);
-            result.put("returnCode", rc);
+            result.put("isClosest", true);
             result.put("error", "Service Program '" + sp + "' not found in DCM catalog.");
             result.put("cspReminder", "Reminder for technicians: Search iAI assisted support searches in CSP.");
             return result;
         }
+
+        result.put("serviceProgramName", prog.name);
 
         long entryVal = (rc / 1000000L) * 1000000L;
         long remainder = rc - entryVal;
@@ -394,47 +411,147 @@ public class DcmSearchService {
             }
         }
 
-        if (entryName == null && utilName == null && localName == null && remainder != 0) {
-            result.put("success", false);
-            result.put("release", release);
-            result.put("serviceProgram", sp);
-            result.put("module", mod);
-            result.put("returnCode", rc);
-            result.put("error", "Could not map RC " + rc + " to known DCM Entry Points or Utility Functions.");
-            result.put("cspReminder", "Reminder for technicians: Search iAI assisted support searches in CSP.");
-            return result;
-        }
+        boolean isExact = (entryName != null || entryVal == 0) && (remainder == 0 || utilName != null || localName != null);
 
         StringBuilder useCase = new StringBuilder();
         useCase.append("During processing in ").append(prog.name).append(" (").append(sp).append(")");
         if (entryName != null) {
             useCase.append(", entry point '").append(entryName).append("' was executing");
+        } else if (entryVal > 0) {
+            useCase.append(", entry point code ").append(entryVal).append(" was invoked");
         }
         if (utilName != null) {
             useCase.append(". A failure occurred in utility function '").append(utilName).append("' (").append(utilCategory).append(")");
         }
         if (localName != null) {
-            useCase.append(", specifically at local failure point '").append(localName).append("' (code ").append(localVal).append(")");
+            useCase.append(", specifically at local point of failure '").append(localName).append("' (code ").append(localVal).append(")");
         } else if (localVal > 0) {
             useCase.append(", specifically at local offset code ").append(localVal);
         }
         useCase.append(".");
 
         result.put("success", true);
-        result.put("release", release);
-        result.put("serviceProgram", sp);
-        result.put("serviceProgramName", prog.name);
-        result.put("module", mod);
-        result.put("returnCode", rc);
+        result.put("isExact", isExact);
+        result.put("isClosest", !isExact);
         result.put("majorEntryPointCode", entryVal);
         result.put("majorEntryPointName", entryName != null ? entryName : "N/A");
         result.put("utilityFunctionCode", utilVal);
-        result.put("utilityFunctionName", utilName);
+        result.put("utilityFunctionName", utilName != null ? utilName : "None (Direct Module Failure)");
         result.put("utilityFunctionCategory", utilCategory);
         result.put("localFailureCode", localVal);
         result.put("localFailureName", localName);
         result.put("useCaseExplanation", useCase.toString());
 
+        if (!isExact) {
+            result.put("cspReminder", "Reminder for technicians: Search iAI assisted support searches in CSP.");
+        }
+
+        return result;
+    }
+
+    private Map<String, Object> findBestGlobalMatch(String raw, long rc) {
+        for (String sp : programs.keySet()) {
+            Map<String, Object> dec = deconstructWithProgram(raw, "N/A", sp, sp, rc);
+            if (Boolean.TRUE.equals(dec.get("isExact"))) {
+                return dec;
+            }
+        }
+
+        long entryVal = (rc / 1000000L) * 1000000L;
+        for (String sp : programs.keySet()) {
+            if (programs.get(sp).entryPoints.containsKey(entryVal)) {
+                return deconstructWithProgram(raw, "N/A", sp, sp, rc);
+            }
+        }
+
+        if (utilityFunctions.containsKey(rc)) {
+            UtilityInfo u = utilityFunctions.get(rc);
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("success", true);
+            result.put("isExact", true);
+            result.put("input", raw);
+            result.put("serviceProgram", "qycuutl.H");
+            result.put("serviceProgramName", "DCM Utility Module");
+            result.put("utilityFunctionCode", rc);
+            result.put("utilityFunctionName", u.name);
+            result.put("utilityFunctionCategory", u.category);
+            result.put("useCaseExplanation", "Direct match for Utility Function '" + u.name + "' (" + u.category + ") with reason code " + rc + ".");
+            return result;
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("success", false);
+        result.put("isClosest", true);
+        result.put("input", raw);
+        result.put("returnCode", rc);
+        result.put("error", "Return code " + rc + " could not be directly matched.");
+        result.put("cspReminder", "Reminder for technicians: Search iAI assisted support searches in CSP.");
+        return result;
+    }
+
+    private Map<String, Object> searchKeyword(String query) {
+        Pattern regex;
+        try {
+            regex = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
+        } catch (Exception e) {
+            regex = Pattern.compile(Pattern.quote(query), Pattern.CASE_INSENSITIVE);
+        }
+
+        List<Map<String, String>> matches = new ArrayList<>();
+
+        for (Map.Entry<String, ProgramInfo> pEntry : programs.entrySet()) {
+            String sp = pEntry.getKey();
+            ProgramInfo p = pEntry.getValue();
+            if (regex.matcher(sp).find() || regex.matcher(p.name).find()) {
+                Map<String, String> m = new HashMap<>();
+                m.put("type", "Service Program");
+                m.put("location", sp);
+                m.put("name", p.name);
+                m.put("code", "N/A");
+                matches.add(m);
+            }
+            for (Map.Entry<Long, String> ep : p.entryPoints.entrySet()) {
+                if (regex.matcher(ep.getValue()).find() || regex.matcher(String.valueOf(ep.getKey())).find()) {
+                    Map<String, String> m = new HashMap<>();
+                    m.put("type", "Entry Point");
+                    m.put("location", sp + " (" + p.name + ")");
+                    m.put("name", ep.getValue());
+                    m.put("code", "+" + ep.getKey());
+                    matches.add(m);
+                }
+            }
+            for (Map.Entry<Long, String> lf : p.localFailures.entrySet()) {
+                if (regex.matcher(lf.getValue()).find() || regex.matcher(String.valueOf(lf.getKey())).find()) {
+                    Map<String, String> m = new HashMap<>();
+                    m.put("type", "Local Failure");
+                    m.put("location", sp + " (" + p.name + ")");
+                    m.put("name", lf.getValue());
+                    m.put("code", "+" + lf.getKey());
+                    matches.add(m);
+                }
+            }
+        }
+
+        for (Map.Entry<Long, UtilityInfo> uEntry : utilityFunctions.entrySet()) {
+            UtilityInfo u = uEntry.getValue();
+            if (regex.matcher(u.name).find() || regex.matcher(u.category).find() || regex.matcher(String.valueOf(uEntry.getKey())).find()) {
+                Map<String, String> m = new HashMap<>();
+                m.put("type", "Utility Function");
+                m.put("location", "qycuutl.H (" + u.category + ")");
+                m.put("name", u.name);
+                m.put("code", "+" + uEntry.getKey());
+                matches.add(m);
+            }
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("success", !matches.isEmpty());
+        result.put("isKeywordSearch", true);
+        result.put("query", query);
+        result.put("matches", matches);
+        if (matches.isEmpty()) {
+            result.put("cspReminder", "Reminder for technicians: Search iAI assisted support searches in CSP.");
+        }
         return result;
     }
 }

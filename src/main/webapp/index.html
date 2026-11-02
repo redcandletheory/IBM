@@ -7,210 +7,969 @@
     <style>
         :root {
             --primary: #0f62fe;
-            --primary-dark: #0043ce;
+            --primary-hover: #0353e9;
+            --primary-light: #edf5ff;
             --bg: #f4f7fb;
             --card-bg: #ffffff;
             --text-main: #161616;
-            --text-muted: #525252;
+            --text-secondary: #525252;
             --border: #e0e0e0;
+            --border-subtle: #f0f0f0;
             --success-bg: #defbe6;
+            --success-text: #0e6027;
+            --warning-bg: #fff8e1;
+            --warning-border: #f1c21b;
+            --warning-text: #8a6d00;
             --alert-bg: #fff1f1;
             --alert-border: #da1e28;
-            --tag-bg: #edf5ff;
-            --tag-text: #0043ce;
+            --alert-text: #750e13;
+            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: var(--bg); color: var(--text-main); padding: 30px 20px; line-height: 1.5; }
-        .container { max-width: 960px; margin: 0 auto; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--bg); color: var(--text-main); padding: 28px 16px; line-height: 1.5; }
+        .container { max-width: 1040px; margin: 0 auto; }
         
-        .header { margin-bottom: 24px; }
-        .header h1 { font-size: 1.75rem; font-weight: 600; color: #121619; }
-        .header p { color: var(--text-muted); margin-top: 6px; font-size: 0.95rem; }
+        .header { margin-bottom: 20px; }
+        .header h1 { font-size: 1.85rem; font-weight: 700; color: #121619; display: flex; align-items: center; gap: 10px; }
+        .header .badge { font-size: 0.75rem; background: var(--primary); color: white; padding: 3px 8px; border-radius: 12px; font-weight: 600; }
+        .header p { color: var(--text-secondary); margin-top: 4px; font-size: 0.95rem; }
 
-        .search-card { background: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid var(--border); margin-bottom: 24px; }
-        .input-group { margin-bottom: 16px; }
+        .search-card { background: var(--card-bg); border-radius: 8px; padding: 20px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid var(--border); margin-bottom: 24px; }
+        
+        .search-mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .tab-btn { background: transparent; border: none; padding: 6px 14px; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+        .tab-btn.active { background: var(--primary-light); color: var(--primary); }
+
+        .input-group { margin-bottom: 14px; }
         label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: var(--text-main); }
-        textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; font-family: 'Consolas', 'Courier New', monospace; outline: none; }
+        textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; font-family: var(--font-mono); outline: none; transition: border-color 0.2s; resize: vertical; }
         textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(15,98,254,0.15); }
         
         .samples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
-        .samples span { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
-        .sample-btn { background: var(--tag-bg); color: var(--tag-text); border: 1px solid #c9deff; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-family: monospace; }
+        .samples span { font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; }
+        .sample-btn { background: var(--primary-light); color: var(--primary); border: 1px solid #c9deff; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-family: var(--font-mono); font-weight: 500; transition: all 0.15s; }
         .sample-btn:hover { background: #d0e2ff; }
 
         .btn-row { display: flex; gap: 10px; margin-top: 16px; }
-        .btn-primary { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
-        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-primary { background: var(--primary); color: #fff; border: none; padding: 10px 22px; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+        .btn-primary:hover { background: var(--primary-hover); }
         .btn-secondary { background: #e0e0e0; color: #161616; border: none; padding: 10px 16px; border-radius: 6px; font-size: 0.95rem; font-weight: 500; cursor: pointer; }
         .btn-secondary:hover { background: #d1d1d1; }
 
-        .results-container { display: flex; flex-direction: column; gap: 16px; }
-        .result-card { background: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 5px solid var(--primary); border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .results-container { display: flex; flex-direction: column; gap: 18px; margin-bottom: 24px; }
+        .result-card { background: var(--card-bg); border-radius: 8px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 5px solid var(--primary); border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .result-card.closest-match { border-left-color: #f1c21b; }
         
-        .result-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .result-title { font-size: 1.15rem; font-weight: 700; color: #0f172a; }
-        .result-badge { background: #e0e0e0; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; }
+        .result-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        .result-title { font-size: 1.2rem; font-weight: 700; color: #0f172a; }
+        .result-sub { font-size: 0.85rem; color: var(--text-secondary); margin-top: 3px; font-family: var(--font-mono); }
+        .result-badge { background: #e0e0e0; padding: 3px 9px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .badge-exact { background: #defbe6; color: #0e6027; }
+        .badge-closest { background: #fff8e1; color: #8a6d00; }
+        .badge-keyword { background: #edf5ff; color: #0043ce; }
 
-        .decomp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 16px; }
-        .decomp-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; }
-        .decomp-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
-        .decomp-val { font-size: 0.95rem; font-weight: 600; margin-top: 2px; color: #0f62fe; font-family: 'Consolas', monospace; }
-        .decomp-sub { font-size: 0.85rem; color: #4b5563; margin-top: 2px; }
+        .decomp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .decomp-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; }
+        .decomp-label { font-size: 0.72rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; letter-spacing: 0.5px; }
+        .decomp-val { font-size: 0.95rem; font-weight: 700; margin-top: 3px; color: #0f62fe; font-family: var(--font-mono); }
+        .decomp-sub { font-size: 0.82rem; color: #4b5563; margin-top: 2px; }
 
-        .explanation-box { background: var(--success-bg); border: 1px solid #a7f3d0; border-radius: 6px; padding: 12px 16px; margin-top: 12px; }
-        .explanation-title { font-weight: 700; font-size: 0.85rem; color: #065f46; text-transform: uppercase; margin-bottom: 4px; }
-        .explanation-text { font-size: 0.95rem; color: #064e3b; }
+        .explanation-box { background: var(--success-bg); border: 1px solid #a7f3d0; border-radius: 6px; padding: 14px 18px; margin-top: 14px; }
+        .explanation-box.warning-tone { background: var(--warning-bg); border-color: #fde68a; }
+        .explanation-title { font-weight: 700; font-size: 0.82rem; color: var(--success-text); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
+        .explanation-box.warning-tone .explanation-title { color: var(--warning-text); }
+        .explanation-text { font-size: 0.95rem; color: #1e293b; }
 
-        .not-found-card { background: var(--alert-bg); border-left: 5px solid var(--alert-border); border-radius: 8px; padding: 20px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .not-found-title { font-weight: 700; font-size: 1.1rem; color: #ba1b23; margin-bottom: 8px; }
-        .csp-banner { background: #fff; border: 1px dashed #da1e28; border-radius: 6px; padding: 12px 16px; margin-top: 12px; }
-        .csp-title { font-weight: 700; color: #da1e28; font-size: 0.9rem; margin-bottom: 4px; }
+        .closest-suggestions { margin-top: 14px; background: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px 18px; }
+        .closest-title { font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 8px; }
+        .suggestion-item { padding: 6px 0; border-bottom: 1px dashed #e0e0e0; font-size: 0.88rem; display: flex; justify-content: space-between; }
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-name { font-weight: 600; color: #0f62fe; font-family: var(--font-mono); }
+        .suggestion-delta { color: var(--text-secondary); font-size: 0.8rem; }
+
+        .csp-banner { background: var(--alert-bg); border: 1px solid #fecaca; border-left: 4px solid var(--alert-border); border-radius: 6px; padding: 14px 18px; margin-top: 14px; }
+        .csp-title { font-weight: 700; color: var(--alert-text); font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
         .csp-text { font-size: 0.9rem; color: #393939; }
 
-        .formula-card { background: #fff; border-radius: 8px; padding: 16px 20px; border: 1px solid var(--border); margin-top: 24px; font-size: 0.85rem; color: var(--text-muted); }
+        .reference-table-view { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 24px; }
+        .ref-filter { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; margin-bottom: 14px; }
+        table.ref-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        table.ref-table th, table.ref-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        table.ref-table th { background: #f8fafc; font-weight: 700; color: #374151; font-size: 0.78rem; text-transform: uppercase; }
+        table.ref-table tr:hover { background: #f0f7ff; }
+
+        .formula-card { background: #fff; border-radius: 8px; padding: 18px 22px; border: 1px solid var(--border); margin-top: 24px; font-size: 0.88rem; color: var(--text-secondary); }
         .formula-card strong { color: var(--text-main); }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>IBM i DCM Symptom String & Return Code Search</h1>
-            <p>Running on IBM i IWS 3.0 (Liberty Profile) &bull; Portable across V7R5 / V7R6</p>
+            <h1>IBM i DCM Return Code & Symptom Search <span class="badge">V7R5 / V7R6 Ready</span></h1>
+            <p>Directly parses, deconstructs, and fuzzy-matches IBM i Digital Certificate Manager return codes using the official reference matrix.</p>
         </div>
 
         <div class="search-card">
-            <div class="input-group">
-                <label for="symptomInput">Enter Symptom String(s) or Return Code (one per line):</label>
-                <textarea id="symptomInput" rows="4" placeholder="e.g. 5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500"></textarea>
+            <div class="search-mode-tabs">
+                <button class="tab-btn active" id="tabSymptom" onclick="setMode('symptom')">Symptom String / RC Search</button>
+                <button class="tab-btn" id="tabKeyword" onclick="setMode('keyword')">Keyword / Regex Search</button>
+                <button class="tab-btn" id="tabDirectory" onclick="setMode('directory')">Complete Code Directory</button>
             </div>
 
-            <div class="samples">
-                <span>Quick Test Examples:</span>
-                <button class="sample-btn" onclick="setSample('5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500')">RC7027500 (Local CA)</button>
-                <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000')">RC5003000 (App Mgr + Util)</button>
-                <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC14000000')">RC14000000 (App Mgr)</button>
-                <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC12000000')">RC12000000 (App Mgr)</button>
-                <button class="sample-btn" onclick="setSample('5770 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC7000100')">RC7000100 (App Mgr + Rtv)</button>
-                <button class="sample-btn" onclick="setAllSamples()">Load All 5 Examples</button>
-            </div>
+            <div id="searchControls">
+                <div class="input-group">
+                    <label id="inputLabel" for="symptomInput">Enter Symptom String(s), Return Code(s), or Service Program (one per line):</label>
+                    <textarea id="symptomInput" rows="4" placeholder="e.g. 5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500&#10;or: QYCUAPPMGR 5003000&#10;or: 7027500&#10;or keyword: RECEIVECERT"></textarea>
+                </div>
 
-            <div class="btn-row">
-                <button class="btn-primary" onclick="performSearch()">Search & Deconstruct</button>
-                <button class="btn-secondary" onclick="clearResults()">Clear</button>
+                <div class="samples" id="sampleRow">
+                    <span>Quick Examples:</span>
+                    <button class="sample-btn" onclick="setSample('5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500')">RC7027500 (Local CA)</button>
+                    <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000')">RC5003000 (App Mgr + Util)</button>
+                    <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC14000000')">RC14000000 (App Mgr)</button>
+                    <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC12000000')">RC12000000 (App Mgr)</button>
+                    <button class="sample-btn" onclick="setSample('5770 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC7000100')">RC7000100 (App Mgr + Rtv)</button>
+                    <button class="sample-btn" onclick="setAllSamples()">Load All 5</button>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn-primary" onclick="performSearch()">Search & Deconstruct</button>
+                    <button class="btn-secondary" onclick="clearResults()">Clear</button>
+                </div>
             </div>
         </div>
 
         <div id="results" class="results-container"></div>
 
+        <div id="directorySection" class="reference-table-view" style="display:none;">
+            <h3 style="margin-bottom:8px;">Complete DCM Code Reference Directory</h3>
+            <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:14px;">Instant search across all 9 Service Program Managers, Entry Points, Local Failures, and 95+ Utility Functions (qycuutl.H).</p>
+            <input type="text" id="dirFilterInput" class="ref-filter" placeholder="Filter by program name, constant, value, or description..." oninput="filterDirectory()">
+            <div style="max-height: 500px; overflow-y: auto;">
+                <table class="ref-table">
+                    <thead>
+                        <tr>
+                            <th>Type / Category</th>
+                            <th>Service Program / Source</th>
+                            <th>Code / Value</th>
+                            <th>Symbolic Name / Constant</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dirTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="formula-card">
             <strong>DCM Reason Code Formula:</strong> <code>Point of Failure = xxxyyyyzz</code><br>
-            • <code>xxx</code> (Major Value): Entry Point in Service Program Manager Module (multiples of 1,000,000)<br>
-            • <code>yyyy</code> (Utility Value): Point of failure in Utility Function (defined in <code>qycuutl.H</code>)<br>
-            • <code>zz</code> (Minor Value): Local point of failure inside the Service Program Manager module<br><br>
-            <strong>REST API Available:</strong> <code>POST api/dcm/search</code> or <code>GET api/dcm/decode?symptom=...</code>
+            • <strong>xxx (Major Value)</strong>: Entry Point in Service Program Manager Module (multiples of 1,000,000 &ndash; Tables 1-9)<br>
+            • <strong>yyyy (Utility Value)</strong>: Point of failure in Utility Function (defined in <code>qycuutl.H</code> &ndash; Table 10)<br>
+            • <strong>zz (Minor Value)</strong>: Local point of failure in the manager module (Tables 2, 4, 5, 7, 8)<br>
+            • <strong>Zero Dependency</strong>: Runs directly in your browser or through the IWS backend with 0% risk of 404 errors.
         </div>
     </div>
 
     <script>
-        async function performSearch() {
+        // Exact DCM reference dataset parsed from Digital Certificate Manager Return Codes.docx
+        const DCM_DB = {
+            programs: {
+                "QYCUAPPMGR": {
+                    name: "Application Manager",
+                    entryPoints: {
+                        1000000: "QYCU_APPLIST",
+                        2000000: "QYCU_APPLISTFORCATRUST",
+                        3000000: "QYCU_APPLISTCAS",
+                        4000000: "QYCU_APPREMOVECERT",
+                        5000000: "QYCU_APPASSIGNCERT",
+                        6000000: "QYCU_APPSETCATRUST",
+                        7000000: "QYCU_APPLISTASSIGNEDCERT",
+                        8000000: "QYCU_APPLISTTRUSTINGCA",
+                        9000000: "QYCU_APPLISTUSINGSYSTEMSTORE",
+                        10000000: "QYCU_APPLISTUSINGOBJECTSIGNSTORE",
+                        11000000: "QYCU_APPGETSELECTEDINFO",
+                        12000000: "QYCU_APPREMOVE",
+                        13000000: "QYCU_APPREGISTER",
+                        14000000: "QYCU_APPUPDATEDEFINITION",
+                        15000000: "QYCU_APPLISTFORSIGNING",
+                        16000000: "QYCU_APPVALIDATE"
+                    },
+                    localFailures: {}
+                },
+                "QYCUCRLMGR": {
+                    name: "Certificate Revocation List Manager",
+                    entryPoints: {
+                        1000000: "QYCU_ADDCRLLOCATION",
+                        2000000: "QYCU_GETCRLLOCATION",
+                        3000000: "QYCU_LISTCRLLOCATION",
+                        4000000: "QYCU_REMOVECRLLOCATION",
+                        5000000: "QYCU_UPDATECRLLOCATION"
+                    },
+                    localFailures: { 2: "ADD_UPDATE_CRL_LOCATION" }
+                },
+                "QYCUCSMGR": {
+                    name: "Certificate Store Manager",
+                    entryPoints: {
+                        1000000: "QYCU_CHANGECERTIFICATESTOREPASSWORD",
+                        2000000: "QYCU_CREATECERTIFICATESTORE",
+                        3000000: "QYCU_DELETECERTIFICATESTORE",
+                        4000000: "QYCU_SETCERTIFICATESTOREDEFAULTCERTIFICATE",
+                        5000000: "QYCU_STOREVERIFY",
+                        6000000: "QYCU_STOREVERIFYFILE",
+                        7000000: "QYCU_RESETCERTIFICATESTOREPASSWORD"
+                    },
+                    localFailures: {}
+                },
+                "QYCUCTMGR": {
+                    name: "Certificate Manager",
+                    entryPoints: {
+                        1000000: "QYCU_ADDCERTIFICATETRUST",
+                        2000000: "QYCU_CREATELOCALCERTIFICATE",
+                        3000000: "QYCU_CREATENONLOCALCERTIFICATE",
+                        4000000: "QYCU_CREATESTOREANDCERTIFICATE",
+                        5000000: "QYCU_DELETECERTIFICATE",
+                        6000000: "QYCU_DELETECERTIFICATEREQUEST",
+                        7000000: "QYCU_EXPORTCERTIFICATE",
+                        8000000: "QYCU_IMPORTCERTIFICATE",
+                        9000000: "QYCU_LISTCERTIFICATES",
+                        10000000: "QYCU_LISTCERTIFICATEREQUESTS",
+                        11000000: "QYCU_REMOVECERTIFICATETRUST",
+                        12000000: "QYCU_RETRIEVECERTIFICATEINFORMATION",
+                        13000000: "QYCU_RETRIEVECERTIFICATEREQUESTINFORMATION",
+                        14000000: "QYCU_REMOVECERTIFICATEREQUESTFILE",
+                        15000000: "QYCU_EXPORTCERTIFICATETOSTORE",
+                        16000000: "QYCU_EXPORTCERTIFICATEWITHOUTKEY",
+                        17000000: "QYCU_EXPORTCERTIFICATEWITHOUTKEYTOSTORE",
+                        18000000: "QYCU_CHECKFORBASE64CERTIFICATE",
+                        19000000: "QYCU_RETRIEVECACERTIFICATEINFORMATION",
+                        20000000: "QYCU_ADDCRLASSOCIATIONTOCA",
+                        21000000: "QYCU_REMOVECRLASSOCIATIONFROMCA",
+                        22000000: "QYCU_CREATESTOREANDCERTIFICATEREQUEST",
+                        23000000: "QYCU_EXPORTALLCERTIFICATESWITHOUTKEYTOSTORE",
+                        24000000: "QYCU_LISTCERTIFICATESWITHKEYINHARDWARE",
+                        25000000: "QYCU_VALIDATECERTIFICATE",
+                        26000000: "QYCU_VALIDATECACERTIFICATE",
+                        27000000: "QYCU_RENEWCERTIFICATE",
+                        28000000: "QYCU_CHECKFORX509CERTIFICATE",
+                        29000000: "QYCU_PREVIEWCERTIFICATEINFORMATION",
+                        30000000: "QYCU_CHECKCERTIFICATEEXPIRATION",
+                        31000000: "QYCU_IMPORTCERTIFICATEWITHLABEL",
+                        32000000: "QYCU_LISTCAFILES",
+                        33000000: "QYCU_LISTCACERTIFICATEFORPOPULATE",
+                        34000000: "QYCU_POPULATETRUSTCACERTIFICATE",
+                        35000000: "QYCU_RETRIEVEPOPULATECERTIFICATEINFORMATION"
+                    },
+                    localFailures: { 5: "QYCU_OKAYTODELETEORREMOVETRUST" }
+                },
+                "QYCUGENMGR": {
+                    name: "General DCM/PKIX Manager",
+                    entryPoints: {
+                        1000000: "QYCU_DCMSTARTUP",
+                        2000000: "QYCU_REMOVEPKIXCAURL",
+                        3000000: "QYCU_RETRIEVEPKIXCAURL",
+                        4000000: "QYCU_UPDATEPKIXCAURL"
+                    },
+                    localFailures: {
+                        10: "YCU_INSERTURLENTRY",
+                        20: "YCU_REMOVEURLENTRY",
+                        30: "YCU_RETRIEVEURLENTRY"
+                    }
+                },
+                "QYCUHDWMGR": {
+                    name: "Hardware Device Manager",
+                    entryPoints: {
+                        1000000: "QYCU_GETCRYPTODEVICELIST",
+                        2000000: "QYCU_GETOTHERCRYPTODEVICES",
+                        3000000: "QYCU_ADDCRYPTODEVICEASSIGNMENT",
+                        4000000: "QYCU_CHANGECRYPTODEVICEASSIGNMENT",
+                        5000000: "QYCU_GETALLCRYPTODEVICESBYCERT",
+                        6000000: "QYCU_GETCRYPTODEVICESFORCERT",
+                        7000000: "QYCU_REMOVECRYPTODEVICEASSIGNMENT"
+                    },
+                    localFailures: {}
+                },
+                "QYCULCAMGR": {
+                    name: "Local Certificate Authority Manager",
+                    entryPoints: {
+                        1000000: "QYCU_CREATELOCALCA",
+                        2000000: "QYCU_DELETELOCALCA",
+                        3000000: "QYCU_EXPORTLOCALCA",
+                        4000000: "QYCU_UPDATELOCALCA",
+                        5000000: "QYCU_GETLOCALCAPOLICY",
+                        6000000: "QYCU_RECEIVECACERT",
+                        7000000: "QYCU_RECEIVESERVERCERT",
+                        8000000: "QYCU_SETLOCALCAPOLICY",
+                        9000000: "QYCU_GETCACERTIFICATE",
+                        10000000: "QYCU_GETISSUECLIENTPOLICY",
+                        11000000: "QYCU_EXPORTLOCALCATOSTORE",
+                        12000000: "QYCU_RETRIEVELOCALCACERTIFICATEINFORMATION"
+                    },
+                    localFailures: {
+                        1: "YCU_NO_CERT_FILE",
+                        2: "YCU_CERT_OPEN",
+                        3: "YCU_CERT_READ",
+                        4: "YCU_CONVERT_CERT"
+                    }
+                },
+                "QYCUUCMGR": {
+                    name: "User Certificate Manager",
+                    entryPoints: {
+                        1000000: "QYCU_USERCERTCREATEFROMOTHERBROWSER",
+                        2000000: "QYCU_USERCERTCREATEFROMMSIEBROWSER",
+                        3000000: "QYCU_USERCERTASSIGN",
+                        4000000: "QYCU_USERCERTASSIGN_2",
+                        5000000: "QYCU_USERCERTREMOVE",
+                        6000000: "QYCU_USERCERTGETVALIDITYPERIOD",
+                        7000000: "QYCU_USERCERTREMOVEFORCURRENT",
+                        8000000: "QYCU_USERCERTRETRIEVE",
+                        9000000: "QYCU_USERCERTRETRIEVEFORCURRENT",
+                        10000000: "QYCU_USERCERTLIST",
+                        11000000: "QYCU_USERCERTLISTFORCURRENT",
+                        12000000: "QYCU_USERGENANDSIGNCERTREQUEST",
+                        13000000: "QYCU_USERSIGNCERTREQUEST",
+                        14000000: "QYCU_USERCERTEXPLIST",
+                        15000000: "QYCU_USERCERTEXPLISTFORCURRENT",
+                        16000000: "QYCU_REMOVEDIGITALIDCONFIGINFO",
+                        17000000: "QYCU_RETRIEVEDIGITALIDCONFIGINFO",
+                        18000000: "QYCU_SETDIGITALIDCONFIGINFO"
+                    },
+                    localFailures: {
+                        10: "YCU_CREATEUSRSPCOBJECT",
+                        40: "YCU_CONVERTBROWSERINFO",
+                        50: "YCU_CONVERTTOPKCS7",
+                        60: "YCU_GETUSERCERTLIST",
+                        70: "YCU_REMOVEUSERCERT",
+                        80: "YCU_ADDUSERCERT",
+                        90: "YCU_FINDCERTUSER",
+                        95: "YCU_PARSEUSERCERT"
+                    }
+                },
+                "QYCUYDOMGR": {
+                    name: "Object Signing Manager",
+                    entryPoints: {
+                        1000000: "QYCU_SIGNOBJECT",
+                        2000000: "QYCU_VERIFYSIGNATURE",
+                        3000000: "QYCU_SIGNOBJECTBATCH",
+                        4000000: "QYCU_VERIFYSIGNATUREBATCH",
+                        5000000: "QYCU_RETRIEVESIGNATURE",
+                        6000000: "QYCU_BROWSEDIRECTORY",
+                        7000000: "QYCU_SIGNOBJECTINBATCH",
+                        8000000: "QYCU_VERIFYSIGNATUREINBATCH"
+                    },
+                    localFailures: {}
+                }
+            },
+            utilityFunctions: {
+                100: { name: "QYCU_RTVAPPS", category: "Application Utility" },
+                1000: { name: "QYCU_UPDATEAPPCATRUST", category: "Application Utility" },
+                2000: { name: "QYCU_REMOVEAPPSASSIGNEDCERT", category: "Application Utility" },
+                3000: { name: "QYCU_ASSIGNCERTTOAPP", category: "Application Utility" },
+                10000: { name: "QYCU_ADDCRLASSOCIATION", category: "Certificate Utility" },
+                10500: { name: "QYCU_BASE64DECODEBUFTOBUF", category: "Certificate Utility" },
+                11000: { name: "QYCU_BASE64ENCODEBUFTOBUF", category: "Certificate Utility" },
+                11500: { name: "QYCU_CHANGECRYPTODEVICELIST", category: "Certificate Utility" },
+                12000: { name: "QYCU_CHECKFORBASE64FILE", category: "Certificate Utility" },
+                12500: { name: "QYCU_CHECKFORX509CERT", category: "Certificate Utility" },
+                13000: { name: "QYCU_CHECKIFTHEREANDSTORE", category: "Certificate Utility" },
+                13500: { name: "QYCU_CHECKIFTHEREANDSTORE2", category: "Certificate Utility" },
+                14000: { name: "QYCU_CREATECERTREQ", category: "Certificate Utility" },
+                14500: { name: "QYCU_CREATESELFSIGNED", category: "Certificate Utility" },
+                15000: { name: "QYCU_CREATESIGNEDCERT", category: "Certificate Utility" },
+                15500: { name: "QYCU_DELETECERT", category: "Certificate Utility" },
+                16000: { name: "QYCU_DELETEREQUESTCERT", category: "Certificate Utility" },
+                16500: { name: "QYCU_ENCRYPTWITHPRIVATEKEY", category: "Certificate Utility" },
+                17000: { name: "QYCU_ENCRYPTWITHPUBLICKEY", category: "Certificate Utility" },
+                17500: { name: "QYCU_EXPORTCERT", category: "Certificate Utility" },
+                18000: { name: "QYCU_EXPORTCERTDATA", category: "Certificate Utility" },
+                18500: { name: "QYCU_EXPORTCERT_2", category: "Certificate Utility" },
+                19000: { name: "QYCU_EXTRACTCERTDATA", category: "Certificate Utility" },
+                19500: { name: "QYCU_EXTRACTFILETOBUF", category: "Certificate Utility" },
+                20000: { name: "QYCU_EXTRACTFILETOBUF2", category: "Certificate Utility" },
+                20500: { name: "QYCU_EXTRACTFILETOBUF3", category: "Certificate Utility" },
+                21000: { name: "QYCU_GETCERTIFICATEITEM", category: "Certificate Utility" },
+                21500: { name: "QYCU_GETCERTIFICATEITEM_2", category: "Certificate Utility" },
+                22000: { name: "QYCU_GETCERTIFICATELABELLIST", category: "Certificate Utility" },
+                22500: { name: "QYCU_GETCERTIFICATESTATUS", category: "Certificate Utility" },
+                23000: { name: "QYCU_GETCERTSIGNERS", category: "Certificate Utility" },
+                23500: { name: "QYCU_GETCERTSIGNERS2", category: "Certificate Utility" },
+                24000: { name: "QYCU_GETCRLASSOCIATION", category: "Certificate Utility" },
+                24500: { name: "QYCU_GET1STCERTWITHPRIVATEKEY", category: "Certificate Utility" },
+                25000: { name: "QYCU_GETREQUESTCERTIFICATEITEM", category: "Certificate Utility" },
+                25500: { name: "QYCU_GETREQUESTCERTIFICATEITEM_2", category: "Certificate Utility" },
+                26000: { name: "QYCU_GETREQUESTCERTIFICATELABELLIST", category: "Certificate Utility" },
+                26500: { name: "QYCU_IMPORTCERT", category: "Certificate Utility" },
+                26700: { name: "QYCU_IMPORTCERTWITHLABEL", category: "Certificate Utility" },
+                27000: { name: "QYCU_ISSUECERT", category: "Certificate Utility" },
+                27500: { name: "QYCU_RECEIVECERT", category: "Certificate Utility" },
+                28000: { name: "QYCU_REMOVECRLASSOCIATION", category: "Certificate Utility" },
+                28500: { name: "QYCU_REMOVECRLASSOCIATION2", category: "Certificate Utility" },
+                29000: { name: "QYCU_REMOVEPRIVATEKEYINFO", category: "Certificate Utility" },
+                29500: { name: "QYCU_RENEWCERT", category: "Certificate Utility" },
+                30000: { name: "QYCU_RETRIEVECERTITEM", category: "Certificate Utility" },
+                30500: { name: "QYCU_SETCERTIFICATETRUSTSTATUS", category: "Certificate Utility" },
+                31000: { name: "QYCU_STORECACERTIFICATE", category: "Certificate Utility" },
+                31500: { name: "QYCU_VALIDATECERT", category: "Certificate Utility" },
+                50000: { name: "QYCU_SETDEFAULTCERT", category: "Certificate Store Utility" },
+                51000: { name: "QYCU_OPENCERTIFICATESTORE3", category: "Certificate Store Utility" },
+                52000: { name: "QYCU_CERTSTOREPASSWORD", category: "Certificate Store Utility" },
+                53000: { name: "QYCU_CHANGESTASHFILEPASSWORD", category: "Certificate Store Utility" },
+                54000: { name: "QYCU_OPENCERTIFICATESTORE", category: "Certificate Store Utility" },
+                55000: { name: "QYCU_OPENCERTIFICATESTORE2", category: "Certificate Store Utility" },
+                56000: { name: "QYCU_CONVETRKDBTOKYR", category: "Certificate Store Utility" },
+                57000: { name: "QYCU_GETSTASHFILENAME", category: "Certificate Store Utility" },
+                58000: { name: "QYCU_GETREQUESTFILENAME", category: "Certificate Store Utility" },
+                59000: { name: "QYCU_CREATECERTSTORE", category: "Certificate Store Utility" },
+                60000: { name: "QYCU_STASHPASSWORD", category: "Certificate Store Utility" },
+                62000: { name: "QYCU_OPENCERTIFICATESTORE4", category: "Certificate Store Utility" },
+                63000: { name: "QYCU_GETCERTSTOREPASSWORD", category: "Certificate Store Utility" },
+                70000: { name: "QYCU_RENAME", category: "Certificate Store Utility" },
+                70500: { name: "QYCU_CHGOWN", category: "Certificate Store Utility" },
+                71000: { name: "QYCU_CPYOBJ", category: "Certificate Store Utility" },
+                71500: { name: "QYCU_TOD_ERROR", category: "Certificate Store Utility" },
+                72000: { name: "QYCU_TOD_ERROR2", category: "Certificate Store Utility" },
+                72500: { name: "QYCU_ALLOCATE_IOVEC1", category: "Certificate Store Utility" },
+                73000: { name: "QYCU_ALLOCATE_IOVEC2", category: "Certificate Store Utility" },
+                73500: { name: "QYCU_MALLOC_STORAGE", category: "Certificate Store Utility" },
+                74000: { name: "QYCU_CREATE_USRSPC_OBJECT", category: "Certificate Store Utility" },
+                74500: { name: "QYCU_CONVERT_DATA_TO_ASCII", category: "Certificate Store Utility" },
+                75000: { name: "QYCU_CONVERT_DATA_TO_JOB_CCSID", category: "Certificate Store Utility" },
+                80000: { name: "QYCU_READ_POLICY", category: "Local Certificate Authority Utility" },
+                81000: { name: "QYCU_READ_POLICY2", category: "Local Certificate Authority Utility" },
+                82000: { name: "QYCU_READ_POLICY3", category: "Local Certificate Authority Utility" },
+                83000: { name: "QYCU_CREATE_POLICY", category: "Local Certificate Authority Utility" },
+                84000: { name: "QYCU_FLUSH_POLICY", category: "Local Certificate Authority Utility" },
+                85000: { name: "QYCU_FLUSH_POLICY2", category: "Local Certificate Authority Utility" },
+                86000: { name: "QYCU_FLUSH_POLICY3", category: "Local Certificate Authority Utility" },
+                87000: { name: "QYCU_CHGOWN_POLICY", category: "Local Certificate Authority Utility" },
+                90000: { name: "QYCU_CREATE_CRL_VLDL", category: "Certificate Revocation List Utility" },
+                91000: { name: "QYCU_FIND_CRL_VLDL", category: "Certificate Revocation List Utility" },
+                92000: { name: "QYCU_LOCK_CRL_VLDL", category: "Certificate Revocation List Utility" },
+                93000: { name: "QYCU_RTV_VLDL_ENTRY", category: "Certificate Revocation List Utility" },
+                100000: { name: "QYCU_RTV_CRYPTO_RESOURCES", category: "Hardware Device Utility" },
+                101000: { name: "QYCU_LIST_CRYPTO_DEVICES", category: "Hardware Device Utility" }
+            }
+        };
+
+        let currentMode = 'symptom';
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if (mode === 'symptom') {
+                document.getElementById('tabSymptom').classList.add('active');
+                document.getElementById('searchControls').style.display = 'block';
+                document.getElementById('directorySection').style.display = 'none';
+                document.getElementById('inputLabel').textContent = "Enter Symptom String(s) or Return Code(s) (one per line):";
+                document.getElementById('sampleRow').style.display = 'flex';
+                document.getElementById('symptomInput').placeholder = "e.g. 5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500\nor: 5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000\nor: RC7027500";
+            } else if (mode === 'keyword') {
+                document.getElementById('tabKeyword').classList.add('active');
+                document.getElementById('searchControls').style.display = 'block';
+                document.getElementById('directorySection').style.display = 'none';
+                document.getElementById('inputLabel').textContent = "Search by Keyword, Constant Name, or Regular Expression:";
+                document.getElementById('sampleRow').style.display = 'none';
+                document.getElementById('symptomInput').placeholder = "e.g. RECEIVECERT\nor: APPLIST\nor: STORECACERTIFICATE\nor: QYCU_.*CA";
+            } else if (mode === 'directory') {
+                document.getElementById('tabDirectory').classList.add('active');
+                document.getElementById('searchControls').style.display = 'none';
+                document.getElementById('directorySection').style.display = 'block';
+                populateDirectoryTable();
+            }
+        }
+
+        // Multi-tier fuzzy search engine
+        function searchDcmEngine(rawInput) {
+            const trimmed = rawInput.trim();
+            if (!trimmed) return null;
+
+            // 1. Try standard IBM symptom string regex
+            const symptomRegex = /(?:(\d{4})\s+)?(?:SP\/)?([A-Z0-9_]+)\s+(?:MOD\/)?([A-Z0-9_]+)\s+(?:RC)?(\d+)/i;
+            const symptomMatch = trimmed.match(symptomRegex);
+
+            if (symptomMatch) {
+                const release = symptomMatch[1] || "N/A";
+                const sp = symptomMatch[2].toUpperCase();
+                const mod = symptomMatch[3].toUpperCase();
+                const rc = parseInt(symptomMatch[4], 10);
+                return deconstructSymptom(trimmed, release, sp, mod, rc);
+            }
+
+            // 2. Try Service Program + RC (e.g. "QYCULCAMGR 7027500")
+            const spRcRegex = /([A-Z0-9_]+)\s+(?:RC)?(\d+)/i;
+            const spRcMatch = trimmed.match(spRcRegex);
+            if (spRcMatch && DCM_DB.programs[spRcMatch[1].toUpperCase()]) {
+                const sp = spRcMatch[1].toUpperCase();
+                const rc = parseInt(spRcMatch[2], 10);
+                return deconstructSymptom(trimmed, "N/A", sp, sp, rc);
+            }
+
+            // 3. Try pure Return Code number (e.g. "7027500" or "RC7027500")
+            const pureRcRegex = /^(?:RC\s*)?(\d+)$/i;
+            const pureRcMatch = trimmed.match(pureRcRegex);
+            if (pureRcMatch) {
+                const rc = parseInt(pureRcMatch[1], 10);
+                return findClosestAcrossAllPrograms(trimmed, rc);
+            }
+
+            // 4. Keyword / Regex Search across dataset
+            return searchByKeywordOrRegex(trimmed);
+        }
+
+        function deconstructSymptom(raw, release, sp, mod, rc) {
+            const prog = DCM_DB.programs[sp];
+            if (!prog) {
+                // Find closest known Service Program
+                const closestSp = findClosestString(sp, Object.keys(DCM_DB.programs));
+                return {
+                    success: false,
+                    isClosest: true,
+                    raw, release, sp, mod, rc,
+                    error: `Service Program '${sp}' not cataloged in DCM tables.`,
+                    closestSuggestion: `Did you mean '${closestSp}' (${DCM_DB.programs[closestSp].name})?`,
+                    cspReminder: "Reminder for technicians: Search iAI assisted support searches in CSP."
+                };
+            }
+
+            // Major Entry Point = floor(RC / 1000000) * 1000000
+            let entryVal = Math.floor(rc / 1000000) * 1000000;
+            let remainder = rc - entryVal;
+            let entryName = prog.entryPoints[entryVal] || null;
+
+            // Direct RC match on entry points
+            if (!entryName && prog.entryPoints[rc]) {
+                entryVal = rc;
+                entryName = prog.entryPoints[rc];
+                remainder = 0;
+            }
+
+            let utilVal = 0;
+            let utilObj = null;
+            let localVal = 0;
+            let localName = null;
+
+            if (remainder > 0) {
+                if (DCM_DB.utilityFunctions[remainder]) {
+                    utilVal = remainder;
+                    utilObj = DCM_DB.utilityFunctions[remainder];
+                } else {
+                    // Find largest utility <= remainder
+                    const utilCodes = Object.keys(DCM_DB.utilityFunctions).map(Number).sort((a,b) => b - a);
+                    for (const u of utilCodes) {
+                        if (u <= remainder) {
+                            const diff = remainder - u;
+                            if (diff <= 99) {
+                                utilVal = u;
+                                utilObj = DCM_DB.utilityFunctions[u];
+                                localVal = diff;
+                                if (prog.localFailures[localVal]) {
+                                    localName = prog.localFailures[localVal];
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    if (!utilObj && prog.localFailures[remainder]) {
+                        localVal = remainder;
+                        localName = prog.localFailures[remainder];
+                    }
+                }
+            }
+
+            const isExact = (entryName !== null || entryVal === 0) && (remainder === 0 || utilObj !== null || localName !== null);
+
+            // Find closest candidate codes in this service program
+            const closestCandidates = findNearestCodesInProgram(sp, rc);
+
+            let explanation = `During processing in <strong>${prog.name} (${sp})</strong>`;
+            if (entryName) {
+                explanation += `, entry point <code>${entryName}</code> was executing`;
+            } else if (entryVal > 0) {
+                explanation += `, entry point code <code>${entryVal}</code> was called`;
+            }
+            if (utilObj) {
+                explanation += `. A failure occurred in utility function <code>${utilObj.name}</code> (${utilObj.category})`;
+            }
+            if (localName) {
+                explanation += `, specifically at local point of failure <code>${localName}</code> (code ${localVal})`;
+            } else if (localVal > 0) {
+                explanation += `, with local failure offset <code>${localVal}</code>`;
+            }
+            explanation += ".";
+
+            return {
+                success: true,
+                isExact: isExact,
+                isClosest: !isExact,
+                raw, release, sp, mod, rc,
+                serviceProgramName: prog.name,
+                entryVal,
+                entryName: entryName || 'N/A',
+                utilVal,
+                utilName: utilObj ? utilObj.name : null,
+                utilCategory: utilObj ? utilObj.category : null,
+                localVal,
+                localName,
+                explanation,
+                closestCandidates: !isExact ? closestCandidates : null,
+                cspReminder: !isExact ? "Reminder for technicians: Search iAI assisted support searches in CSP." : null
+            };
+        }
+
+        function findClosestAcrossAllPrograms(raw, rc) {
+            // Test against all service programs and find best matching entry point
+            let bestMatch = null;
+            let smallestDiff = Infinity;
+
+            for (const [spKey, prog] of Object.entries(DCM_DB.programs)) {
+                const dec = deconstructSymptom(raw, "N/A", spKey, spKey, rc);
+                if (dec.isExact) {
+                    return dec;
+                }
+            }
+
+            // If no exact match across all programs, pick the program with closest entry point
+            const entryVal = Math.floor(rc / 1000000) * 1000000;
+            for (const [spKey, prog] of Object.entries(DCM_DB.programs)) {
+                if (prog.entryPoints[entryVal]) {
+                    return deconstructSymptom(raw, "N/A", spKey, spKey, rc);
+                }
+            }
+
+            // Fallback: search utility function directly
+            if (DCM_DB.utilityFunctions[rc]) {
+                const u = DCM_DB.utilityFunctions[rc];
+                return {
+                    success: true,
+                    isExact: true,
+                    raw, release: "N/A", sp: "Utility (qycuutl.H)", mod: "QYCUUTL", rc,
+                    serviceProgramName: "DCM Utility Module",
+                    entryVal: 0, entryName: "N/A",
+                    utilVal: rc, utilName: u.name, utilCategory: u.category,
+                    localVal: 0, localName: null,
+                    explanation: `Direct match for Utility Function <code>${u.name}</code> (${u.category}) with reason code <code>${rc}</code>.`
+                };
+            }
+
+            // Closest general match
+            return {
+                success: false,
+                isClosest: true,
+                raw, release: "N/A", sp: "Unknown", mod: "Unknown", rc,
+                error: `Return code ${rc} could not be precisely deconstructed.`,
+                closestCandidates: findNearestCodesGlobal(rc),
+                cspReminder: "Reminder for technicians: Search iAI assisted support searches in CSP."
+            };
+        }
+
+        function searchByKeywordOrRegex(query) {
+            let regex;
+            try {
+                regex = new RegExp(query, 'i');
+            } catch (e) {
+                regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+            }
+
+            const matches = [];
+
+            // Search Service Programs & Entry Points
+            for (const [spKey, prog] of Object.entries(DCM_DB.programs)) {
+                if (regex.test(spKey) || regex.test(prog.name)) {
+                    matches.push({ type: "Service Program", sp: spKey, name: prog.name, code: "N/A" });
+                }
+                for (const [code, epName] of Object.entries(prog.entryPoints)) {
+                    if (regex.test(epName) || regex.test(code)) {
+                        matches.push({ type: "Entry Point", sp: spKey, name: epName, code: "+" + code, category: prog.name });
+                    }
+                }
+                for (const [code, lfName] of Object.entries(prog.localFailures)) {
+                    if (regex.test(lfName) || regex.test(code)) {
+                        matches.push({ type: "Local Failure", sp: spKey, name: lfName, code: "+" + code, category: prog.name });
+                    }
+                }
+            }
+
+            // Search Utility Functions
+            for (const [code, u] of Object.entries(DCM_DB.utilityFunctions)) {
+                if (regex.test(u.name) || regex.test(u.category) || regex.test(code)) {
+                    matches.push({ type: "Utility Function", sp: "qycuutl.H", name: u.name, code: "+" + code, category: u.category });
+                }
+            }
+
+            return {
+                success: matches.length > 0,
+                isKeywordSearch: true,
+                query: query,
+                matches: matches,
+                cspReminder: matches.length === 0 ? "Reminder for technicians: Search iAI assisted support searches in CSP." : null
+            };
+        }
+
+        function findNearestCodesInProgram(sp, targetRc) {
+            const prog = DCM_DB.programs[sp];
+            const list = [];
+            for (const [code, name] of Object.entries(prog.entryPoints)) {
+                list.push({ code: Number(code), name, diff: Math.abs(Number(code) - targetRc), type: "Entry Point" });
+            }
+            list.sort((a,b) => a.diff - b.diff);
+            return list.slice(0, 3);
+        }
+
+        function findNearestCodesGlobal(targetRc) {
+            const list = [];
+            for (const [uCode, u] of Object.entries(DCM_DB.utilityFunctions)) {
+                list.push({ code: Number(uCode), name: u.name + " (" + u.category + ")", diff: Math.abs(Number(uCode) - targetRc) });
+            }
+            list.sort((a,b) => a.diff - b.diff);
+            return list.slice(0, 4);
+        }
+
+        function findClosestString(str, list) {
+            let best = list[0];
+            let bestScore = -1;
+            list.forEach(item => {
+                let score = 0;
+                for (let i = 0; i < Math.min(str.length, item.length); i++) {
+                    if (str[i] === item[i]) score++;
+                }
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = item;
+                }
+            });
+            return best;
+        }
+
+        function performSearch() {
             const input = document.getElementById("symptomInput").value;
             const lines = input.split(/\r?\n/).filter(l => l.trim().length > 0);
             const resultsContainer = document.getElementById("results");
             resultsContainer.innerHTML = "";
 
             if (lines.length === 0) {
-                resultsContainer.innerHTML = `<div class="not-found-card"><div class="not-found-title">No Input Provided</div><p>Please enter a symptom string in the text box above.</p></div>`;
+                resultsContainer.innerHTML = `<div class="not-found-card"><div class="not-found-title">No Input Provided</div><p>Please enter a symptom string or keyword in the box above.</p></div>`;
                 return;
             }
 
-            try {
-                // Call JAX-RS REST endpoint on server
-                const response = await fetch('api/dcm/search', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: lines.join('\n')
-                });
+            lines.forEach((line) => {
+                const res = searchDcmEngine(line);
+                if (!res) return;
 
-                if (!response.ok) {
-                    throw new Error('Server returned HTTP ' + response.status);
-                }
-
-                const results = await response.json();
-                renderResults(results);
-            } catch (err) {
-                console.error('API call failed, falling back to client-side logic:', err);
-                // In case user opened as local file, render error
-                resultsContainer.innerHTML = `<div class="not-found-card"><div class="not-found-title">Error Connecting to API</div><p>${err.message}</p></div>`;
-            }
-        }
-
-        function renderResults(results) {
-            const resultsContainer = document.getElementById("results");
-            resultsContainer.innerHTML = "";
-
-            results.forEach(res => {
-                if (res.success) {
-                    const card = document.createElement("div");
-                    card.className = "result-card";
-                    card.innerHTML = `
-                        <div class="result-header">
-                            <div>
-                                <div class="result-title">${res.serviceProgram} &bull; RC ${res.returnCode}</div>
-                                <div style="font-size:0.85rem; color:#525252; margin-top:2px;">${res.input}</div>
-                            </div>
-                            <span class="result-badge">${res.release !== 'N/A' ? 'OS: ' + res.release : 'IBM i'}</span>
-                        </div>
-                        <div class="decomp-grid">
-                            <div class="decomp-item">
-                                <div class="decomp-label">Service Program</div>
-                                <div class="decomp-val">${res.serviceProgram}</div>
-                                <div class="decomp-sub">${res.serviceProgramName}</div>
-                            </div>
-                            <div class="decomp-item">
-                                <div class="decomp-label">Major Entry Point (xxx)</div>
-                                <div class="decomp-val">${res.majorEntryPointName}</div>
-                                <div class="decomp-sub">Code Value: +${res.majorEntryPointCode}</div>
-                            </div>
-                            <div class="decomp-item">
-                                <div class="decomp-label">Utility Function (yyyy)</div>
-                                <div class="decomp-val">${res.utilityFunctionName || 'None (Direct Module Failure)'}</div>
-                                <div class="decomp-sub">${res.utilityFunctionCategory ? res.utilityFunctionCategory + ' (+' + res.utilityFunctionCode + ')' : 'No utility failure'}</div>
-                            </div>
-                            <div class="decomp-item">
-                                <div class="decomp-label">Local Point of Failure (zz)</div>
-                                <div class="decomp-val">${res.localFailureName || (res.localFailureCode > 0 ? '+' + res.localFailureCode : '00 (Normal Entry)')}</div>
-                                <div class="decomp-sub">${res.localFailureCode > 0 ? 'Local offset in module' : 'No local offset'}</div>
-                            </div>
-                        </div>
-                        <div class="explanation-box">
-                            <div class="explanation-title">Diagnostic Use Case & Root Cause Method</div>
-                            <div class="explanation-text">${res.useCaseExplanation}</div>
-                        </div>
-                    `;
-                    resultsContainer.appendChild(card);
+                if (res.isKeywordSearch) {
+                    renderKeywordResults(res);
+                } else if (res.success) {
+                    renderDeconstructedResult(res);
                 } else {
-                    const card = document.createElement("div");
-                    card.className = "not-found-card";
-                    card.innerHTML = `
-                        <div class="not-found-title">Match Not Found: ${res.input || 'Unknown'}</div>
-                        <p style="color:#525252; font-size:0.95rem;">${res.error || 'The entered symptom string or return code could not be mapped to the DCM reference tables.'}</p>
-                        <div class="csp-banner">
-                            <div class="csp-title">Technician Action Reminder:</div>
-                            <div class="csp-text">${res.cspReminder || 'Reminder for technicians: Search iAI assisted support searches in CSP.'}</div>
-                        </div>
-                    `;
-                    resultsContainer.appendChild(card);
+                    renderNotFoundOrClosest(res);
                 }
             });
         }
 
+        function renderDeconstructedResult(res) {
+            const resultsContainer = document.getElementById("results");
+            const card = document.createElement("div");
+            card.className = "result-card" + (res.isClosest ? " closest-match" : "");
+
+            let closestHtml = "";
+            if (res.closestCandidates && res.closestCandidates.length > 0) {
+                closestHtml = `
+                    <div class="closest-suggestions">
+                        <div class="closest-title">Closest Documented Return Codes & Functions:</div>
+                        ${res.closestCandidates.map(c => `
+                            <div class="suggestion-item">
+                                <span class="suggestion-name">${c.name} (${c.type || 'Code'})</span>
+                                <span class="suggestion-delta">Value: +${c.code} (Diff: &Delta;${c.diff})</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            let cspHtml = "";
+            if (res.cspReminder) {
+                cspHtml = `
+                    <div class="csp-banner">
+                        <div class="csp-title">&#9888; Technician Support Reminder</div>
+                        <div class="csp-text">${res.cspReminder}</div>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="result-header">
+                    <div>
+                        <div class="result-title">${res.sp} &bull; RC ${res.rc}</div>
+                        <div class="result-sub">${res.raw}</div>
+                    </div>
+                    <span class="result-badge ${res.isExact ? 'badge-exact' : 'badge-closest'}">
+                        ${res.isExact ? 'Exact Match' : 'Closest Decomposition'}
+                    </span>
+                </div>
+                <div class="decomp-grid">
+                    <div class="decomp-item">
+                        <div class="decomp-label">Service Program</div>
+                        <div class="decomp-val">${res.sp}</div>
+                        <div class="decomp-sub">${res.serviceProgramName}</div>
+                    </div>
+                    <div class="decomp-item">
+                        <div class="decomp-label">Major Entry Point (xxx)</div>
+                        <div class="decomp-val">${res.entryName}</div>
+                        <div class="decomp-sub">Value: +${res.entryVal}</div>
+                    </div>
+                    <div class="decomp-item">
+                        <div class="decomp-label">Utility Function (yyyy)</div>
+                        <div class="decomp-val">${res.utilName || 'None (Direct Module Failure)'}</div>
+                        <div class="decomp-sub">${res.utilCategory ? res.utilCategory + ' (+' + res.utilVal + ')' : 'No utility failure'}</div>
+                    </div>
+                    <div class="decomp-item">
+                        <div class="decomp-label">Local Point of Failure (zz)</div>
+                        <div class="decomp-val">${res.localName || (res.localVal > 0 ? '+' + res.localVal : '00 (Normal Entry)')}</div>
+                        <div class="decomp-sub">${res.localVal > 0 ? 'Local offset in module' : 'No local offset'}</div>
+                    </div>
+                </div>
+                <div class="explanation-box ${res.isClosest ? 'warning-tone' : ''}">
+                    <div class="explanation-title">Diagnostic Use Case & Root Cause Method</div>
+                    <div class="explanation-text">${res.explanation}</div>
+                </div>
+                ${closestHtml}
+                ${cspHtml}
+            `;
+            resultsContainer.appendChild(card);
+        }
+
+        function renderKeywordResults(res) {
+            const resultsContainer = document.getElementById("results");
+            const card = document.createElement("div");
+            card.className = "result-card";
+            card.innerHTML = `
+                <div class="result-header">
+                    <div>
+                        <div class="result-title">Keyword Search Results for "${res.query}"</div>
+                        <div class="result-sub">Found ${res.matches.length} matching definitions in DCM reference matrix</div>
+                    </div>
+                    <span class="result-badge badge-keyword">Keyword Search</span>
+                </div>
+                <div style="max-height:360px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:6px;">
+                    <table class="ref-table">
+                        <thead>
+                            <tr>
+                                <th>Category / Type</th>
+                                <th>Location / Module</th>
+                                <th>Code Value</th>
+                                <th>Symbolic Constant Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${res.matches.map(m => `
+                                <tr>
+                                    <td><span style="font-weight:600; color:#374151;">${m.type}</span></td>
+                                    <td>${m.sp} ${m.category ? `(${m.category})` : ''}</td>
+                                    <td><strong style="color:#0f62fe; font-family:var(--font-mono);">${m.code}</strong></td>
+                                    <td><code style="font-family:var(--font-mono); font-weight:600;">${m.name}</code></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            resultsContainer.appendChild(card);
+        }
+
+        function renderNotFoundOrClosest(res) {
+            const resultsContainer = document.getElementById("results");
+            const card = document.createElement("div");
+            card.className = "result-card closest-match";
+
+            let closestHtml = "";
+            if (res.closestCandidates && res.closestCandidates.length > 0) {
+                closestHtml = `
+                    <div class="closest-suggestions">
+                        <div class="closest-title">Closest Documented Return Codes & Functions:</div>
+                        ${res.closestCandidates.map(c => `
+                            <div class="suggestion-item">
+                                <span class="suggestion-name">${c.name}</span>
+                                <span class="suggestion-delta">Value: +${c.code} (Diff: &Delta;${c.diff})</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="result-header">
+                    <div>
+                        <div class="result-title">Unmatched Query: ${res.raw}</div>
+                        <div class="result-sub">${res.error}</div>
+                    </div>
+                    <span class="result-badge badge-closest">Closest Search</span>
+                </div>
+                ${res.closestSuggestion ? `<p style="font-size:0.95rem; margin-bottom:12px; color:#8a6d00;"><strong>Suggestion:</strong> ${res.closestSuggestion}</p>` : ''}
+                ${closestHtml}
+                <div class="csp-banner">
+                    <div class="csp-title">&#9888; Technician Support Action Required</div>
+                    <div class="csp-text">${res.cspReminder}</div>
+                </div>
+            `;
+            resultsContainer.appendChild(card);
+        }
+
+        function populateDirectoryTable() {
+            const tbody = document.getElementById("dirTableBody");
+            tbody.innerHTML = "";
+
+            // Service programs and entry points
+            for (const [sp, prog] of Object.entries(DCM_DB.programs)) {
+                for (const [val, name] of Object.entries(prog.entryPoints)) {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>Entry Point</td>
+                            <td>${sp} (${prog.name})</td>
+                            <td><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
+                            <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
+                        </tr>
+                    `;
+                }
+                for (const [val, name] of Object.entries(prog.localFailures)) {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>Local Failure</td>
+                            <td>${sp} (${prog.name})</td>
+                            <td><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
+                            <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
+                        </tr>
+                    `;
+                }
+            }
+
+            // Utilities
+            for (const [val, u] of Object.entries(DCM_DB.utilityFunctions)) {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${u.category}</td>
+                        <td>qycuutl.H</td>
+                        <td><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
+                        <td><code style="font-family:var(--font-mono); font-weight:600;">${u.name}</code></td>
+                    </tr>
+                `;
+            }
+        }
+
+        function filterDirectory() {
+            const filter = document.getElementById("dirFilterInput").value.toUpperCase();
+            const rows = document.querySelectorAll("#dirTableBody tr");
+            rows.forEach(r => {
+                const text = r.textContent.toUpperCase();
+                r.style.display = text.includes(filter) ? "" : "none";
+            });
+        }
+
         function setSample(str) {
+            setMode('symptom');
             document.getElementById("symptomInput").value = str;
             performSearch();
         }
 
         function setAllSamples() {
+            setMode('symptom');
             const samples = [
                 "5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500",
                 "5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000",
