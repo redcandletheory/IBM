@@ -1,16 +1,16 @@
 # IBM i DCM Return Code & Symptom Search Web Application
 
-### Target Runtime: **IBM WebSphere Liberty Server 24.0.0.12 and Above**
+### Target Runtime: **Integrated Application Server (IAS) / WebSphere Liberty 24.0.0.12+**
 * **Operating System**: IBM i V7R5, V7R6, and future releases
-* **Target Application Server**: IBM WebSphere Application Server Liberty Profile (`24.0.0.12+`) / Integrated Application Server (IAS)
-* **Notice**: **This application is built for WebSphere Liberty Server 24.0.0.12+ and is NOT intended for IWS (Integrated Web Services) servers.**
+* **Target Application Server**: Integrated Application Server (IAS) powered by IBM WebSphere Application Server Liberty Profile (`24.0.0.12+`)
+* **Notice**: **This application is built for Integrated Application Server (IAS) / WebSphere Liberty Server 24.0.0.12+.**
 
 ---
 
 ## 🌟 Features & Architecture
 
-1. **Native WebSphere Liberty 24.0.0.12+ Compliance**:
-   * Uses standard Java EE 8 / Servlet 3.1 / JAX-RS specifications provided by WebSphere Liberty 24.0.0.12+.
+1. **Native WebSphere Liberty 24.0.0.12+ / IAS Compliance**:
+   * Uses standard Java EE 8 / Servlet 3.1 / JAX-RS specifications provided by IAS / WebSphere Liberty 24.0.0.12+.
    * Standard `.war` packaging with zero external runtime dependencies.
 
 2. **DCM Return Code Deconstruction Engine**:
@@ -34,12 +34,12 @@
 ## 📁 Project Structure
 
 ```
-iws-service-v7r5/
-├── pom.xml                                    # Maven build configuration for Liberty 24.0.0.12+
+ias-service-v7r5/
+├── pom.xml                                    # Maven build configuration for Liberty 24.0.0.12+ / IAS
 ├── README.md                                  # Documentation
 ├── src/
 │   └── main/
-│       ├── java/com/ibmi/iws/
+│       ├── java/com/ibmi/ias/
 │       │   ├── RestApplication.java          # JAX-RS Application root (/api)
 │       │   ├── api/
 │       │   │   ├── DcmSearchResource.java    # REST search & decode endpoints
@@ -57,7 +57,7 @@ iws-service-v7r5/
 
 ## 🔨 How to Build the WAR File
 
-From the `iws-service-v7r5` directory:
+From the project directory:
 
 ```powershell
 mvn clean package
@@ -65,19 +65,19 @@ mvn clean package
 
 The compiled WAR package is generated at:
 ```
-target/iws-service.war
+target/ias-service.war
 ```
 
 ---
 
-## 🚀 How to Deploy on WebSphere Liberty (24.0.0.12+) on IBM i
+## 🚀 How to Deploy on Integrated Application Server (IAS / Liberty 24.0.0.12+) on IBM i
 
 ### Option 1: Dropins Directory Deployment (Fastest)
-1. Transfer `iws-service.war` to the IBM i IFS (e.g. `/tmp/iws-service.war`).
-2. Copy the WAR into your Liberty server instance's `dropins` folder:
+1. Transfer `ias-service.war` to the IBM i IFS (e.g. `/tmp/ias-service.war`).
+2. Copy the WAR into your IAS server instance's `dropins` folder:
    ```cl
-   CPY OBJ('/tmp/iws-service.war') +
-       TODIR('/www/<LIBERTY_SERVER_NAME>/wlp/usr/servers/<LIBERTY_SERVER_NAME>/dropins') +
+   CPY OBJ('/tmp/ias-service.war') +
+       TODIR('/www/<IAS_SERVER_NAME>/wlp/usr/servers/<IAS_SERVER_NAME>/dropins') +
        REPLACE(*YES)
    ```
 3. Liberty 24.0.0.12+ will dynamically discover and start the application.
@@ -85,9 +85,9 @@ target/iws-service.war
 ---
 
 ### Option 2: Server Configuration (`server.xml`)
-Add the web application declaration to your Liberty server's `server.xml`:
+Add the web application declaration to your IAS server's `server.xml`:
 ```xml
-<server description="Liberty Server 24.0.0.12+">
+<server description="IAS Liberty Server 24.0.0.12+">
     <featureManager>
         <feature>webProfile-8.0</feature>
         <feature>jaxrs-2.1</feature>
@@ -95,20 +95,20 @@ Add the web application declaration to your Liberty server's `server.xml`:
     </featureManager>
 
     <webApplication id="dcmSearch" 
-                    location="iws-service.war" 
+                    location="ias-service.war" 
                     name="dcmSearch" 
-                    contextRoot="/iws-service"/>
+                    contextRoot="/ias-service"/>
 </server>
 ```
 
 ---
 
-### Option 3: Using IBM Web Administration for i (IAS Instance)
+### Option 3: Using IBM Web Administration for i (IAS Instance Wizard)
 1. Open `http://<YOUR_IBMI_HOST>:2001/HTTPAdmin`.
 2. Under the **Manage** tab, select **Integrated Application Servers** (Liberty 24.0.0.12+).
-3. Select your Liberty server instance.
-4. Click **Install New Application** &rarr; Upload `iws-service.war`.
-5. Set context root to `/iws-service` and finish the wizard.
+3. Select your IAS server instance.
+4. Click **Install New Application** &rarr; Upload `ias-service.war`.
+5. Set context root to `/ias-service` and finish the wizard.
 
 ---
 
@@ -116,10 +116,10 @@ Add the web application declaration to your Liberty server's `server.xml`:
 
 | Resource | URL Pattern | Description |
 | :--- | :--- | :--- |
-| **Interactive Search Dashboard** | `http://<YOUR_IBMI_HOST>:<PORT>/iws-service/` | Web UI for symptom strings, closest match & regex search |
-| **DCM Single Decode API** | `http://<YOUR_IBMI_HOST>:<PORT>/iws-service/api/dcm/decode?symptom=5770%20SP/QYCULCAMGR%20MOD/QYCULCAMGR%20RC7027500` | REST API for single symptom deconstruction |
-| **DCM Batch Search API** | `http://<YOUR_IBMI_HOST>:<PORT>/iws-service/api/dcm/search` | REST API (POST) for batch searches |
-| **Server Health & Diagnostics** | `http://<YOUR_IBMI_HOST>:<PORT>/iws-service/api/status` | Returns OS version, Java version, and runtime status |
+| **Interactive Search Dashboard** | `http://<YOUR_IBMI_HOST>:<PORT>/ias-service/` | Web UI for symptom strings, closest match & regex search |
+| **DCM Single Decode API** | `http://<YOUR_IBMI_HOST>:<PORT>/ias-service/api/dcm/decode?symptom=5770%20SP/QYCULCAMGR%20MOD/QYCULCAMGR%20RC7027500` | REST API for single symptom deconstruction |
+| **DCM Batch Search API** | `http://<YOUR_IBMI_HOST>:<PORT>/ias-service/api/dcm/search` | REST API (POST) for batch searches |
+| **Server Health & Diagnostics** | `http://<YOUR_IBMI_HOST>:<PORT>/ias-service/api/status` | Returns OS version, Java version, and runtime status |
 
 ---
 

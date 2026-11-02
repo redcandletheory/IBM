@@ -1,4 +1,4 @@
-package com.ibmi.iws.api;
+package com.ibmi.ias.api;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * Health check & runtime diagnostic endpoint.
- * Built for IBM WebSphere Liberty 24.0.0.12 and above on IBM i V7R5 / V7R6.
+ * Built for Integrated Application Server (IAS) on IBM WebSphere Liberty 24.0.0.12+ (IBM i V7R5 / V7R6).
  */
 @Path("/status")
 @Produces(MediaType.APPLICATION_JSON)
@@ -20,7 +20,7 @@ public class StatusResource {
     public Response getStatus() {
         Map<String, Object> info = new HashMap<>();
         info.put("serviceName", "IBM i DCM Search Service");
-        info.put("targetServer", "IBM WebSphere Liberty Profile 24.0.0.12+ (Not IWS)");
+        info.put("targetServer", "Integrated Application Server (IAS) / WebSphere Liberty Profile 24.0.0.12+");
         info.put("status", "UP");
         info.put("osName", System.getProperty("os.name"));
         info.put("osVersion", System.getProperty("os.version"));

@@ -10,7 +10,7 @@
     <packaging>war</packaging>
 
     <name>IBM i DCM Search Web Application</name>
-    <description>Web application and REST service for IBM WebSphere Liberty Server 24.0.0.12 and above on IBM i V7R5 / V7R6 (Not for IWS servers)</description>
+    <description>Web application and REST service for Integrated Application Server (IAS) / WebSphere Liberty 24.0.0.12 and above on IBM i V7R5 / V7R6</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -20,7 +20,7 @@
     </properties>
 
     <dependencies>
-        <!-- Java EE 8 / JAX-RS API (provided by Liberty Server 24.0.0.12+ runtime on IBM i) -->
+        <!-- Java EE 8 / JAX-RS API (provided by IAS / Liberty Server 24.0.0.12+ runtime on IBM i) -->
         <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
@@ -50,7 +50,7 @@
     </dependencies>
 
     <build>
-        <finalName>iws-service</finalName>
+        <finalName>ias-service</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -1,6 +1,6 @@
-package com.ibmi.iws.api;
+package com.ibmi.ias.api;
 
-import com.ibmi.iws.service.ProgramCallerService;
+import com.ibmi.ias.service.ProgramCallerService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * REST endpoint to trigger IBM i native programs (*PGM)
  * POST /api/program/call?lib=MYLIB&pgm=MYPGM&outLen=100
- * Body: Raw input string or JSON text
+ * Hosted on Integrated Application Server (IAS) / WebSphere Liberty 24.0.0.12+.
  */
 @Path("/program")
 public class ProgramResource {

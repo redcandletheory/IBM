@@ -1,6 +1,6 @@
-package com.ibmi.iws.api;
+package com.ibmi.ias.api;
 
-import com.ibmi.iws.service.DcmSearchService;
+import com.ibmi.ias.service.DcmSearchService;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -11,6 +11,7 @@ import java.util.Map;
 
 /**
  * REST API for IBM i Digital Certificate Manager (DCM) Return Code Search & Deconstruction.
+ * Hosted on Integrated Application Server (IAS) / WebSphere Liberty 24.0.0.12+.
  */
 @Path("/dcm")
 @Produces(MediaType.APPLICATION_JSON)
