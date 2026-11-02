@@ -1,13 +1,20 @@
-# IBM i IWS 3.0 Portable Web Service (V7R5 / V7R6)
+# IBM i IWS 3.0 Portable Web Service (V7R5 / V7R6) &mdash; System: `RCH750B`
 
-This project provides a portable Java RESTful Web Service packaged as a **WAR file** for **IBM Integrated Web Services (IWS 3.0)** running on **IBM i V7R5, V7R6, and future releases**.
+This project provides a portable Java RESTful Web Service and Interactive Web UI packaged as a **WAR file** for **IBM Integrated Web Services (IWS 3.0)** running on **IBM i V7R5, V7R6, and future releases**.
 
 ---
 
-## 🌟 Features & Portability
-- **Runtime Compatibility**: Built on standard Java EE / JAX-RS specifications supported by IWS 3.0 (Liberty Profile) on IBM i V7R5 and V7R6.
-- **Native IBM i Integration**: Includes IBM Toolbox for Java (`jt400`) wrapper to seamlessly execute native RPG/COBOL `*PGM` and `*SRVPGM` objects.
-- **Zero OS Lock-in**: Can be moved across different IWS server instances and IBM i OS versions without recompilation.
+## 🌟 Live Access on `RCH750B` (Port: `10299`)
+
+Once deployed onto system **`RCH750B`**, access the tools using the following URLs:
+
+| Resource | Exact URL | Description |
+| :--- | :--- | :--- |
+| **Interactive Search Dashboard** | [`http://RCH750B:10299/iws-service/`](http://RCH750B:10299/iws-service/) | Web UI for symptom strings, closest match & regex search |
+| **DCM Single Decode API** | `http://RCH750B:10299/iws-service/api/dcm/decode?symptom=5770%20SP/QYCULCAMGR%20MOD/QYCULCAMGR%20RC7027500` | REST API for single symptom deconstruction |
+| **DCM Batch Search API** | `http://RCH750B:10299/iws-service/api/dcm/search` | REST API (POST) for batch searches |
+| **Server Health & Diagnostics** | [`http://RCH750B:10299/iws-service/api/status`](http://RCH750B:10299/iws-service/api/status) | Returns OS/400 version, Java version, and runtime status |
+| **IBM Web Administration GUI** | [`http://RCH750B:2001/HTTPAdmin`](http://RCH750B:2001/HTTPAdmin) | Management console for IWS / IAS instances on `RCH750B` |
 
 ---
 
@@ -15,97 +22,77 @@ This project provides a portable Java RESTful Web Service packaged as a **WAR fi
 
 ```
 iws-service-v7r5/
-├── pom.xml                                    # Maven build descriptor
-├── README.md                                  # Documentation
+├── pom.xml                                    # Maven build descriptor (Java 8/11, WAR packaging)
+├── README.md                                  # Documentation tailored for RCH750B
 ├── src/
 │   └── main/
-│       ├── java/
-│       │   └── com/ibmi/iws/
-│       │       ├── RestApplication.java       # JAX-RS Application root (/api)
-│       │       ├── api/
-│       │       │   ├── StatusResource.java    # /api/status (Health & OS diagnostics)
-│       │       │   └── ProgramResource.java   # /api/program/call (Execute native *PGM)
-│       │       └── service/
-│       │           └── ProgramCallerService.java # JT400 program call handler
+│       ├── java/com/ibmi/iws/
+│       │   ├── RestApplication.java          # JAX-RS Application root (/api)
+│       │   ├── api/
+│       │   │   ├── DcmSearchResource.java    # /api/dcm/* (REST search & decode endpoints)
+│       │   │   ├── StatusResource.java       # /api/status (Health & OS diagnostics)
+│       │   │   └── ProgramResource.java      # /api/program/call (Execute native *PGM)
+│       │   └── service/
+│       │       ├── DcmSearchService.java     # Multi-tier fuzzy & closest-match DCM engine
+│       │       └── ProgramCallerService.java # JT400 program call handler
 │       └── webapp/
-│           ├── WEB-INF/
-│           │   └── web.xml                    # Web deployment descriptor
-│           └── index.html                     # Landing page
+│           ├── WEB-INF/web.xml               # Web deployment descriptor
+│           └── index.html                    # Interactive DCM search tool UI (Zero-404 browser engine)
 ```
 
 ---
 
 ## 🔨 How to Build the WAR File
 
-From the `iws-service-v7r5` directory, run:
+From the `iws-service-v7r5` directory:
 
-```bash
+```powershell
 mvn clean package
 ```
 
-The compiled WAR file will be generated at:
+The compiled WAR package is generated at:
 ```
 target/iws-service.war
 ```
 
 ---
 
-## 🚀 How to Deploy / Install on IBM i (V7R5 & V7R6)
+## 🚀 How to Deploy on `RCH750B`
 
-### Option 1: Using IBM Web Administration for i (GUI)
-1. Open a browser and navigate to `http://<YOUR_IBMI_IP>:2001/HTTPAdmin`.
+### Option 1: Direct Liberty Dropins (Recommended & Fastest)
+Transfer `iws-service.war` to `RCH750B` and copy it into your IWS server instance's dropins folder:
+```cl
+CPY OBJ('/tmp/iws-service.war') +
+    TODIR('/www/<YOUR_IWS_SERVER>/wlp/usr/servers/<YOUR_IWS_SERVER>/dropins') +
+    REPLACE(*YES)
+```
+
+### Option 2: Using IBM Web Administration for i (GUI)
+1. Open [`http://RCH750B:2001/HTTPAdmin`](http://RCH750B:2001/HTTPAdmin).
 2. Log in with your IBM i user credentials (requires `*IOSYSCFG` authority).
-3. Under the **Integrated Web Services** tab, select your IWS 3.0 Server.
-4. Click **Deploy New Service**.
-5. Select **REST Web Service** and upload `iws-service.war`.
-6. Follow the wizard steps to complete deployment and start the service.
+3. Under the **Integrated Web Services** (or **Integrated Application Servers**) tab, select your server instance.
+4. Click **Deploy New Service** (or **Install New Application**) and select `iws-service.war`.
+5. Set context root to `/iws-service` and finish the wizard.
 
-### Option 2: Command Line (QShell / Scripting)
-You can deploy using the IBM i Web Services CLI script:
+### Option 3: Command Line (QShell)
+Run from QSH on `RCH750B`:
 ```bash
-/qibm/proddata/os/webservices/bin/installWebService.sh -server <SERVER_NAME> -service iwsService -war /path/to/iws-service.war
-```
-
-### Option 3: Direct Liberty Dropins
-Copy `iws-service.war` directly to the server's dropins folder:
-```bash
-/www/<SERVER_NAME>/wlp/usr/servers/<SERVER_NAME>/dropins/iws-service.war
+/qibm/proddata/os/webservices/bin/installWebService.sh -server <SERVER_NAME> -service iwsService -war /tmp/iws-service.war -contextRoot /iws-service
 ```
 
 ---
 
-## 🌐 API Endpoints
+## 🔍 DCM Search Capabilities & Examples
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/iws-service/api/status` | Returns OS version, Java runtime, and server health |
-| `POST` | `/iws-service/api/program/call?lib=MYLIB&pgm=MYPGM&outLen=100` | Calls an IBM i native `*PGM` and returns the output |
+### Supported Symptom Strings:
+1. `5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500` &rarr; Local CA Manager, Receive Server Cert (`QYCU_RECEIVESERVERCERT`), Receive Cert Utility (`QYCU_RECEIVECERT`)
+2. `5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000` &rarr; App Manager, Assign Cert (`QYCU_APPASSIGNCERT`), Assign Cert to App Utility (`QYCU_ASSIGNCERTTOAPP`)
+3. `5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC14000000` &rarr; App Manager, Update Definition (`QYCU_APPUPDATEDEFINITION`)
+4. `5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC12000000` &rarr; App Manager, Remove App (`QYCU_APPREMOVE`)
+5. `5770 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC7000100` &rarr; App Manager, List Assigned Certs (`QYCU_APPLISTASSIGNEDCERT`), Retrieve Apps (`QYCU_RTVAPPS`)
 
----
-
-## 🐙 How to Save and Upload to GitHub
-
-### 1. Install Git (if not already installed)
-In PowerShell:
-```powershell
-winget install --id Git.Git -e --source winget
-```
-*(Close and reopen your terminal after installation so `git` is recognized)*
-
-### 2. Initialize and Commit
-From inside the `iws-service-v7r5` folder:
-```powershell
-cd iws-service-v7r5
-git init
-git add .
-git commit -m "Initial commit of portable IWS 3.0 web service for V7R5/V7R6"
-```
-
-### 3. Create a GitHub Repository and Push
-1. Go to [GitHub.com](https://github.com/new) and create a new repository (e.g., `iws-web-service-v7r5`).
-2. Link your local project to GitHub and push:
-```powershell
-git branch -M main
-git remote add origin https://github.com/<YOUR-GITHUB-USERNAME>/<YOUR-REPO-NAME>.git
-git push -u origin main
-```
+### Unmatched / Unknown Symptom Strings:
+If a return code cannot be resolved exactly, the system:
+* Finds and presents the closest candidate entry points and utilities.
+* Automatically displays the support reminder:
+  > ⚠️ **Reminder for Technicians**: Search **iAI assisted support searches in CSP** (Customer Support Portal) for known APARs, PTFs, or defect tracking.
