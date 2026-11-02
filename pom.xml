@@ -50,7 +50,7 @@
     </dependencies>
 
     <build>
-        <finalName>ias-service</finalName>
+        <finalName>dcm-service</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

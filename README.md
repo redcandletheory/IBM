@@ -34,7 +34,7 @@
 ## 📁 Project Structure
 
 ```
-ias-service-v7r5/
+dcm-service-v7r5/
 ├── pom.xml                                    # Maven build configuration for Liberty 24.0.0.12+ / IAS
 ├── README.md                                  # Documentation
 ├── src/
@@ -65,7 +65,7 @@ mvn clean package
 
 The compiled WAR package is generated at:
 ```
-target/ias-service.war
+target/dcm-service.war
 ```
 
 ---
@@ -73,10 +73,10 @@ target/ias-service.war
 ## 🚀 How to Deploy on Integrated Application Server (IAS / Liberty 24.0.0.12+) on IBM i
 
 ### Option 1: Dropins Directory Deployment (Fastest)
-1. Transfer `ias-service.war` to the IBM i IFS (e.g. `/tmp/ias-service.war`).
+1. Transfer `dcm-service.war` to the IBM i IFS (e.g. `/tmp/dcm-service.war`).
 2. Copy the WAR into your IAS server instance's `dropins` folder:
    ```cl
-   CPY OBJ('/tmp/ias-service.war') +
+   CPY OBJ('/tmp/dcm-service.war') +
        TODIR('/www/<IAS_SERVER_NAME>/wlp/usr/servers/<IAS_SERVER_NAME>/dropins') +
        REPLACE(*YES)
    ```
@@ -95,9 +95,9 @@ Add the web application declaration to your IAS server's `server.xml`:
     </featureManager>
 
     <webApplication id="dcmSearch" 
-                    location="ias-service.war" 
+                    location="dcm-service.war" 
                     name="dcmSearch" 
-                    contextRoot="/ias-service"/>
+                    contextRoot="/dcm-service"/>
 </server>
 ```
 
@@ -107,8 +107,8 @@ Add the web application declaration to your IAS server's `server.xml`:
 1. Open `http://<YOUR_IBMI_HOST>:2001/HTTPAdmin`.
 2. Under the **Manage** tab, select **Integrated Application Servers** (Liberty 24.0.0.12+).
 3. Select your IAS server instance.
-4. Click **Install New Application** &rarr; Upload `ias-service.war`.
-5. Set context root to `/ias-service` and finish the wizard.
+4. Click **Install New Application** &rarr; Upload `dcm-service.war`.
+5. Set context root to `/dcm-service` and finish the wizard.
 
 ---
 
@@ -116,10 +116,10 @@ Add the web application declaration to your IAS server's `server.xml`:
 
 | Resource | URL Pattern | Description |
 | :--- | :--- | :--- |
-| **Interactive Search Dashboard** | `http://<YOUR_IBMI_HOST>:<PORT>/ias-service/` | Web UI for symptom strings, closest match & regex search |
-| **DCM Single Decode API** | `http://<YOUR_IBMI_HOST>:<PORT>/ias-service/api/dcm/decode?symptom=5770%20SP/QYCULCAMGR%20MOD/QYCULCAMGR%20RC7027500` | REST API for single symptom deconstruction |
-| **DCM Batch Search API** | `http://<YOUR_IBMI_HOST>:<PORT>/ias-service/api/dcm/search` | REST API (POST) for batch searches |
-| **Server Health & Diagnostics** | `http://<YOUR_IBMI_HOST>:<PORT>/ias-service/api/status` | Returns OS version, Java version, and runtime status |
+| **Interactive Search Dashboard** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/` | Web UI for symptom strings, closest match & regex search |
+| **DCM Single Decode API** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/dcm/decode?symptom=5770%20SP/QYCULCAMGR%20MOD/QYCULCAMGR%20RC7027500` | REST API for single symptom deconstruction |
+| **DCM Batch Search API** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/dcm/search` | REST API (POST) for batch searches |
+| **Server Health & Diagnostics** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/status` | Returns OS version, Java version, and runtime status |
 
 ---
 
