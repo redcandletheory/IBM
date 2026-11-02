@@ -4,13 +4,13 @@
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.ibmi.iws</groupId>
-    <artifactId>iws-web-service</artifactId>
+    <groupId>com.ibmi.dcm</groupId>
+    <artifactId>ibmi-dcm-search-service</artifactId>
     <version>1.0.0</version>
     <packaging>war</packaging>
 
-    <name>IBM i IWS 3.0 Portable Web Service</name>
-    <description>Portable RESTful Web Service WAR package for IBM i Integrated Web Services (IWS 3.0) on IBM i V7R5 / V7R6</description>
+    <name>IBM i DCM Search Web Application</name>
+    <description>Web application and REST service for IBM WebSphere Liberty Server 24.0.0.12 and above on IBM i V7R5 / V7R6 (Not for IWS servers)</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -20,7 +20,7 @@
     </properties>
 
     <dependencies>
-        <!-- Java EE 8 / JAX-RS API (provided by IWS 3.0 Liberty runtime on IBM i) -->
+        <!-- Java EE 8 / JAX-RS API (provided by Liberty Server 24.0.0.12+ runtime on IBM i) -->
         <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
@@ -66,7 +66,6 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.3.2</version>
                 <configuration>
-                    <warName>iws-service</warName>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>

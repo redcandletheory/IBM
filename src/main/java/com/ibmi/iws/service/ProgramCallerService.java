@@ -14,7 +14,7 @@ import java.util.Map;
 
 /**
  * Service to execute native IBM i programs (*PGM) via IBM Toolbox for Java (JT400).
- * When running directly on IBM i (IWS / Liberty), default constructor connects locally using system authority.
+ * When running directly on IBM i (WebSphere Liberty 24.0.0.12+), default constructor connects locally using system authority.
  */
 public class ProgramCallerService {
 

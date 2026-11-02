@@ -5,7 +5,7 @@
                              http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
          version="3.1">
 
-    <display-name>IWS 3.0 Portable Web Service</display-name>
+    <display-name>IBM i DCM Search Application - WebSphere Liberty 24.0.0.12+</display-name>
 
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>

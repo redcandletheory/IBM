@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * Health check & runtime diagnostic endpoint.
- * Portable across IBM i V7R5, V7R6, and IWS 3.0 instances.
+ * Built for IBM WebSphere Liberty 24.0.0.12 and above on IBM i V7R5 / V7R6.
  */
 @Path("/status")
 @Produces(MediaType.APPLICATION_JSON)
@@ -19,7 +19,8 @@ public class StatusResource {
     @GET
     public Response getStatus() {
         Map<String, Object> info = new HashMap<>();
-        info.put("serviceName", "IWS Portable Service");
+        info.put("serviceName", "IBM i DCM Search Service");
+        info.put("targetServer", "IBM WebSphere Liberty Profile 24.0.0.12+ (Not IWS)");
         info.put("status", "UP");
         info.put("osName", System.getProperty("os.name"));
         info.put("osVersion", System.getProperty("os.version"));
