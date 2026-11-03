@@ -25,9 +25,11 @@
    * **Fuzzy & Closest Match**: If an exact code is not found, calculates $\Delta$ offsets and lists the closest documented return codes.
    * **Keyword & Regex Search**: Search across constants like `RECEIVECERT`, `STORE`, `APPLIST`, or regular expressions.
    * **Technician Action Support**: Prompts support technicians to *"Search iAI assisted support searches in CSP"* when non-standard codes are identified.
+   * **Red Herring & Known Issue Detection**: Automatically recognizes benign diagnostic events (e.g. `5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500` Base64 vs PKCS#12 handling) and links to official IBM Support pages.
 
-4. **Zero-404 Browser Engine**:
-   * Web UI runs completely self-contained in the browser without network latency or 404 errors.
+4. **Interactive Web UI vs. Raw Postman Output**:
+   * Provides a rich client-side dashboard with multi-line input, sample presets, dynamic 4-column decomposition cards, and color-coded status badges, eliminating the need for Postman or manual JSON inspection.
+   * Web UI runs completely self-contained in the browser with zero network failure risk.
 
 ---
 
