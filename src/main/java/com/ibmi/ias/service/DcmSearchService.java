@@ -430,9 +430,14 @@ public class DcmSearchService {
         }
         useCase.append(".");
 
+        String operationalDomain = getOperationalDomain(sp, utilCategory);
+        List<String> diagnosticCommands = getDiagnosticCommands(sp, operationalDomain);
+        List<String> affectedObjects = getAffectedObjects(sp, operationalDomain);
+
         result.put("success", true);
         result.put("isExact", isExact);
         result.put("isClosest", !isExact);
+        result.put("operationalDomain", operationalDomain);
         result.put("majorEntryPointCode", entryVal);
         result.put("majorEntryPointName", entryName != null ? entryName : "N/A");
         result.put("utilityFunctionCode", utilVal);
@@ -441,12 +446,87 @@ public class DcmSearchService {
         result.put("localFailureCode", localVal);
         result.put("localFailureName", localName);
         result.put("useCaseExplanation", useCase.toString());
+        result.put("targetObjects", affectedObjects);
+        result.put("diagnosticCommands", diagnosticCommands);
 
         if (!isExact) {
             result.put("cspReminder", "Reminder for technicians: Search iAI assisted support searches in CSP.");
         }
 
         return result;
+    }
+
+    private String getOperationalDomain(String sp, String utilCategory) {
+        if ("QYCUAPPMGR".equals(sp) || (utilCategory != null && utilCategory.contains("Application"))) {
+            return "Application Integration & Trust";
+        }
+        if ("QYCUCSMGR".equals(sp) || (utilCategory != null && utilCategory.contains("Store"))) {
+            return "Certificate Store & Stash Files";
+        }
+        if ("QYCUCTMGR".equals(sp) || (utilCategory != null && utilCategory.contains("Certificate Utility"))) {
+            return "Certificate Lifecycle & CSR";
+        }
+        if ("QYCULCAMGR".equals(sp) || (utilCategory != null && utilCategory.contains("Local Certificate Authority"))) {
+            return "Local Certificate Authority";
+        }
+        if ("QYCUHDWMGR".equals(sp) || (utilCategory != null && utilCategory.contains("Hardware Device"))) {
+            return "Hardware Cryptographic Devices";
+        }
+        if ("QYCUCRLMGR".equals(sp) || "QYCUGENMGR".equals(sp) || (utilCategory != null && utilCategory.contains("Revocation"))) {
+            return "Revocation & Validation (CRL)";
+        }
+        if ("QYCUYDOMGR".equals(sp)) {
+            return "Object & Signature Manager";
+        }
+        return "General DCM Subsystem";
+    }
+
+    private List<String> getDiagnosticCommands(String sp, String domain) {
+        List<String> cmds = new ArrayList<>();
+        if (domain.contains("Application")) {
+            cmds.add("WRKREGINF (Work with Registration Information for Application IDs)");
+            cmds.add("WRKAUT OBJ('/QIBM/UserData/ICSS/Cert/Server')");
+        } else if (domain.contains("Store")) {
+            cmds.add("WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')");
+            cmds.add("CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)");
+        } else if (domain.contains("Local Certificate Authority")) {
+            cmds.add("WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/LocalCA/*')");
+            cmds.add("WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)");
+        } else if (domain.contains("Hardware")) {
+            cmds.add("WRKHDWRSC TYPE(*CRP) (Work with Cryptographic Hardware Resources)");
+            cmds.add("WRKACTJOB SBS(QSEC) (Check Cryptographic subsystem jobs)");
+        } else if (domain.contains("Revocation")) {
+            cmds.add("WRKOBJ OBJ(QUSRSYS/QYCU*) OBJTYPE(*VLDL)");
+            cmds.add("PING <LDAP_OR_HTTP_CRL_SERVER>");
+        } else {
+            cmds.add("WRKACTJOB SBS(QHTTPSVR) (Check HTTP & Liberty server status)");
+            cmds.add("DSPLOG MSGID(CPF* CPD*)");
+        }
+        return cmds;
+    }
+
+    private List<String> getAffectedObjects(String sp, String domain) {
+        List<String> objs = new ArrayList<>();
+        if (domain.contains("Application")) {
+            objs.add("IBM i Registration Facility (QSYS/QUSRSYS)");
+            objs.add("/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB");
+        } else if (domain.contains("Store")) {
+            objs.add("/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB");
+            objs.add("/QIBM/UserData/ICSS/Cert/Server/DEFAULT.RDB");
+            objs.add("/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH (Password Stash)");
+        } else if (domain.contains("Local Certificate Authority")) {
+            objs.add("/QIBM/UserData/ICSS/Cert/LocalCA/RECEIVE.KDB");
+            objs.add("Local CA Policy Database (*VLDL)");
+        } else if (domain.contains("Hardware")) {
+            objs.add("PCIe Cryptographic Coprocessors (4767, 4769, 4770)");
+            objs.add("CCA / Enterprise PKCS#11 Master Key Registers");
+        } else if (domain.contains("Revocation")) {
+            objs.add("Validation Lists (*VLDL) in QUSRSYS");
+            objs.add("CRL Distribution Points (LDAP / HTTP)");
+        } else {
+            objs.add("DCM Configuration & Certificate Store Files");
+        }
+        return objs;
     }
 
     private Map<String, Object> findBestGlobalMatch(String raw, long rc) {

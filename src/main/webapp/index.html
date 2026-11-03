@@ -144,16 +144,28 @@
 
         <div id="directorySection" class="reference-table-view" style="display:none;">
             <h3 style="margin-bottom:8px;">Complete DCM Code Reference Directory</h3>
-            <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:14px;">Instant search across all 9 Service Program Managers, Entry Points, Local Failures, and 95+ Utility Functions (qycuutl.H).</p>
+            <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:12px;">Instant search & multi-column sorting across all 9 Service Program Managers, Entry Points, Local Failures, and 95+ Utility Functions (qycuutl.H).</p>
+            
+            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;" id="domainFilterChips">
+                <button class="sample-btn" style="background:#0f62fe; color:#fff; border-color:#0f62fe;" onclick="filterByDomainChip('ALL', this)">All Categories</button>
+                <button class="sample-btn" onclick="filterByDomainChip('Application', this)">Application Integration</button>
+                <button class="sample-btn" onclick="filterByDomainChip('Store', this)">Store & Passwords</button>
+                <button class="sample-btn" onclick="filterByDomainChip('Certificate', this)">Certificate Lifecycle</button>
+                <button class="sample-btn" onclick="filterByDomainChip('Local Certificate', this)">Local CA</button>
+                <button class="sample-btn" onclick="filterByDomainChip('Hardware', this)">Hardware Crypto</button>
+                <button class="sample-btn" onclick="filterByDomainChip('Revocation', this)">Revocation & CRL</button>
+            </div>
+
             <input type="text" id="dirFilterInput" class="ref-filter" placeholder="Filter by program name, constant, value, or description..." oninput="filterDirectory()">
+            
             <div style="max-height: 500px; overflow-y: auto;">
-                <table class="ref-table">
+                <table class="ref-table" id="directoryTable">
                     <thead>
                         <tr>
-                            <th>Type / Category</th>
-                            <th>Service Program / Source</th>
-                            <th>Code / Value</th>
-                            <th>Symbolic Name / Constant</th>
+                            <th onclick="sortDirectoryTable(0)" style="cursor:pointer;" title="Click to sort">Type / Category &#8597;</th>
+                            <th onclick="sortDirectoryTable(1)" style="cursor:pointer;" title="Click to sort">Service Program / Source &#8597;</th>
+                            <th onclick="sortDirectoryTable(2)" style="cursor:pointer;" title="Click to sort">Code / Value &#8597;</th>
+                            <th onclick="sortDirectoryTable(3)" style="cursor:pointer;" title="Click to sort">Symbolic Name / Constant &#8597;</th>
                         </tr>
                     </thead>
                     <tbody id="dirTableBody"></tbody>
@@ -828,8 +840,29 @@
                     </div>
                 </div>
                 <div class="explanation-box ${res.isClosest ? 'warning-tone' : ''}">
-                    <div class="explanation-title">Diagnostic Use Case & Root Cause Method</div>
+                    <div class="explanation-title">Diagnostic Root Cause & Operational Domain</div>
                     <div class="explanation-text">${res.explanation}</div>
+                </div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px 16px; margin-top:12px; font-size:0.88rem;">
+                    <strong style="color:#0f62fe;">Recommended IBM i Diagnostic Verification Commands:</strong>
+                    <ul style="margin-left:20px; margin-top:6px; color:#374151;">
+                        ${(res.sp === 'QYCUAPPMGR' || (res.utilCategory && res.utilCategory.includes('Application'))) ? `
+                            <li><code>WRKREGINF</code> &mdash; Verify the Application ID is registered in the IBM i Registration Facility.</li>
+                            <li><code>WRKAUT OBJ('/QIBM/UserData/ICSS/Cert/Server')</code> &mdash; Check IFS data authorities for *SYSTEM store.</li>
+                        ` : (res.sp === 'QYCUCSMGR' || (res.utilCategory && res.utilCategory.includes('Store'))) ? `
+                            <li><code>WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')</code> &mdash; Check existence of DEFAULT.KDB, DEFAULT.RDB, DEFAULT.STH.</li>
+                            <li><code>CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)</code></li>
+                        ` : (res.sp === 'QYCUHDWMGR' || (res.utilCategory && res.utilCategory.includes('Hardware'))) ? `
+                            <li><code>WRKHDWRSC TYPE(*CRP)</code> &mdash; Work with Cryptographic Hardware Resources (PCIe Coprocessors 4767/4769/4770).</li>
+                            <li><code>WRKACTJOB SBS(QSEC)</code> &mdash; Verify cryptographic subsystem jobs are active.</li>
+                        ` : (res.sp === 'QYCULCAMGR' || (res.utilCategory && res.utilCategory.includes('Local Certificate Authority'))) ? `
+                            <li><code>WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/LocalCA/*')</code> &mdash; Verify Local CA certificate files.</li>
+                            <li><code>WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)</code> &mdash; Inspect Validation Lists for CA policies.</li>
+                        ` : `
+                            <li><code>WRKACTJOB SBS(QHTTPSVR)</code> &mdash; Verify HTTP & Liberty server status.</li>
+                            <li><code>DSPLOG MSGID(CPF* CPD*)</code> &mdash; Check system history log for security or authority errors.</li>
+                        `}
+                    </ul>
                 </div>
                 ${closestHtml}
                 ${cspHtml}
@@ -913,6 +946,8 @@
             resultsContainer.appendChild(card);
         }
 
+        let selectedDomainFilter = 'ALL';
+
         function populateDirectoryTable() {
             const tbody = document.getElementById("dirTableBody");
             tbody.innerHTML = "";
@@ -922,9 +957,9 @@
                 for (const [val, name] of Object.entries(prog.entryPoints)) {
                     tbody.innerHTML += `
                         <tr>
-                            <td>Entry Point</td>
-                            <td>${sp} (${prog.name})</td>
-                            <td><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
+                            <td>Entry Point (${prog.name})</td>
+                            <td>${sp}</td>
+                            <td data-val="${val}"><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
                             <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
                         </tr>
                     `;
@@ -932,9 +967,9 @@
                 for (const [val, name] of Object.entries(prog.localFailures)) {
                     tbody.innerHTML += `
                         <tr>
-                            <td>Local Failure</td>
-                            <td>${sp} (${prog.name})</td>
-                            <td><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
+                            <td>Local Failure (${prog.name})</td>
+                            <td>${sp}</td>
+                            <td data-val="${val}"><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
                             <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
                         </tr>
                     `;
@@ -947,11 +982,24 @@
                     <tr>
                         <td>${u.category}</td>
                         <td>qycuutl.H</td>
-                        <td><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
+                        <td data-val="${val}"><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
                         <td><code style="font-family:var(--font-mono); font-weight:600;">${u.name}</code></td>
                     </tr>
                 `;
             }
+        }
+
+        function filterByDomainChip(domain, btn) {
+            selectedDomainFilter = domain;
+            document.querySelectorAll("#domainFilterChips button").forEach(b => {
+                b.style.background = "";
+                b.style.color = "";
+                b.style.borderColor = "";
+            });
+            btn.style.background = "#0f62fe";
+            btn.style.color = "#fff";
+            btn.style.borderColor = "#0f62fe";
+            filterDirectory();
         }
 
         function filterDirectory() {
@@ -959,8 +1007,33 @@
             const rows = document.querySelectorAll("#dirTableBody tr");
             rows.forEach(r => {
                 const text = r.textContent.toUpperCase();
-                r.style.display = text.includes(filter) ? "" : "none";
+                const matchesText = text.includes(filter);
+                const matchesDomain = (selectedDomainFilter === 'ALL') || text.includes(selectedDomainFilter.toUpperCase());
+                r.style.display = (matchesText && matchesDomain) ? "" : "none";
             });
+        }
+
+        let sortDirections = [1, 1, 1, 1];
+        function sortDirectoryTable(colIndex) {
+            const tbody = document.getElementById("dirTableBody");
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            const dir = sortDirections[colIndex] === 1 ? -1 : 1;
+            sortDirections[colIndex] = dir;
+
+            rows.sort((a, b) => {
+                const cellA = a.children[colIndex];
+                const cellB = b.children[colIndex];
+                if (colIndex === 2) {
+                    const valA = parseInt(cellA.getAttribute("data-val") || cellA.textContent.replace(/\D/g,''), 10) || 0;
+                    const valB = parseInt(cellB.getAttribute("data-val") || cellB.textContent.replace(/\D/g,''), 10) || 0;
+                    return (valA - valB) * dir;
+                }
+                const textA = cellA.textContent.trim().toUpperCase();
+                const textB = cellB.textContent.trim().toUpperCase();
+                return textA.localeCompare(textB) * dir;
+            });
+
+            rows.forEach(r => tbody.appendChild(r));
         }
 
         function setSample(str) {
