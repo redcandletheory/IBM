@@ -10,13 +10,13 @@
 
 ## 🏗️ Architecture Overview: Standard REST vs. Interactive Web UI
 
-Traditional web services require developers to construct HTTP requests with URL query parameters or JSON payloads and test them via command line tools or Postman, returning raw, unformatted JSON. 
+In a standard web services workflow, requests are executed against an HTTP URL (via `GET` query parameters or a `POST` JSON payload). The raw JSON result is typically inspected in tools like Postman or rendered as plain JSON text.
 
-The **`dcm-service`** application delivers an embedded, zero-dependency, Carbon-styled interactive client-side web application directly inside the WAR archive:
+The **`dcm-service`** application delivers a self-contained, zero-dependency interactive client-side web application directly inside the WAR archive. This interface bridges standard backend REST endpoints with an interactive dashboard:
 
 ```mermaid
 graph TD
-    subgraph Traditional_REST_Postman_Flow [Traditional REST / Postman Flow]
+    subgraph Traditional_REST_Postman_Flow [Standard REST / Postman Flow]
         A1["Developer Manual Input"] --> B1["HTTP GET / POST /api/dcm/decode"]
         B1 --> C1["IAS / Liberty JAX-RS Backend"]
         C1 --> D1["Raw JSON Response String"]
@@ -24,12 +24,11 @@ graph TD
     end
 
     subgraph DCM_Service_Interactive_UI_Flow [dcm-service Interactive Web UI Flow]
-        A2["User / Technician Input Box (textarea)"] --> B2["JavaScript Event Controller (performSearch)"]
-        B2 --> C2["Client-Side Deconstruction Engine (searchDcmEngine)"]
-        C2 --> D2["Formula Decomposition xxxyyyyzz"]
-        D2 --> E2["Known Issue & Red Herring Validation"]
-        E2 --> F2["Dynamic DOM Card Generator (renderDeconstructedResult)"]
-        F2 --> G2["Formatted 4-Column CSS Grid & Status Badges"]
+        A2["User Input Query Box (textarea)"] --> B2["JavaScript Event Controller (performSearch)"]
+        B2 --> C2["Deconstruction Engine (searchDcmEngine)"]
+        C2 --> D2["Mathematical Decomposition: xxxyyyyzz"]
+        D2 --> E2["Dynamic DOM Card Generator (renderDeconstructedResult)"]
+        E2 --> F2["Formatted 4-Column CSS Grid & Status Badges"]
     end
 ```
 
@@ -39,7 +38,7 @@ graph TD
 
 1. **Native WebSphere Liberty 24.0.0.12+ / IAS Compliance**:
    * Uses standard Java EE 8 / Servlet 3.1 / JAX-RS specifications.
-   * Self-contained `.war` packaging with zero external runtime dependencies.
+   * Standard `.war` packaging with zero external runtime dependencies.
 
 2. **DCM Return Code Mathematical Deconstruction**:
    * Deconstructs return codes using the official IBM DCM formula:
@@ -48,30 +47,38 @@ graph TD
      * **`yyyy` (Utility Point of Failure)**: Defined in header `qycuutl.H` (95+ utility routines).
      * **`zz` (Local Point of Failure)**: Specific internal manager module offset codes (Tables 2, 4, 5, 7, 8).
 
-3. **Multi-Tier Search Engine**:
+3. **Multi-Tier Search Capabilities**:
    * **Exact Symptom String Matching**: `5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500`
-   * **Closest-Match & Delta Offsets**: Calculates $|\text{Target} - \text{Candidate}|$ offsets and provides ranked suggestions when non-standard codes are supplied.
-   * **Keyword & Regular Expression Search**: Fast regex search across all constants (e.g. `RECEIVECERT`, `APPLIST`, `QYCU_.*CA`).
-   * **Full Reference Matrix Directory**: Interactive, filterable directory covering all 9 managers and 95+ utilities.
+   * **Fuzzy & Closest Match**: If an exact code is not found, calculates $\Delta$ offsets and lists the closest documented return codes.
+   * **Keyword & Regex Search**: Search across constants like `RECEIVECERT`, `STORE`, `APPLIST`, or regular expressions.
+   * **Technician Action Support**: Prompts support technicians to *"Search iAI assisted support searches in CSP"* when non-standard codes are identified.
 
-4. **Red Herring & Known Issue Detection**:
-   * Automatically identifies benign diagnostic events (e.g. `5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500` triggered during Base64 inspection of a valid PKCS#12 certificate).
-   * Displays clear actionable guidance (*No action required*) and links directly to official IBM Support documentation.
-   * Prompts technicians to *"Search iAI assisted support searches in CSP (Customer Support Portal)"* when unique situations arise.
+4. **Hardware Cryptographic Coprocessor Support**:
+   * Comprehensive coverage of PCIe cryptographic coprocessors (IBM 4767, 4769, 4770, Enterprise PKCS#11, and CCA APIs).
 
-5. **Hardware Cryptographic Coprocessor Scope**:
-   * Built-in support for hardware cryptographic devices and PCIe coprocessors (IBM 4767, 4769, 4770, Enterprise PKCS#11, and CCA APIs).
-
-6. **Zero-404 Browser Engine**:
+5. **Zero-404 Browser Engine**:
    * Search and parsing algorithms run completely client-side in standard JavaScript, eliminating network latency and 404 HTTP errors.
 
 ---
 
-## 💻 Deep-Dive: UI Components & Code Implementation
+## 💻 Detailed UI Implementation: Query Box, Controller, & Dynamic Formatting
 
-### 1. The Input Query Box (HTML Structure)
+The web interface replaces raw JSON with interactive, formatted cards and tables using three core layers:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. HTML5 Query Box & Preset Samples (User Input Layer)      │
+├─────────────────────────────────────────────────────────────┤
+│ 2. JavaScript Controller & Parser (Logic Execution Layer)   │
+├─────────────────────────────────────────────────────────────┤
+│ 3. Dynamic DOM Generator & CSS Grid (Visual Output Layer)   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 1. HTML5 Input Query Box Structure
 Located in [`src/main/webapp/index.html`](src/main/webapp/index.html):
 ```html
+<!-- Input Query Card -->
 <div class="search-card">
     <div class="input-group">
         <label id="inputLabel" for="symptomInput">
@@ -106,12 +113,16 @@ Located in [`src/main/webapp/index.html`](src/main/webapp/index.html):
 
 ---
 
-### 2. The JavaScript Controller Function (`performSearch()`)
+### 2. JavaScript Event Controller (`performSearch()`)
+This function orchestrates input reading, clears previous searches, and loops through multi-line inputs:
 ```javascript
 function performSearch() {
+    // 1. Extract input lines from the textarea
     const input = document.getElementById("symptomInput").value;
     const lines = input.split(/\r?\n/).filter(l => l.trim().length > 0);
     const resultsContainer = document.getElementById("results");
+    
+    // 2. Clear old results
     resultsContainer.innerHTML = "";
 
     if (lines.length === 0) {
@@ -123,6 +134,7 @@ function performSearch() {
         return;
     }
 
+    // 3. Process each line through the deconstruction engine
     lines.forEach((line) => {
         const res = searchDcmEngine(line);
         if (!res) return;
@@ -130,7 +142,7 @@ function performSearch() {
         if (res.isKeywordSearch) {
             renderKeywordResults(res);
         } else if (res.success) {
-            renderDeconstructedResult(res);
+            renderDeconstructedResult(res); // Generates visual cards
         } else {
             renderNotFoundOrClosest(res);
         }
@@ -141,6 +153,7 @@ function performSearch() {
 ---
 
 ### 3. Dynamic HTML Card Generator (`renderDeconstructedResult(res)`)
+This function transforms the deconstructed data into structured DOM nodes with 4-column breakdown grids:
 ```javascript
 function renderDeconstructedResult(res) {
     const resultsContainer = document.getElementById("results");
@@ -148,6 +161,7 @@ function renderDeconstructedResult(res) {
     card.className = "result-card" + (res.isClosest ? " closest-match" : "");
 
     card.innerHTML = `
+        <!-- Header with Exact / Closest Status Badge -->
         <div class="result-header">
             <div>
                 <div class="result-title">${res.sp} &bull; RC ${res.rc}</div>
@@ -158,7 +172,7 @@ function renderDeconstructedResult(res) {
             </span>
         </div>
 
-        <!-- 4-Column Breakdown Grid -->
+        <!-- 4-Column Mathematical Breakdown Grid -->
         <div class="decomp-grid">
             <div class="decomp-item">
                 <div class="decomp-label">Service Program</div>
@@ -182,7 +196,7 @@ function renderDeconstructedResult(res) {
             </div>
         </div>
 
-        <!-- Diagnostic Explanation Box -->
+        <!-- Root Cause Diagnostic Explanation Box -->
         <div class="explanation-box ${res.isClosest ? 'warning-tone' : ''}">
             <div class="explanation-title">Diagnostic Use Case & Root Cause Method</div>
             <div class="explanation-text">${res.explanation}</div>
@@ -195,9 +209,9 @@ function renderDeconstructedResult(res) {
 
 ---
 
-### 4. CSS Grid & Card Layout
+### 4. CSS Card & Grid Layout
 ```css
-/* Visual Result Card */
+/* Card Container */
 .result-card {
     background: #ffffff;
     border-radius: 8px;
@@ -224,13 +238,27 @@ function renderDeconstructedResult(res) {
     border-radius: 6px;
     padding: 12px 14px;
 }
+
+.decomp-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: #525252;
+    font-weight: 700;
+}
+
+.decomp-val {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f62fe;
+    font-family: monospace;
+}
 ```
 
 ---
 
 ## 🔐 IBM i Authorities Required to Access HTTPAdmin GUI
 
-To access and manage applications via **IBM Web Administration for i** (`http://<YOUR_IBMI_HOST>:2001/HTTPAdmin`), the user profile on IBM i must have appropriate special authorities, function usage registrations, and object permissions.
+To access and administer applications via **IBM Web Administration for i** (`http://<YOUR_IBMI_HOST>:2001/HTTPAdmin`), the user profile on IBM i must have appropriate special authorities, function usage registrations, and object permissions.
 
 ### 1. User Profile Special Authorities
 | Special Authority | Description | Reason Required |

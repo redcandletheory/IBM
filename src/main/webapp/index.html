@@ -448,17 +448,6 @@
                 93000: { name: "QYCU_RTV_VLDL_ENTRY", category: "Certificate Revocation List Utility" },
                 100000: { name: "QYCU_RTV_CRYPTO_RESOURCES", category: "Hardware Device Utility" },
                 101000: { name: "QYCU_LIST_CRYPTO_DEVICES", category: "Hardware Device Utility" }
-            },
-            knownIssues: {
-                "QYCULCAMGR_7027500": {
-                    title: "Benign Diagnostic Event (Known Red Herring)",
-                    isRedHerring: true,
-                    explanation: "This symptom string flags an internal message when Base64 processing was initially attempted on a certificate that was imported via PKCS#12 (.p12/.pfx). The certificate import succeeded normally.",
-                    actionRequired: "No action required. This diagnostic entry is informational and does not represent an application or cryptographic failure.",
-                    referenceLinks: [
-                        { title: "IBM Support Document (5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500)", url: "https://www.ibm.com/support/pages/5770-spqyculcamgr-modqyculcamgr-rc7027500" }
-                    ]
-                }
             }
         };
 
@@ -608,10 +597,6 @@
             }
             explanation += ".";
 
-            // Check Known Issues / Red Herring registry
-            const issueKey = sp + "_" + rc;
-            const knownIssue = DCM_DB.knownIssues ? DCM_DB.knownIssues[issueKey] : null;
-
             return {
                 success: true,
                 isExact: isExact,
@@ -626,7 +611,6 @@
                 localVal,
                 localName,
                 explanation,
-                knownIssue,
                 closestCandidates: !isExact ? closestCandidates : null,
                 cspReminder: !isExact ? "Reminder for technicians: Search iAI assisted support searches in CSP." : null
             };
@@ -847,21 +831,6 @@
                     <div class="explanation-title">Diagnostic Use Case & Root Cause Method</div>
                     <div class="explanation-text">${res.explanation}</div>
                 </div>
-                ${res.knownIssue ? `
-                    <div style="background:#f0fdf4; border:1px solid #86efac; border-left:4px solid #16a34a; border-radius:6px; padding:14px 18px; margin-top:14px;">
-                        <div style="font-weight:700; color:#15803d; font-size:0.95rem; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
-                            <span>&#9432;</span> ${res.knownIssue.title}
-                        </div>
-                        <div style="font-size:0.92rem; color:#166534; margin-bottom:8px;">${res.knownIssue.explanation}</div>
-                        <div style="font-size:0.88rem; color:#14532d; font-weight:600; margin-bottom:10px;"><strong>Action:</strong> ${res.knownIssue.actionRequired}</div>
-                        ${res.knownIssue.referenceLinks && res.knownIssue.referenceLinks.length > 0 ? `
-                            <div style="font-size:0.85rem; border-top:1px dashed #bbf7d0; padding-top:8px;">
-                                <strong>Official IBM Reference:</strong><br>
-                                ${res.knownIssue.referenceLinks.map(l => `<a href="${l.url}" target="_blank" rel="noopener noreferrer" style="color:#0f62fe; text-decoration:underline;">${l.title}</a>`).join('<br>')}
-                            </div>
-                        ` : ''}
-                    </div>
-                ` : ''}
                 ${closestHtml}
                 ${cspHtml}
             `;
