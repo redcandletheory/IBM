@@ -5,8 +5,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Robust Multi-Tier Search & Deconstruction Service for IBM i Digital Certificate Manager (DCM).
- * Supports exact symptom strings, partial return codes, regex/keyword queries, and closest-match suggestions.
+ * Robust Multi-Tier Search, Deconstruction & Knowledge Base Service for IBM i Digital Certificate Manager (DCM).
+ * Includes known "Red Herring" classifications, IBM Support doc links, and support portal integration.
  */
 public class DcmSearchService {
 
@@ -30,12 +30,31 @@ public class DcmSearchService {
         }
     }
 
+    public static class KnownIssue {
+        public String title;
+        public boolean isRedHerring;
+        public String explanation;
+        public String actionRequired;
+        public List<String> referenceLinks = new ArrayList<>();
+        public List<String> relatedTickets = new ArrayList<>();
+
+        public KnownIssue(String title, boolean isRedHerring, String explanation, String actionRequired, String... links) {
+            this.title = title;
+            this.isRedHerring = isRedHerring;
+            this.explanation = explanation;
+            this.actionRequired = actionRequired;
+            this.referenceLinks.addAll(Arrays.asList(links));
+        }
+    }
+
     private final Map<String, ProgramInfo> programs = new HashMap<>();
     private final Map<Long, UtilityInfo> utilityFunctions = new HashMap<>();
     private final List<Long> sortedUtilityCodes = new ArrayList<>();
+    private final Map<String, KnownIssue> knownIssues = new HashMap<>();
 
     public DcmSearchService() {
         initDatabase();
+        initKnownIssues();
     }
 
     private void initDatabase() {
@@ -131,8 +150,8 @@ public class DcmSearchService {
         genMgr.localFailures.put(30L, "YCU_RETRIEVEURLENTRY");
         programs.put("QYCUGENMGR", genMgr);
 
-        // Table 6: QYCUHDWMGR
-        ProgramInfo hdwMgr = new ProgramInfo("Hardware Device Manager");
+        // Table 6: QYCUHDWMGR (Cryptographic Coprocessors 4767, 4769, 4770, PCIe Crypto)
+        ProgramInfo hdwMgr = new ProgramInfo("Hardware Cryptographic Device Manager");
         hdwMgr.entryPoints.put(1000000L, "QYCU_GETCRYPTODEVICELIST");
         hdwMgr.entryPoints.put(2000000L, "QYCU_GETOTHERCRYPTODEVICES");
         hdwMgr.entryPoints.put(3000000L, "QYCU_ADDCRYPTODEVICEASSIGNMENT");
@@ -297,6 +316,18 @@ public class DcmSearchService {
         Collections.sort(sortedUtilityCodes, Collections.reverseOrder());
     }
 
+    private void initKnownIssues() {
+        // Red Herring 1: 5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500
+        KnownIssue lcaRedHerring = new KnownIssue(
+                "Benign Diagnostic Event (Known Red Herring)",
+                true,
+                "This symptom string flags an internal message when Base64 processing was initially attempted on a certificate that was imported via PKCS#12 (.p12/.pfx). The import succeeded normally.",
+                "No action required. This message is informational and does not represent a failure.",
+                "https://www.ibm.com/support/pages/5770-spqyculcamgr-modqyculcamgr-rc7027500"
+        );
+        knownIssues.put("QYCULCAMGR_7027500", lcaRedHerring);
+    }
+
     private void addUtility(long code, String name, String category) {
         utilityFunctions.put(code, new UtilityInfo(name, category));
     }
@@ -441,6 +472,19 @@ public class DcmSearchService {
         result.put("localFailureCode", localVal);
         result.put("localFailureName", localName);
         result.put("useCaseExplanation", useCase.toString());
+
+        // Check Known Issues & Red Herrings
+        String lookupKey = sp + "_" + rc;
+        if (knownIssues.containsKey(lookupKey)) {
+            KnownIssue ki = knownIssues.get(lookupKey);
+            Map<String, Object> kiMap = new LinkedHashMap<>();
+            kiMap.put("title", ki.title);
+            kiMap.put("isRedHerring", ki.isRedHerring);
+            kiMap.put("explanation", ki.explanation);
+            kiMap.put("actionRequired", ki.actionRequired);
+            kiMap.put("referenceLinks", ki.referenceLinks);
+            result.put("knownIssue", kiMap);
+        }
 
         if (!isExact) {
             result.put("cspReminder", "Reminder for technicians: Search iAI assisted support searches in CSP.");
