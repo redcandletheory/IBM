@@ -5,6 +5,7 @@
 * **Target Application Server**: Integrated Application Server (IAS) powered by IBM WebSphere Application Server Liberty Profile (`24.0.0.12+`)
 * **Context Root**: `/dcm-service`
 * **Artifact Package**: `dcm-service.war`
+* **Comprehensive Operator & User Guide**: See [`USER_GUIDE.md`](USER_GUIDE.md) for in-depth concepts, sorting techniques, recovery walkthroughs, CL cheatsheet, and technician tips.
 
 ---
 
