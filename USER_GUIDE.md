@@ -292,3 +292,27 @@ The official location of the dropin folder on IBM i for IAS and Liberty server i
 6. **Set Context Root**: Set **Application Name** to `dcm-service` and **Context Root** to `/dcm-service`.
 7. **Complete Wizard**: Click **Finish**.
 8. **Test Dashboard**: Open `http://<YOUR_IBMI_HOST>:<IAS_PORT>/dcm-service/` in your browser.
+
+---
+
+### Option C: QShell Script Utility (`installapp.sh`)
+Execute from QShell (`QSH`):
+```bash
+/QIBM/ProdData/OS/OS400/bin/installapp.sh -server '<instance>' -app '/tmp/dcm-service.war' -contextRoot '/dcm-service'
+```
+
+---
+
+### Deployment Verification & Log Diagnostics
+1. **Check Server Jobs**:
+   ```cl
+   WRKACTJOB SBS(QHTTPSVR) JOB(<instance>*)
+   ```
+2. **Inspect Runtime Server Log**:
+   ```cl
+   DSPF STMF('/www/<instance>/wlp/usr/servers/<instance>/logs/messages.log')
+   ```
+   Confirm success message:
+   ```text
+   CWWKZ0001I: Application dcm-service started in X.XXX seconds.
+   ```

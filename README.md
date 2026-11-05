@@ -346,6 +346,48 @@ The `dcm-service.war` archive is packaged using standard Java EE Servlet 3.1 / J
 
 ---
 
+### 🏛️ IBM i Product Architecture & File Hierarchy
+
+Integrated Application Server is built into IBM i under licensed programs **`5770-DG1`** (HTTP Server for i) and **`5770-SS1`** (Option 33 - PASE).
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        IBM i Operating System                          │
+│                                                                        │
+│  ┌────────────────────────┐  ┌──────────────────────────────────────┐  │
+│  │ 5770-DG1 (HTTPAdmin)   │  │ Subsystem: QHTTPSVR                  │  │
+│  │ Port 2001 /HTTPAdmin   │  │ Jobs: ADMIN, <instance> (BCK / BSF)  │  │
+│  └───────────┬────────────┘  └──────────────────┬───────────────────┘  │
+│              │                                  │                      │
+│  ┌───────────▼──────────────────────────────────▼───────────────────┐  │
+│  │ Product Script Directory: /QIBM/ProdData/OS/OS400/bin/           │  │
+│  │ (createappsvr.sh, installapp.sh, startappsvr.sh, stopappsvr.sh)  │  │
+│  └──────────────────────────────────┬───────────────────────────────┘  │
+│                                     │                                  │
+│  ┌──────────────────────────────────▼───────────────────────────────┐  │
+│  │ Server Instance Location:                                        │  │
+│  │ /www/<instance>/wlp/usr/servers/<instance>/                      │  │
+│  │ ├── dropins/                     <-- Target for WAR files        │  │
+│  │ ├── server.xml                   <-- Liberty/IAS descriptor      │  │
+│  │ ├── bootstrap.properties         <-- Port & JVM configuration    │  │
+│  │ └── logs/ (messages.log)         <-- Deployment status & trace   │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Native IBM i QShell Utility Scripts (`/QIBM/ProdData/OS/OS400/bin/`)
+| Script Utility | Full IFS Path | Purpose |
+| :--- | :--- | :--- |
+| **`installapp.sh`** | `/QIBM/ProdData/OS/OS400/bin/installapp.sh` | Deploys a `.war` file to an IAS instance with custom context roots. |
+| **`uninstallapp.sh`** | `/QIBM/ProdData/OS/OS400/bin/uninstallapp.sh` | Removes an installed application from an IAS instance. |
+| **`createappsvr.sh`** | `/QIBM/ProdData/OS/OS400/bin/createappsvr.sh` | Provisions a new IAS server instance. |
+| **`startappsvr.sh`** | `/QIBM/ProdData/OS/OS400/bin/startappsvr.sh` | Starts the IAS server job in subsystem `QHTTPSVR`. |
+| **`stopappsvr.sh`** | `/QIBM/ProdData/OS/OS400/bin/stopappsvr.sh` | Gracefully shuts down the IAS server instance. |
+| **`listappsvrs.sh`** | `/QIBM/ProdData/OS/OS400/bin/listappsvrs.sh` | Lists all configured IAS instances on the system. |
+| **`getappsvrprop.sh`** | `/QIBM/ProdData/OS/OS400/bin/getappsvrprop.sh` | Retrieves server ports, JVM properties, and features. |
+
+---
+
 ### Method 1: Using IBM Web Administration for i GUI (`HTTPAdmin` In-App Server Wizard)
 1. **Ensure the Admin Server is Active**:
    ```cl
@@ -357,7 +399,7 @@ The `dcm-service.war` archive is packaged using standard Java EE Servlet 3.1 / J
 3. **Navigate to the IAS Server Instance**:
    * Click on the **Manage** tab at the top.
    * Click on **Application Servers** (or **Integrated Application Servers**).
-   * In the **Server** dropdown, select your target **IAS v8.5+** server instance (e.g., `IAS85` or your custom server name).
+   * In the **Server** dropdown, select your target **IAS v8.5+** server instance (e.g., `<instance>`).
 4. **Launch Install Wizard**:
    * Under **Server Tasks** in the left navigation pane, click **Install New Application**.
 5. **Specify WAR Location**:
@@ -371,7 +413,7 @@ The `dcm-service.war` archive is packaged using standard Java EE Servlet 3.1 / J
 7. **Start Application / Server**:
    * If the IAS server is running, the application will automatically start. If stopped, click the green **Start** icon or run:
      ```cl
-     STRTCPSVR SERVER(*HTTP) HTTPSVR(<IAS_SERVER_NAME>)
+     STRTCPSVR SERVER(*HTTP) HTTPSVR(<instance>)
      ```
 
 ---
@@ -425,7 +467,27 @@ For automated CI/CD pipelines or headless administration via IBM i QShell:
    ```
 2. Execute the IBM IAS application installation utility:
    ```bash
-   /QIBM/ProdData/OS/OS400/bin/installapp.sh -server '<IAS_SERVER_NAME>' -app '/tmp/dcm-service.war' -contextRoot '/dcm-service'
+   /QIBM/ProdData/OS/OS400/bin/installapp.sh -server '<instance>' -app '/tmp/dcm-service.war' -contextRoot '/dcm-service'
+   ```
+
+---
+
+### 🔍 Verification & Diagnostic Log Inspection
+1. **Check Subsystem Jobs (5250)**:
+   ```cl
+   WRKACTJOB SBS(QHTTPSVR) JOB(<instance>*)
+   ```
+2. **Inspect Runtime Server Log (IFS)**:
+   ```cl
+   DSPF STMF('/www/<instance>/wlp/usr/servers/<instance>/logs/messages.log')
+   ```
+   Look for the confirmation message:
+   ```text
+   CWWKZ0001I: Application dcm-service started in X.XXX seconds.
+   ```
+3. **Open the Interactive Web Dashboard**:
+   ```
+   http://<YOUR_IBMI_HOST>:<IAS_PORT>/dcm-service/
    ```
 
 ---
