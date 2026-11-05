@@ -1,8 +1,8 @@
 # IBM i DCM Return Code & Symptom Search Web Application
 
-### Target Runtime: **Integrated Application Server (IAS) / WebSphere Liberty 24.0.0.12+**
-* **Operating System**: IBM i V7R5, V7R6, and future releases
-* **Target Application Server**: Integrated Application Server (IAS) powered by IBM WebSphere Application Server Liberty Profile (`24.0.0.12+`)
+### Target Runtime: **Integrated Application Server (IAS) v8.5+ / WebSphere Liberty 24.0.0.12+**
+* **Operating System**: IBM i V7R5, V7R6, V7R4, V7R3, and future releases
+* **Target Application Server**: IBM Integrated Application Server (IAS) v8.5 and above / WebSphere Application Server Liberty Profile
 * **Context Root**: `/dcm-service`
 * **Artifact Package**: `dcm-service.war`
 * **Comprehensive Operator & User Guide**: See [`USER_GUIDE.md`](USER_GUIDE.md) for in-depth concepts, sorting techniques, recovery walkthroughs, CL cheatsheet, and technician tips.
@@ -340,44 +340,86 @@ target/dcm-service.war
 
 ---
 
-## 🚀 How to Deploy on Integrated Application Server (IAS / Liberty 24.0.0.12+)
+## 🚀 How to Deploy on Integrated Application Server (IAS v8.5+ / Liberty)
 
-### Option 1: Dropins Directory Deployment (Fastest)
-1. Transfer `dcm-service.war` to the IBM i IFS (e.g., `/tmp/dcm-service.war`).
-2. Copy the WAR file to the IAS server's dropins folder:
+The `dcm-service.war` archive is packaged using standard Java EE Servlet 3.1 / JAX-RS specifications and can be installed into any **Integrated Application Server (IAS) v8.5 or above** running on IBM i.
+
+---
+
+### Method 1: Using IBM Web Administration for i GUI (`HTTPAdmin` In-App Server Wizard)
+1. **Ensure the Admin Server is Active**:
+   ```cl
+   STRTCPSVR SERVER(*HTTP) HTTPSVR(*ADMIN)
+   ```
+2. **Access Web Administration**:
+   * Open your browser and navigate to: `http://<YOUR_IBMI_HOST>:2001/HTTPAdmin`
+   * Log in with an authorized IBM i user profile (e.g., possessing `*IOSYSCFG` and `*JOBCTL` authorities).
+3. **Navigate to the IAS Server Instance**:
+   * Click on the **Manage** tab at the top.
+   * Click on **Application Servers** (or **Integrated Application Servers**).
+   * In the **Server** dropdown, select your target **IAS v8.5+** server instance (e.g., `IAS85` or your custom server name).
+4. **Launch Install Wizard**:
+   * Under **Server Tasks** in the left navigation pane, click **Install New Application**.
+5. **Specify WAR Location**:
+   * Choose **"The application is located on the system"** &rarr; enter the IFS path `/tmp/dcm-service.war`
+     *(or choose "The application is located on your local file system" &rarr; click Browse &rarr; select `dcm-service.war` from your PC)*.
+   * Click **Next**.
+6. **Configure Application Properties**:
+   * **Application Name**: `dcm-service`
+   * **Context Root**: `/dcm-service`
+   * Click **Next** &rarr; review settings &rarr; click **Finish**.
+7. **Start Application / Server**:
+   * If the IAS server is running, the application will automatically start. If stopped, click the green **Start** icon or run:
+     ```cl
+     STRTCPSVR SERVER(*HTTP) HTTPSVR(<IAS_SERVER_NAME>)
+     ```
+
+---
+
+### Method 2: Dropins Directory Deployment (Fastest IFS Method)
+On IAS v8.5 and modern Liberty instances, the `dropins` folder provides zero-configuration deployment:
+1. Transfer `dcm-service.war` to the IBM i IFS (e.g., `/tmp/dcm-service.war` using binary FTP, SFTP, or SCP).
+2. Copy the WAR file directly into the server's `dropins` directory:
    ```cl
    CPY OBJ('/tmp/dcm-service.war') +
        TODIR('/www/<IAS_SERVER_NAME>/wlp/usr/servers/<IAS_SERVER_NAME>/dropins') +
        REPLACE(*YES)
    ```
+3. The IAS runtime automatically detects the new archive and deploys it at context root `/dcm-service`.
 
 ---
 
-### Option 2: Server Configuration (`server.xml`)
-Add the application configuration to `/www/<IAS_SERVER_NAME>/wlp/usr/servers/<IAS_SERVER_NAME>/server.xml`:
+### Method 3: Direct `server.xml` Configuration (IAS v8.5 / Liberty)
+To explicitly register the application with custom caching or classloading rules, edit `/www/<IAS_SERVER_NAME>/wlp/usr/servers/<IAS_SERVER_NAME>/server.xml`:
 ```xml
-<server description="IAS Liberty Server 24.0.0.12+">
+<server description="IBM Integrated Application Server v8.5+">
+    <!-- Required Features -->
     <featureManager>
         <feature>webProfile-8.0</feature>
         <feature>jaxrs-2.1</feature>
         <feature>servlet-4.0</feature>
     </featureManager>
 
-    <webApplication id="dcmService" 
-                    location="dcm-service.war" 
-                    name="dcmService" 
+    <!-- dcm-service In-App Deployment -->
+    <webApplication id="dcmService"
+                    location="dcm-service.war"
+                    name="dcmService"
                     contextRoot="/dcm-service"/>
 </server>
 ```
 
 ---
 
-### Option 3: Using IBM Web Administration for i GUI (`HTTPAdmin`)
-1. Open `http://<YOUR_IBMI_HOST>:2001/HTTPAdmin` in a web browser.
-2. Under the **Manage** tab, click **Integrated Application Servers**.
-3. Select your Liberty 24.0.0.12+ server instance.
-4. Click **Install New Application** and upload `dcm-service.war`.
-5. Specify context root `/dcm-service` and finish the installation wizard.
+### Method 4: Automated QShell CLI Deployment (`installapp.sh`)
+For automated CI/CD pipelines or headless administration via IBM i QShell:
+1. Start QShell on IBM i:
+   ```cl
+   QSH
+   ```
+2. Execute the IBM IAS application installation utility:
+   ```bash
+   /QIBM/ProdData/OS/OS400/bin/installapp.sh -server '<IAS_SERVER_NAME>' -app '/tmp/dcm-service.war' -contextRoot '/dcm-service'
+   ```
 
 ---
 
