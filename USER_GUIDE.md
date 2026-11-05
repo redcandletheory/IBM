@@ -256,16 +256,39 @@ curl -X POST "http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/dcm/search" \
 ## 8. Integrated Application Server (IAS v8.5+) In-App Server Deployment Guide
 
 ### Overview
-IBM Integrated Application Server (IAS) v8.5 and above provides a lightweight Java EE runtime on IBM i. Follow these instructions to add `dcm-service.war` directly to your IAS v8.5 server instance.
+IBM Integrated Application Server (IAS) v8.5 and above provides a lightweight Java EE runtime on IBM i. Follow these instructions to add `dcm-service.war` directly to your IAS server instance.
 
-### Step-by-Step: IBM Web Administration for i GUI (`HTTPAdmin`)
-1. **Start Admin Server**: Ensure `STRTCPSVR SERVER(*HTTP) HTTPSVR(*ADMIN)` has been run on IBM i.
+---
+
+### Dropin Folder Location
+The official location of the dropin folder on IBM i for IAS and Liberty server instances is:
+```
+/www/<instance>/wlp/usr/servers/<instance>/dropins
+```
+*(where `<instance>` is the name of your specific IAS server)*
+
+---
+
+### Option A: Direct IFS Dropin Deployment (Zero Configuration)
+1. Transfer `dcm-service.war` to `/tmp/dcm-service.war` on IBM i.
+2. Run the CL copy command from 5250:
+   ```cl
+   CPY OBJ('/tmp/dcm-service.war') +
+       TODIR('/www/<instance>/wlp/usr/servers/<instance>/dropins') +
+       REPLACE(*YES)
+   ```
+3. The server instance automatically discovers and starts `/dcm-service`.
+
+---
+
+### Option B: IBM Web Administration for i GUI (`HTTPAdmin`)
+1. **Start Admin Server**: Ensure `STRTCPSVR SERVER(*HTTP) HTTPSVR(*ADMIN)` is active.
 2. **Open Console**: Navigate to `http://<YOUR_IBMI_HOST>:2001/HTTPAdmin`.
-3. **Select Server**: Go to **Manage** &rarr; **Application Servers** &rarr; select your IAS v8.5+ server from the dropdown list.
+3. **Select Server**: Go to **Manage** &rarr; **Application Servers** &rarr; select `<instance>` from the dropdown list.
 4. **Install Application**: Under **Server Tasks** (left menu), click **Install New Application**.
 5. **Select WAR Package**:
    * If uploaded to IBM i IFS: Select **"The application is located on the system"** &rarr; enter `/tmp/dcm-service.war`.
    * If on local workstation: Select **"The application is located on your local file system"** &rarr; click Browse &rarr; select `dcm-service.war`.
 6. **Set Context Root**: Set **Application Name** to `dcm-service` and **Context Root** to `/dcm-service`.
-7. **Complete Wizard**: Click **Finish**. The in-app server deploys the WAR.
-8. **Test Dashboard**: Open `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/` in your browser.
+7. **Complete Wizard**: Click **Finish**.
+8. **Test Dashboard**: Open `http://<YOUR_IBMI_HOST>:<IAS_PORT>/dcm-service/` in your browser.

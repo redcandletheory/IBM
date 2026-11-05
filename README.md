@@ -377,20 +377,27 @@ The `dcm-service.war` archive is packaged using standard Java EE Servlet 3.1 / J
 ---
 
 ### Method 2: Dropins Directory Deployment (Fastest IFS Method)
-On IAS v8.5 and modern Liberty instances, the `dropins` folder provides zero-configuration deployment:
+On IBM i Integrated Application Server (IAS) v8.5+ and WebSphere Liberty instances, the **dropin folder** is located at:
+```
+/www/<instance>/wlp/usr/servers/<instance>/dropins
+```
+
+Where `<instance>` is the name of your IAS server instance.
+
+#### Deployment Steps:
 1. Transfer `dcm-service.war` to the IBM i IFS (e.g., `/tmp/dcm-service.war` using binary FTP, SFTP, or SCP).
-2. Copy the WAR file directly into the server's `dropins` directory:
+2. Execute the CL copy command to place the WAR file directly into the dropin folder:
    ```cl
    CPY OBJ('/tmp/dcm-service.war') +
-       TODIR('/www/<IAS_SERVER_NAME>/wlp/usr/servers/<IAS_SERVER_NAME>/dropins') +
+       TODIR('/www/<instance>/wlp/usr/servers/<instance>/dropins') +
        REPLACE(*YES)
    ```
-3. The IAS runtime automatically detects the new archive and deploys it at context root `/dcm-service`.
+3. The IAS runtime automatically detects the new archive in the `dropins` folder and deploys it dynamically at context root `/dcm-service` without requiring a server restart.
 
 ---
 
 ### Method 3: Direct `server.xml` Configuration (IAS v8.5 / Liberty)
-To explicitly register the application with custom caching or classloading rules, edit `/www/<IAS_SERVER_NAME>/wlp/usr/servers/<IAS_SERVER_NAME>/server.xml`:
+To explicitly register the application with custom caching or classloading rules, edit `/www/<instance>/wlp/usr/servers/<instance>/server.xml`:
 ```xml
 <server description="IBM Integrated Application Server v8.5+">
     <!-- Required Features -->
