@@ -5,10 +5,22 @@
                              http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
          version="3.1">
 
-    <display-name>IBM i DCM Search Application - WebSphere Liberty 24.0.0.12+</display-name>
+    <display-name>IBM i DCM Search Application - Integrated Application Server</display-name>
 
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>
+
+    <!-- Universal Native API Servlet for all IAS v8.5+ and Liberty configurations -->
+    <servlet>
+        <servlet-name>ApiServlet</servlet-name>
+        <servlet-class>com.ibmi.ias.servlet.ApiServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>ApiServlet</servlet-name>
+        <url-pattern>/api/*</url-pattern>
+    </servlet-mapping>
 
 </web-app>
