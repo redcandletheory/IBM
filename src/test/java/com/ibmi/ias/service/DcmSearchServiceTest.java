@@ -24,6 +24,9 @@ public class DcmSearchServiceTest {
         String name16 = service.getGskkmName(16);
         assertEquals("GSKKM_ERR_DATABASE_INVALID_PASSWORD", name16);
 
+        String name24 = service.getGskkmName(24);
+        assertEquals("GSKKM_ERR_CRYPTO", name24);
+
         DcmSearchService.GskDetail detail6 = service.getGskDetail(6);
         assertNotNull(detail6);
         assertEquals("GSKKM_ERR_DATABASE_OPEN", detail6.constant);
@@ -85,6 +88,19 @@ public class DcmSearchServiceTest {
         assertEquals("gskkm_open_database() / gskkm_open_key_database()", result.get("originFunction"));
         assertEquals("QYCUCSMGR / QYCUCTMGR", result.get("associatedServiceProgram"));
         assertEquals("/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB", result.get("targetObject"));
+        assertTrue((Boolean) result.get("apiAttemptedAndFailed"));
+    }
+
+    @Test
+    public void testSingleLineAdminLogParsing() {
+        String line = "user: QSECOFR / function: qycu_listCertificatesJ / rc: 6";
+        Map<String, Object> result = service.parseAdmin3Log(line);
+        assertNotNull(result);
+        assertEquals("QSECOFR", result.get("user"));
+        assertEquals("qycu_listCertificatesJ", result.get("function"));
+        assertEquals(6L, result.get("returnCode"));
+        assertEquals("GSKKM_ERR_DATABASE_OPEN", result.get("gskkmName"));
+        assertTrue((Boolean) result.get("apiAttemptedAndFailed"));
     }
 
     @Test

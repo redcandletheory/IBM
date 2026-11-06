@@ -108,6 +108,18 @@
         table.ref-table th { background: #f8fafc; font-weight: 700; color: #374151; font-size: 0.78rem; text-transform: uppercase; }
         table.ref-table tr:hover { background: #f0f7ff; }
 
+        .mode-guidance-card { background: #f0f7ff; border: 1px solid #bae0ff; border-left: 4px solid #0f62fe; border-radius: 6px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.88rem; color: #1e293b; }
+        .mode-guidance-title { font-weight: 700; color: #0043ce; font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        
+        .fuzzy-hint-card { background: #fff8e1; border: 1px solid #ffb74d; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.88rem; color: #92400e; font-weight: 500; }
+        .fuzzy-hint-card a { color: #d97706; font-weight: 700; text-decoration: underline; cursor: pointer; }
+        
+        .api-status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; font-size: 0.78rem; font-weight: 700; margin-top: 6px; }
+        .api-status-pill.failed { background: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
+        .api-status-pill.success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .api-status-pill.failed .status-dot { background: #dc2626; }
+        .api-status-pill.success .status-dot { background: #16a34a; }
     </style>
 </head>
 <body>
@@ -127,9 +139,16 @@
             </div>
 
             <div id="searchControls">
+                <div id="modeGuidance" class="mode-guidance-card">
+                    <div class="mode-guidance-title"><span>📌</span> Mode 1: WRKPRB / IBM Symptom String Deconstructor</div>
+                    <div>Paste standard problem symptom strings (e.g. <code>5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500</code>) or raw reason codes. Deconstructs the <code>xxxyyyyzz</code> formula into Entry Point, Utility Function, and Local Failure offsets.</div>
+                </div>
+
+                <div id="fuzzyHintBox" style="display:none;" class="fuzzy-hint-card"></div>
+
                 <div class="input-group">
                     <label id="inputLabel" for="symptomInput">Enter Symptom String(s), Return Code(s), or Service Program (one per line):</label>
-                    <textarea id="symptomInput" rows="5" placeholder="e.g. 5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500&#10;or: QYCUAPPMGR 5003000&#10;or: 7027500&#10;or: 6 (GSKKM Database Open Error)"></textarea>
+                    <textarea id="symptomInput" rows="5" placeholder="e.g. 5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500&#10;or: QYCUAPPMGR 5003000&#10;or: 7027500&#10;or: 6 (GSKKM Database Open Error)" oninput="checkFuzzyFormat(this.value)"></textarea>
                 </div>
 
                 <div class="samples" id="sampleRow">
@@ -138,7 +157,7 @@
                     <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000')">RC5003000 (App Mgr + Util)</button>
                     <button class="sample-btn" onclick="setSample('6')">RC 6 (GSKKM DB Open)</button>
                     <button class="sample-btn" onclick="setSample('16')">RC 16 (GSKKM Bad Password)</button>
-                    <button class="sample-btn" onclick="setSample('3941')">RC 3941 (Country Req)</button>
+                    <button class="sample-btn" onclick="setSample('24')">RC 24 (GSKKM Crypto Err)</button>
                 </div>
 
                 <div class="btn-row">
@@ -1161,6 +1180,23 @@ const DCM_DB = {
                     "WRKOBJ OBJ(QUSRSYS/QYCU*)"
                 ]
             },
+            "24": {
+                code: 24,
+                constant: "GSKKM_ERR_CRYPTO",
+                originFunction: "gskkm_crypto() / gskkm_rsa_operation()",
+                serviceProgram: "QYCUCSMGR / QYCUCTMGR",
+                entryPoint: "QYCU_GENERATEKEYPAIR / QYCU_CRYPTOOP",
+                jniFunction: "qycu_createCertificateJ / qycu_importCertificateJ",
+                targetObject: "Cryptographic Subsystem / Key Store",
+                failureDomain: "Cryptographic Algorithm Operation",
+                msgId: "CPDBC15",
+                rootCause: "Low-level cryptographic algorithm failure occurred during key generation, decryption, or digital signature computation.",
+                recoveryCommands: [
+                    "WRKHDWRSC TYPE(*CRP) (Inspect Cryptographic Resources)",
+                    "WRKACTJOB SBS(QSEC) (Verify Crypto Server Jobs)",
+                    "DSPLOG MSGID(CPF* CPD*)"
+                ]
+            },
             "42": {
                 code: 42,
                 constant: "GSKKM_ERR_VALIDATION_KEY_ISSUER_NOT_FOUND",
@@ -1444,20 +1480,63 @@ const DCM_DB = {
 
         let currentMode = 'symptom';
 
+        function checkFuzzyFormat(val) {
+            const hintBox = document.getElementById("fuzzyHintBox");
+            if (!hintBox) return;
+            const trimmed = val.trim();
+            if (!trimmed) {
+                hintBox.style.display = "none";
+                return;
+            }
+
+            let detected = null;
+            let targetMode = null;
+            let modeLabel = "";
+
+            if (trimmed.includes("SystemOut") || trimmed.includes("ProgramParameter") || (trimmed.toLowerCase().includes("function:") && trimmed.toLowerCase().includes("rc:")) || trimmed.toLowerCase().includes("certificateaction") || /qycu_[a-zA-Z0-9_]+\s*\/\s*rc:\s*-?\d+/i.test(trimmed)) {
+                detected = "ADMIN3 / Liberty SystemOut Log Trace";
+                targetMode = "admin3";
+                modeLabel = "ADMIN3 / Liberty SystemOut Log";
+            } else if (/(?:5770|5722)\s+SP\/[A-Z0-9_]+/i.test(trimmed) || /SP\/[A-Z0-9_]+\s+MOD\/[A-Z0-9_]+/i.test(trimmed) || /RC\d{6,}/i.test(trimmed) || /QYCU[A-Z0-9_]+\s+\d{6,}/i.test(trimmed)) {
+                detected = "WRKPRB / IBM Symptom String";
+                targetMode = "symptom";
+                modeLabel = "Symptom String / WRKPRB";
+            } else if (/^(?:RC\s*)?-?\d{1,5}$/i.test(trimmed) || /^rc:\s*-?\d+$/i.test(trimmed)) {
+                detected = "Pure Return Code (GSKit / QYCU)";
+                targetMode = "gsk";
+                modeLabel = "GSKit / API Return Codes";
+            }
+
+            if (detected && targetMode && targetMode !== currentMode && currentMode !== "directory") {
+                hintBox.innerHTML = `💡 <strong>Format Notice:</strong> The input you entered looks like a <strong>${detected}</strong> format. The analyzer will automatically decode it with the appropriate engine. <a href="javascript:void(0)" onclick="setMode('${targetMode}')">Click here to switch to the ${modeLabel} tab</a>.`;
+                hintBox.style.display = "block";
+            } else {
+                hintBox.style.display = "none";
+            }
+        }
+
         function setMode(mode) {
             currentMode = mode;
+            clearResults();
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             const sampleRow = document.getElementById('sampleRow');
             const inputLabel = document.getElementById('inputLabel');
             const symptomInput = document.getElementById('symptomInput');
             const searchControls = document.getElementById('searchControls');
             const dirSection = document.getElementById('directorySection');
+            const modeGuidance = document.getElementById('modeGuidance');
+            const fuzzyHint = document.getElementById('fuzzyHintBox');
+            if (fuzzyHint) fuzzyHint.style.display = 'none';
 
             searchControls.style.display = 'block';
             dirSection.style.display = 'none';
 
             if (mode === 'symptom') {
                 document.getElementById('tabSymptom').classList.add('active');
+                modeGuidance.innerHTML = `
+                    <div class="mode-guidance-title"><span>📌</span> Mode 1: WRKPRB / IBM Symptom String Deconstructor</div>
+                    <div>Paste standard problem symptom strings (e.g. <code>5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500</code>) or raw reason codes. Deconstructs the <code>xxxyyyyzz</code> formula into Entry Point, Utility Function, and Local Failure offsets with CL recovery steps.</div>
+                `;
                 inputLabel.textContent = "Enter Symptom String(s), WRKPRB Block, or Reason Code(s) (one per line):";
                 symptomInput.placeholder = "e.g. 5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500\nor: QYCUAPPMGR 5003000\nor: RC7027500\nor: 6031000";
                 sampleRow.innerHTML = `
@@ -1469,34 +1548,51 @@ const DCM_DB = {
                 `;
             } else if (mode === 'admin3') {
                 document.getElementById('tabAdmin3').classList.add('active');
+                modeGuidance.innerHTML = `
+                    <div class="mode-guidance-title"><span>🔍</span> Mode 2: ADMIN3 / Liberty SystemOut Log Analyzer & EBCDIC CP037 Hex Decoder</div>
+                    <div>Paste multi-line trace log blocks or single-line JNI API failures from <code>SystemOut.log</code>. Automatically decodes all hexadecimal EBCDIC CP037 parameters (IFS paths, certificate flags) and correlates <code>rc:</code> failure codes to underlying C routines and service programs.</div>
+                `;
                 inputLabel.textContent = "Paste ADMIN3 / Liberty SystemOut.log Lines (extracts user, function, rc, job, & decodes EBCDIC hex parameters):";
-                symptomInput.placeholder = `Paste log trace snippet, e.g.:\n[11/4/26, 12:19:34:617 CET] 00000032 SystemOut O user: QSECOFR / function: qycu_listCertificatesJ / rc: 6\n0 : ProgramParameter ( input: F1F5F900 ... )\n6 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 )\njob: 123456/QTMHHTTP/ADMIN3`;
+                symptomInput.placeholder = `Paste log trace snippet, e.g.:\n[11/4/26, 12:19:34:617 CET] 00000032 SystemOut O user: QSECOFR / function: qycu_listCertificatesJ / rc: 6\n0 : ProgramParameter ( input: F1F5F900 ... )\n6 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 )\njob: 123456/QTMHHTTP/ADMIN3\nCertificateAction.listCertificates: API failed\n\nor single line: qycu_listCertificatesJ / rc: 6`;
                 sampleRow.innerHTML = `
-                    <span>Sample Logs:</span>
-                    <button class="sample-btn" onclick="setSampleAdmin3_RC6()">ADMIN3 Log (RC 6 - Store Open Error)</button>
-                    <button class="sample-btn" onclick="setSampleAdmin3_RC16()">ADMIN3 Log (RC 16 - Bad Password)</button>
+                    <span>Synthetic Log Presets:</span>
+                    <button class="sample-btn" onclick="setSampleAdmin3_RC6()">RC 6 (Store Open Failure)</button>
+                    <button class="sample-btn" onclick="setSampleAdmin3_RC16()">RC 16 (Bad Stash / Password)</button>
+                    <button class="sample-btn" onclick="setSampleAdmin3_RC24()">RC 24 (Crypto Algorithm Err)</button>
+                    <button class="sample-btn" onclick="setSampleAdmin3_SingleLine()">Single Line (RC 6)</button>
                 `;
             } else if (mode === 'gsk') {
                 document.getElementById('tabGsk').classList.add('active');
-                inputLabel.textContent = "Enter GSKit / GSKKM Return Code or QYCU API Return Code (e.g. 6, 16, 3941, -902):";
-                symptomInput.placeholder = "e.g. 6 (GSKKM_ERR_DATABASE_OPEN)\nor: 16 (GSKKM_ERR_DATABASE_INVALID_PASSWORD)\nor: 3941 (YCU_RC_COUNTRYNAME_REQUIRED)\nor: -1 (YCU_RC_USRPRF_NOT_FOUND)";
+                modeGuidance.innerHTML = `
+                    <div class="mode-guidance-title"><span>⚡</span> Mode 3: Direct GSKit & QYCU Return Code Lookup</div>
+                    <div>Lookup standalone GSKKM key management return codes (0-408), IBM i extended TLS protocol codes (6000-6024), and QYCU API return codes. Provides C symbolic constants, origin API functions, and targeted CL remediation.</div>
+                `;
+                inputLabel.textContent = "Enter GSKit / GSKKM Return Code or QYCU API Return Code (e.g. 6, 16, 24, 6000, 3941, -992):";
+                symptomInput.placeholder = "e.g. 6 (GSKKM_ERR_DATABASE_OPEN)\nor: 16 (GSKKM_ERR_DATABASE_INVALID_PASSWORD)\nor: 24 (GSKKM_ERR_CRYPTO)\nor: 6000 (GSK_AS400_ERROR_NOT_TRUSTED)\nor: 6007 (GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED)\nor: 3941 (YCU_RC_COUNTRYNAME_REQUIRED)";
                 sampleRow.innerHTML = `
                     <span>GSK Presets:</span>
-                    <button class="sample-btn" onclick="setSample('6')">Code 6 (GSKKM DB Open)</button>
-                    <button class="sample-btn" onclick="setSample('16')">Code 16 (GSKKM Bad Password)</button>
-                    <button class="sample-btn" onclick="setSample('18')">Code 18 (DB Corruption)</button>
-                    <button class="sample-btn" onclick="setSample('3941')">Code 3941 (Country Req)</button>
-                    <button class="sample-btn" onclick="setSample('-1')">Code -1 (User Not Found)</button>
+                    <button class="sample-btn" onclick="setSample('6')">Code 6 (DB Open)</button>
+                    <button class="sample-btn" onclick="setSample('16')">Code 16 (Bad Password)</button>
+                    <button class="sample-btn" onclick="setSample('24')">Code 24 (Crypto Err)</button>
+                    <button class="sample-btn" onclick="setSample('6000')">Code 6000 (Not Trusted)</button>
+                    <button class="sample-btn" onclick="setSample('6007')">Code 6007 (Not Registered)</button>
+                    <button class="sample-btn" onclick="setSample('6011')">Code 6011 (Bad Cipher)</button>
+                    <button class="sample-btn" onclick="setSample('6019')">Code 6019 (No Default Cert)</button>
                 `;
             } else if (mode === 'keyword') {
                 document.getElementById('tabKeyword').classList.add('active');
+                modeGuidance.innerHTML = `
+                    <div class="mode-guidance-title"><span>🔎</span> Mode 4: Global Keyword & Regex Search Engine</div>
+                    <div>Full-text search across all 500+ Symbolic Constants, C API function names, Service Programs, and utility categories. Supports regular expressions such as <code>^GSKKM_ERR_.*</code> or <code>.*PASSWORD.*</code>.</div>
+                `;
                 inputLabel.textContent = "Search across all 500+ Constants, Functions, or Regex:";
-                symptomInput.placeholder = "e.g. DATABASE_OPEN\nor: qycu_listCertificatesJ\nor: RECEIVECERT\nor: ^GSKKM_ERR_.*";
+                symptomInput.placeholder = "e.g. DATABASE_OPEN\nor: qycu_listCertificatesJ\nor: RECEIVECERT\nor: ^GSKKM_ERR_.*\nor: QYCU_APP.*";
                 sampleRow.innerHTML = `
                     <span>Keyword Presets:</span>
                     <button class="sample-btn" onclick="setSample('GSKKM_ERR_DATABASE')">GSKKM Database</button>
                     <button class="sample-btn" onclick="setSample('YCU_RC_')">YCU Return Codes</button>
                     <button class="sample-btn" onclick="setSample('QYCU_')">QYCU Entry Points</button>
+                    <button class="sample-btn" onclick="setSample('GSK_AS400')">GSK AS400 Protocol</button>
                 `;
             } else if (mode === 'directory') {
                 document.getElementById('tabDirectory').classList.add('active');
@@ -1534,13 +1630,30 @@ const DCM_DB = {
             performSearch();
         }
 
+        function setSampleAdmin3_RC24() {
+            setMode('admin3');
+            document.getElementById('symptomInput').value =
+`[11/4/26, 12:22:15:102 CET] 00000078 SystemOut                                                    O user: QSECOFR / function: qycu_createCertificateJ / rc: 24
+[11/4/26, 12:22:15:103 CET] 00000078 SystemOut                                                    O 0 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )
+[11/4/26, 12:22:15:104 CET] 00000078 SystemOut                                                    O 1 : ProgramParameter ( input: D8C9C2D46DD6E2F4F0F06DC4C5C6C1E4D3E300 / output length: 0 / output:  )
+[11/4/26, 12:22:15:105 CET] 00000078 SystemOut                                                    O job: 123458/QTMHHTTP/ADMIN3
+[11/4/26, 12:22:15:106 CET] 00000078 SystemOut                                                    O CertificateAction.createCertificate: API failed`;
+            performSearch();
+        }
+
+        function setSampleAdmin3_SingleLine() {
+            setMode('admin3');
+            document.getElementById('symptomInput').value = `user: QSECOFR / function: qycu_listCertificatesJ / rc: 6`;
+            performSearch();
+        }
+
         // Intensified Multi-Tier Diagnostic Engine
         function searchDcmEngine(rawInput) {
             const trimmed = rawInput.trim();
             if (!trimmed) return null;
 
             // 1. Check if input is an ADMIN3 / Liberty SystemOut trace log block
-            if (trimmed.includes("SystemOut") || trimmed.includes("ProgramParameter") || trimmed.includes("qycu_") || trimmed.includes("CertificateAction")) {
+            if (trimmed.includes("SystemOut") || trimmed.includes("ProgramParameter") || trimmed.includes("qycu_") || trimmed.includes("CertificateAction") || (trimmed.toLowerCase().includes("function:") && trimmed.toLowerCase().includes("rc:"))) {
                 return parseAdmin3Log(trimmed);
             }
 
@@ -1588,11 +1701,18 @@ const DCM_DB = {
 
             for (const line of lines) {
                 // User & function line
-                const userFuncMatch = line.match(/user:\s*([^\s/]+)\s*\/\s*function:\s*([^\s/]+)\s*\/\s*rc:\s*(-?\d+)/i);
+                const userFuncMatch = line.match(/(?:user:\s*([^\\s/]+)\s*\/\s*)?(?:function:\s*)?([a-zA-Z0-9_]+)\s*\/\s*rc:\s*(-?\d+)/i);
                 if (userFuncMatch) {
-                    user = userFuncMatch[1];
+                    if (userFuncMatch[1]) user = userFuncMatch[1];
                     funcName = userFuncMatch[2];
                     rcVal = parseInt(userFuncMatch[3], 10);
+                } else {
+                    const uMatch = line.match(/(?:^|\s)user:\s*([^\\s/]+)/i);
+                    if (uMatch) user = uMatch[1];
+                    const fMatch = line.match(/(?:^|\s)function:\s*([^\\s/]+)/i);
+                    if (fMatch) funcName = fMatch[1];
+                    const rMatch = line.match(/(?:^|\s|\/)rc:\s*(-?\d+)/i);
+                    if (rMatch) rcVal = parseInt(rMatch[1], 10);
                 }
 
                 // Job line
@@ -2015,11 +2135,19 @@ const DCM_DB = {
             }
 
             const d = res.detail;
+            const isFailed = (res.rc !== null && res.rc !== 0) || (res.actionFailure && res.actionFailure.length > 0);
+            const statusHtml = isFailed ? `
+                <div class="api-status-pill failed"><span class="status-dot"></span> API Execution: Attempted & Failed &bull; ${res.actionFailure ? res.actionFailure : `rc: ${res.rc} (${res.gskkmName || res.qycuName || 'Failure'})`}</div>
+            ` : `
+                <div class="api-status-pill success"><span class="status-dot"></span> API Execution: Succeeded (rc: 0)</div>
+            `;
+
             card.innerHTML = `
                 <div class="result-header">
                     <div>
                         <div class="result-title">ADMIN3 / Liberty Trace Diagnostic &bull; RC ${res.rc} &bull; ${res.gskkmName || res.qycuName || 'Diagnostic Failure'}</div>
                         <div class="result-sub">User: <strong>${res.user}</strong> &bull; Function: <code>${res.funcName}</code> &bull; Job: <code>${res.job}</code></div>
+                        ${statusHtml}
                     </div>
                     <span class="result-badge badge-admin3">ADMIN3 Log Trace</span>
                 </div>

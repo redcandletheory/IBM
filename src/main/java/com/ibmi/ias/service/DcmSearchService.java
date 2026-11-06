@@ -638,6 +638,7 @@ public class DcmSearchService {
         gskDetails.put(6L, new GskDetail(6L, "GSKKM_ERR_DATABASE_OPEN", "gskkm_open_database() / gskkm_open_key_database()", "QYCUCSMGR / QYCUCTMGR", "QYCU_OPENSTORE / QYCU_LISTCERTIFICATES", "qycu_listCertificatesJ / qycu_openStoreJ", "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB", "Key Database Open & IFS Authority", "Cannot open certificate store file. The .KDB file does not exist or user profile QTMHHTTP lacks *RWX data authority.", "CPDB701", "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')", "CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)", "WRKJOB JOB(*)"));
         gskDetails.put(16L, new GskDetail(16L, "GSKKM_ERR_DATABASE_INVALID_PASSWORD", "gskkm_verify_password() / gskkm_check_stash()", "QYCUCSMGR", "QYCU_VALIDATEPASSWORD / QYCU_CHANGESTOREPASSWORD", "qycu_listCertificatesJ / qycu_listCACertificatesJ / qycu_changePasswordJ", "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH", "Password Stash & Decryption", "The certificate store password or password stash file (.STH) is invalid, corrupted, or does not match the key database.", "CPDB702", "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH')", "DCM -> Manage Certificate Store -> Select Store -> Change/Reset Password & Stash", "WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)"));
         gskDetails.put(18L, new GskDetail(18L, "GSKKM_ERR_DATABASE_CORRUPTION", "gskkm_read_record() / gskkm_parse_kdb_header()", "QYCUCSMGR / QYCUCTMGR", "QYCU_READSTORE / QYCU_LISTCERTIFICATES", "qycu_listCertificatesJ / qycu_getCertificateListJ", "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB", "CMS Database Integrity", "Key database file header or record blocks are corrupted. Often caused by binary file transfer truncation or disk fault.", "CPDB703", "RST OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') from backup", "WRKOBJ OBJ(QUSRSYS/QYCU*)"));
+        gskDetails.put(24L, new GskDetail(24L, "GSKKM_ERR_CRYPTO", "gskkm_crypto() / gskkm_rsa_operation()", "QYCUCSMGR / QYCUCTMGR", "QYCU_GENERATEKEYPAIR / QYCU_CRYPTOOP", "qycu_createCertificateJ / qycu_importCertificateJ", "Cryptographic Subsystem / Key Store", "Cryptographic Algorithm Operation", "Low-level cryptographic algorithm failure occurred during key generation, decryption, or digital signature computation.", "CPDBC15", "WRKHDWRSC TYPE(*CRP) (Inspect Cryptographic Resources)", "WRKACTJOB SBS(QSEC) (Verify Crypto Server Jobs)", "DSPLOG MSGID(CPF* CPD*)"));
         gskDetails.put(42L, new GskDetail(42L, "GSKKM_ERR_VALIDATION_KEY_ISSUER_NOT_FOUND", "gskkm_validate_certificate() / gskkm_build_certificate_chain()", "QYCUCTMGR / QYCUAPPMGR", "QYCU_VALIDATECERTIFICATE / QYCU_APPASSIGNCERT", "qycu_validateCertificateJ / qycu_validateCertificateTrustJ", "Trust Store (DEFAULT.KDB)", "X.509 Chain Building & Trust", "The Certificate Authority (CA) that issued the certificate could not be found in the current certificate store.", "CPDB704", "DCM -> Manage Certificate Store -> Populate / Import CA Certificate", "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/*')"));
         gskDetails.put(46L, new GskDetail(46L, "GSKKM_ERR_VALIDATION_KEY_ROOT_KEY_NOT_TRUSTED", "gskkm_check_root_trust()", "QYCUCTMGR / QYCUAPPMGR", "QYCU_VALIDATECERTIFICATE / QYCU_ADDCERTIFICATETRUST", "qycu_addCertificateTrustJ / qycu_validateCertificateJ", "Trust Store Root CA", "Root CA Trust Setting", "The Root CA is present in the database, but is marked as Untrusted in DCM.", "CPDB705", "DCM -> Manage Certificate Store -> Work with CA Certificates -> Trust Status -> Mark Trusted"));
         gskDetails.put(47L, new GskDetail(47L, "GSKKM_ERR_VALIDATION_KEY_IS_REVOKED", "gskkm_check_crl() / gskkm_query_ocsp()", "QYCUCRLMGR / QYCUCTMGR", "QYCU_CHECKREVOCATION / QYCU_VALIDATECERTIFICATE", "qycu_validateCertificateJ", "CRL / OCSP Responder", "Certificate Revocation", "Certificate has been revoked by the issuing Certificate Authority on the CRL or OCSP server.", "CPDB706", "PING <CRL_SERVER_IP>", "WRKOBJ OBJ(QUSRSYS/QYCU*) OBJTYPE(*VLDL)"));
@@ -684,7 +685,7 @@ public class DcmSearchService {
         result.put("input", input);
 
         // Pattern 1: ADMIN3 / Liberty SystemOut trace log
-        if (input.contains("SystemOut") || input.contains("ProgramParameter") || input.contains("qycu_") || input.contains("CertificateAction")) {
+        if (input.contains("SystemOut") || input.contains("ProgramParameter") || input.contains("qycu_") || input.contains("CertificateAction") || (input.toLowerCase().contains("function:") && input.toLowerCase().contains("rc:"))) {
             return parseAdmin3Log(input);
         }
 
@@ -743,21 +744,23 @@ public class DcmSearchService {
 
         String[] lines = logText.split("\\r?\\n");
         for (String line : lines) {
-            Matcher ufMatcher = Pattern.compile("user:\\s*([^\\s/]+)\\s*/\\s*function:\\s*([^\\s/]+)\\s*/\\s*rc:\\s*(-?\\d+)", Pattern.CASE_INSENSITIVE).matcher(line);
+            Matcher ufMatcher = Pattern.compile("(?:user:\\s*([^\\s/]+)\\s*/\\s*)?(?:function:\\s*)?([a-zA-Z0-9_]+)\\s*/\\s*rc:\\s*(-?\\d+)", Pattern.CASE_INSENSITIVE).matcher(line);
             if (ufMatcher.find()) {
-                user = ufMatcher.group(1);
+                if (ufMatcher.group(1) != null) {
+                    user = ufMatcher.group(1);
+                }
                 funcName = ufMatcher.group(2);
                 rcVal = Long.parseLong(ufMatcher.group(3));
             } else {
-                Matcher uMatcher = Pattern.compile("^\\s*user:\\s*([^\\s/]+)", Pattern.CASE_INSENSITIVE).matcher(line);
+                Matcher uMatcher = Pattern.compile("(?:^|\\s)user:\\s*([^\\s/]+)", Pattern.CASE_INSENSITIVE).matcher(line);
                 if (uMatcher.find()) {
                     user = uMatcher.group(1);
                 }
-                Matcher fMatcher = Pattern.compile("^\\s*function:\\s*([^\\s/]+)", Pattern.CASE_INSENSITIVE).matcher(line);
+                Matcher fMatcher = Pattern.compile("(?:^|\\s)function:\\s*([^\\s/]+)", Pattern.CASE_INSENSITIVE).matcher(line);
                 if (fMatcher.find()) {
                     funcName = fMatcher.group(1);
                 }
-                Matcher rMatcher = Pattern.compile("^\\s*rc:\\s*(-?\\d+)", Pattern.CASE_INSENSITIVE).matcher(line);
+                Matcher rMatcher = Pattern.compile("(?:^|\\s|/)rc:\\s*(-?\\d+)", Pattern.CASE_INSENSITIVE).matcher(line);
                 if (rMatcher.find()) {
                     rcVal = Long.parseLong(rMatcher.group(1));
                 }
@@ -796,6 +799,7 @@ public class DcmSearchService {
         result.put("returnCode", rcVal);
         result.put("hostJob", job);
         result.put("actionFailure", actionFailure);
+        result.put("apiAttemptedAndFailed", (rcVal != null && rcVal != 0) || !actionFailure.isEmpty());
         result.put("parameters", params);
 
         String gskName = rcVal != null ? gskkmerr.get(rcVal) : null;
