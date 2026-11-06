@@ -89,6 +89,9 @@
         .hex-scroll-box { max-height: 85px; overflow-x: auto; overflow-y: auto; font-size: 0.75rem; color: #475569; word-break: break-all; white-space: pre-wrap; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 8px; margin-bottom: 4px; }
         .param-decoded { color: #0f62fe; font-weight: 600; margin-top: 2px; word-break: break-word; }
 
+        .decoded-log-box { background: #0f172a; color: #e2e8f0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; padding: 14px 16px; border-radius: 6px; border: 1px solid #1e293b; overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin-top: 10px; }
+        .decoded-highlight-red { color: #ef4444; font-weight: 700; background: rgba(239, 68, 68, 0.15); padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(239, 68, 68, 0.35); }
+
         .explanation-box { background: var(--success-bg); border: 1px solid #a7f3d0; border-radius: 6px; padding: 14px 18px; margin-top: 14px; }
         .explanation-box.warning-tone { background: var(--warning-bg); border-color: #fde68a; }
         .explanation-title { font-weight: 700; font-size: 0.82rem; color: var(--success-text); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
@@ -2089,42 +2092,58 @@ const DCM_DB = {
             });
         }
 
+        function formatDecodedLogBlock(rawLog) {
+            if (!rawLog) return '';
+            const lines = rawLog.split(/\r?\n/);
+            const decodedLines = lines.map(line => {
+                let escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                // Replace input hex
+                escaped = escaped.replace(/(input:\s*)([0-9A-Fa-f]{2,})/gi, (match, prefix, hex) => {
+                    const decoded = decodeEbcdicHex(hex);
+                    if (decoded && decoded.length > 0) {
+                        return `${prefix}<span class="decoded-highlight-red">${decoded}</span>`;
+                    }
+                    return match;
+                });
+
+                // Replace output hex
+                escaped = escaped.replace(/(output:\s*)([0-9A-Fa-f]{2,})/gi, (match, prefix, hex) => {
+                    const decoded = decodeEbcdicHex(hex);
+                    if (decoded && decoded.length > 0) {
+                        return `${prefix}<span class="decoded-highlight-red">${decoded}</span>`;
+                    }
+                    return match;
+                });
+
+                // Replace standalone ProgramParameter hex
+                escaped = escaped.replace(/(ProgramParameter:\s*)([0-9A-Fa-f]{2,})/gi, (match, prefix, hex) => {
+                    const decoded = decodeEbcdicHex(hex);
+                    if (decoded && decoded.length > 0) {
+                        return `${prefix}<span class="decoded-highlight-red">${decoded}</span>`;
+                    }
+                    return match;
+                });
+
+                return escaped;
+            });
+
+            return decodedLines.join('\n');
+        }
+
         function renderAdmin3Result(res) {
             const resultsContainer = document.getElementById("results");
             const card = document.createElement("div");
             card.className = "result-card admin3-card";
 
             let paramsHtml = "";
-            if (res.parameters && res.parameters.length > 0) {
+            const logContent = res.raw || (res.funcName ? `user: ${res.user} / function: ${res.funcName} / rc: ${res.rc}${res.job ? ` / job: ${res.job}` : ''}` : '');
+            if (logContent && logContent.trim().length > 0) {
+                const formattedLog = formatDecodedLogBlock(logContent);
                 paramsHtml = `
                     <div style="margin-top:14px;">
-                        <strong style="font-size:0.85rem; color:#0369a1;">Decoded ProgramParameter Stack (EBCDIC CP037 / Hex):</strong>
-                        <div class="param-table-container">
-                            <table class="param-table">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Input Hex / Decoded Text</th>
-                                        <th>Output Hex / Decoded Text</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${res.parameters.map(p => `
-                                        <tr>
-                                            <td><strong>${p.index}</strong></td>
-                                            <td>
-                                                ${p.inputHex ? `<div class="hex-scroll-box">${p.inputHex}</div>` : '<span style="color:#94a3b8; font-size:0.75rem;">(None)</span>'}
-                                                ${p.decodedInput ? `<div class="param-decoded">&#8594; "${p.decodedInput}"</div>` : ''}
-                                            </td>
-                                            <td>
-                                                ${p.outHex ? `<div class="hex-scroll-box">${p.outHex} <span style="color:#0284c7; font-weight:700;">(Len: ${p.outLen})</span></div>` : (p.outLen && p.outLen !== '0' ? `<div style="font-size:0.75rem; color:#0284c7; font-weight:700;">Length: ${p.outLen}</div>` : '<span style="color:#94a3b8; font-size:0.75rem;">(None)</span>')}
-                                                ${p.decodedOutput ? `<div class="param-decoded">&#8594; "${p.decodedOutput}"</div>` : ''}
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
+                        <strong style="font-size:0.85rem; color:#0369a1;">Decoded SystemOut Log Stream (In-Place EBCDIC CP037 Hex Decoded):</strong>
+                        <div class="decoded-log-box">${formattedLog}</div>
                     </div>
                 `;
             }
