@@ -563,50 +563,79 @@ The web dashboard is a responsive Single Page Application (SPA) providing **5 de
 
 ---
 
-### 3. ADMIN3 / Liberty SystemOut Log Analyzer Deep Dive
+### 3. ADMIN3 / Liberty SystemOut Log Analyzer Deep Dive & Whole-Log Decoding Architecture
 
-When managing DCM via the IBM Web Administration for i interface (`http://<host>:2001/HTTPAdmin`), backend operations execute inside the **`ADMIN3`** Liberty server instance (`/www/ADMIN3/wlp/usr/servers/ADMIN3/logs/SystemOut.log`).
+When administrators manage certificates using DCM or the IBM Web Administration for i interface (`http://<host>:2001/HTTPAdmin`), backend operations execute inside the **`ADMIN3`** WebSphere Liberty server instance (`/www/ADMIN3/wlp/usr/servers/admin/logs/SystemOut.log` or `/www/ADMIN3/wlp/usr/servers/ADMIN3/logs/SystemOut.log`).
 
-#### Sample Input Log Snippet:
+#### Why ADMIN3 Logs Contain Hexadecimal Parameters
+The Java Web UI inside ADMIN3 interacts with native IBM i DCM Service Programs (`QYCUCSMGR`, `QYCUCTMGR`, `QFLAGSK`) via Java Native Interface (JNI) and the IBM Toolbox for Java (`jt400.jar`). Because native C routines on IBM i expect memory buffers in **EBCDIC Code Page 037 (CP037)**, parameters such as IFS file paths, certificate labels, and operational flags are serialized as raw hexadecimal byte arrays.
+
+#### 4-Stage Whole-Log Decoding Pipeline
+
+```
+[Full SystemOut.log Input Stream]
+         │
+         ├── 1. Line-by-Line Tokenizer
+         │      └── Identifies: Timestamps, Job IDs, User Profiles, JNI Functions, Return Codes
+         │
+         ├── 2. ProgramParameter Hex Extractor
+         │      └── Scans all `ProgramParameter ( input: <HEX> / output: <HEX> )` entries
+         │
+         ├── 3. Byte-Level EBCDIC (CP037) Binary Converter
+         │      └── Converts hex pairs into raw binary bytes → Maps to CP037 character table
+         │
+         └── 4. Deterministic Correlation & Remediation Engine
+                └── Resolves `rc:` to GSKKM / GSKSSL / QYCURET constants & generates CL fixes
+```
+
+#### Sample Input Log Trace:
 ```text
 user: QSECOFR
 current thread: Thread[WebContainer : 3,5,main]
 class: com.ibm.as400.access.AS400
 function: qycu_listCertificatesJ
 0: ProgramParameter(input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output: )
-1: ProgramParameter(input: C1D3D36DD2C5E8E200 / output length: 0 / output: )
+1: ProgramParameter(input: C8C1E2D7D9C9E5C1E3C5D2C5E800 / output length: 0 / output: )
 rc: 6
 Job: 123456/QTMHHTTP/ADMIN3
 CertificateAction.listCertificates: API failed
 ```
 
-#### What the Analyzer Extracts & Displays:
-1. **Host Job & User Tracking**: Displays executing user `QSECOFR` and job `123456/QTMHHTTP/ADMIN3`.
-2. **Native SPI Function**: Identifies `qycu_listCertificatesJ` as the failing routine.
-3. **EBCDIC Parameter Hex Decoding**:
-   * Input `61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200` &rarr; Decodes to `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB`.
-   * Input `C1D3D36DD2C5E8E200` &rarr; Decodes to `ALL_KEYS`.
-4. **GSKKM Root-Cause Resolution**:
+#### What the Analyzer Decodes & Resolves:
+1. **Host Job & User Profile Tracking**: Displays executing user `QSECOFR` and IBM i host job `123456/QTMHHTTP/ADMIN3`.
+2. **Native SPI / JNI Function**: Identifies `qycu_listCertificatesJ` as the calling routine.
+3. **Hard EBCDIC Parameter Hex Decoding**:
+   * `61D8C9C2D461E4E2C5D9C4C1E3C1...` &rarr; Decodes byte-for-byte to: `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB`
+   * `C8C1E2D7D9C9E5C1E3C5D2C5E800` &rarr; Decodes byte-for-byte to: `HASPRIVATEKEY`
+   * `C1D3D36DD2C5E8E200` &rarr; Decodes byte-for-byte to: `ALL_KEYS`
+4. **GSKKM / GSKSSL Root-Cause Mapping**:
    * Evaluates `rc: 6` &rarr; **`GSKKM_ERR_DATABASE_OPEN`** (Cannot open key database).
-   * Generates step-by-step remediation commands:
-     ```cl
-     WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')
-     CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)
-     WRKJOB JOB(123456)
-     ```
+   * Maps to origin C API `gskkm_open_database()` and module `QYCUCSMGR`.
+5. **Actionable CL Remediation Checklist**:
+   ```cl
+   WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')
+   CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)
+   WRKJOB JOB(123456)
+   ```
 
 ---
 
-### 4. Built-in EBCDIC CP037 Hex Parameter Decoder
+### 4. Built-in EBCDIC CP037 Hex Parameter Decoder Reference
 
-The dashboard includes a standalone **EBCDIC Hex Converter** tool located below the search panels.
+The decoder converts any arbitrary EBCDIC hex stream into plaintext:
 
-* **Example 1**: `61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361C3C5D9E3C1E4E3C861C4C5C6C1E4D3E34BD2C4C200`
-  &rarr; Decodes to: `/QIBM/UserData/ICSS/Cert/CertAuth/DEFAULT.KDB`
-* **Example 2**: `C8C1E2D7D9C9E5C1E3C5D2C5E800`
-  &rarr; Decodes to: `HASPRIVATEKEY`
-* **Example 3**: `C1D3D36DD2C5E8E200`
-  &rarr; Decodes to: `ALL_KEYS`
+* **IFS Store Paths:**
+  * `61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200`
+    &rarr; `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB`
+  * `61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361C3C5D9E3C1E4E3C861C4C5C6C1E4D3E34BD2C4C200`
+    &rarr; `/QIBM/UserData/ICSS/Cert/CertAuth/DEFAULT.KDB`
+* **Filtering & Operation Flags:**
+  * `C8C1E2D7D9C9E5C1E3C5D2C5E800` &rarr; `HASPRIVATEKEY`
+  * `C1D3D36DD2C5E8E200` &rarr; `ALL_KEYS`
+  * `E3D9E4E2E3C5C400` &rarr; `TRUSTED`
+  * `E2C5D9E5C5D900` &rarr; `SERVER`
+* **Binary Payloads:**
+  * Non-text binary payloads (DER certificates, cipher buffers) are detected and sanitized so they do not produce rendering artifacts or corrupt JSON outputs.
 
 ---
 

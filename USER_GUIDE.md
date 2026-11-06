@@ -81,15 +81,17 @@ The web dashboard is a high-performance Single Page Application (SPA) providing 
   * Generates an English diagnostic narrative explaining what the program was trying to do.
   * Recommends exact **IBM i CL verification commands**.
 
-### Mode 2: ADMIN3 / Liberty SystemOut Log Analyzer
+### Mode 2: ADMIN3 / Liberty SystemOut Log Analyzer & Whole-Log Hex Processor
 * **What to enter**:
-  * Paste multi-line raw log snippets directly from `/www/ADMIN3/wlp/usr/servers/ADMIN3/logs/SystemOut.log`.
-* **Output**:
-  * Extracts executing User Profile (e.g., `QSECOFR`) and IBM i Host Job (e.g., `123456/QTMHHTTP/ADMIN3`).
-  * Maps native SPI method calls (e.g., `qycu_listCertificatesJ`).
-  * **Decodes EBCDIC (CP037) Hex Parameters** into plaintext IFS paths and option tags.
-  * Resolves underlying **GSKit / GSKKM return codes** (e.g., `rc: 6` &rarr; `GSKKM_ERR_DATABASE_OPEN`).
-  * Generates tailored recovery checklists and CL commands.
+  * Paste entire multi-line trace log blocks or complete session extracts from `/www/ADMIN3/wlp/usr/servers/admin/logs/SystemOut.log` (or `/www/ADMIN3/wlp/usr/servers/ADMIN3/logs/SystemOut.log`).
+* **Processing Engine**:
+  * **Line Tokenizer**: Scans timestamps, thread IDs, host jobs (e.g., `123456/QTMHHTTP/ADMIN3`), user profiles (e.g., `QSECOFR`), and SPI calling routines (e.g., `qycu_listCertificatesJ`).
+  * **Byte-by-Byte EBCDIC CP037 Hex Decoder**: Parses all `ProgramParameter` entries (`input:` / `output:`), converting raw 2-character hex pairs directly into binary bytes and matching them against the EBCDIC Code Page 037 character mapping.
+  * **Decoded Artifacts**: Converts encrypted/obfuscated hex parameter streams into plaintext IFS paths (`/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB`, `/QIBM/UserData/ICSS/Cert/CertAuth/DEFAULT.KDB`), filtering flags (`HASPRIVATEKEY`, `ALL_KEYS`, `TRUSTED`), and application registration IDs.
+* **Diagnostic Output**:
+  * Resolves underlying **GSKit / GSKKM return codes** (e.g., `rc: 6` &rarr; `GSKKM_ERR_DATABASE_OPEN`, `rc: 16` &rarr; `GSKKM_ERR_DATABASE_INVALID_PASSWORD`) and **GSKSSL handshake codes** (e.g., `rc: 6000` &rarr; `GSK_AS400_ERROR_NOT_TRUSTED`).
+  * Correlates the failure to the underlying C API routine (`gskkm_open_database()`, `gskkm_verify_password()`) and DCM Service Program module (`QYCUCSMGR`, `QYCUCTMGR`).
+  * Generates prioritized, copy-pasteable **IBM i CL recovery commands** tailored to the specific failure.
 
 ### Mode 3: GSKit & API Return Codes Mode
 * **What to enter**:
