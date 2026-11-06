@@ -89,8 +89,8 @@
         .hex-scroll-box { max-height: 85px; overflow-x: auto; overflow-y: auto; font-size: 0.75rem; color: #475569; word-break: break-all; white-space: pre-wrap; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 8px; margin-bottom: 4px; }
         .param-decoded { color: #0f62fe; font-weight: 600; margin-top: 2px; word-break: break-word; }
 
-        .decoded-log-box { background: #0f172a; color: #e2e8f0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; padding: 14px 16px; border-radius: 6px; border: 1px solid #1e293b; overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin-top: 10px; }
-        .decoded-highlight-red { color: #ef4444; font-weight: 700; background: rgba(239, 68, 68, 0.15); padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(239, 68, 68, 0.35); }
+        .decoded-log-box { background: #0f172a; color: #e2e8f0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; padding: 14px 16px; border-radius: 6px; border: 1px solid #1e293b; max-height: 480px; overflow-y: auto; overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin-top: 10px; user-select: text; -webkit-user-select: text; }
+        .decoded-highlight-red { color: #ff4d4f; font-weight: 700; background: rgba(255, 77, 79, 0.18); padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(255, 77, 79, 0.4); user-select: text; -webkit-user-select: text; }
 
         .explanation-box { background: var(--success-bg); border: 1px solid #a7f3d0; border-radius: 6px; padding: 14px 18px; margin-top: 14px; }
         .explanation-box.warning-tone { background: var(--warning-bg); border-color: #fde68a; }
@@ -1091,19 +1091,23 @@ const DCM_DB = {
         function decodeEbcdicHex(hexStr) {
             if (!hexStr || typeof hexStr !== 'string') return '';
             const clean = hexStr.replace(/\s+/g, '');
-            if (clean.length < 2 || clean.length % 2 !== 0) return hexStr;
+            if (clean.length < 2 || clean.length % 2 !== 0) return '';
             let result = '';
+            let printableCount = 0;
             for (let i = 0; i < clean.length; i += 2) {
                 const byteVal = parseInt(clean.substr(i, 2), 16);
                 if (byteVal === 0) continue; // skip null terminators
                 const asciiCode = EBCDIC_CP037[byteVal];
                 if (asciiCode && asciiCode >= 32 && asciiCode <= 126) {
                     result += String.fromCharCode(asciiCode);
+                    printableCount++;
                 } else if (byteVal >= 32 && byteVal <= 126) {
                     // Fallback ASCII interpretation
                     result += String.fromCharCode(byteVal);
+                    printableCount++;
                 }
             }
+            if (printableCount === 0) return '';
             return result.trim();
         }
 
@@ -1456,16 +1460,17 @@ const DCM_DB = {
         };
 
         function getGskDetail(rc) {
+            if (rc === null || rc === undefined) return null;
             const rcStr = rc.toString();
             if (GSK_DETAIL_MAP[rcStr]) {
                 return GSK_DETAIL_MAP[rcStr];
             }
-            const sym = DCM_DB.gskkmerr[rcStr];
+            const sym = DCM_DB.gskkmerr[rcStr] || DCM_DB.qycuretcodes[rcStr];
             if (sym) {
-                const origin = sym.toLowerCase().startsWith("gskkm_") ? "gskkm_" + sym.substring(6).toLowerCase() + "()" : "gsk_secure_soc_*()";
-                const sp = sym.includes("DATABASE") || sym.includes("DB") || sym.includes("PWD") ? "QYCUCSMGR" : (sym.includes("VALIDATION") || sym.includes("CERT") ? "QYCUCTMGR" : "QSYS/QFLAGSK");
+                const origin = sym.toLowerCase().startsWith("gskkm_") ? "gskkm_" + sym.substring(6).toLowerCase() + "()" : (sym.toLowerCase().startsWith("gsk_") ? "gsk_secure_soc_*()" : "QYCU Entry Point");
+                const sp = sym.includes("DATABASE") || sym.includes("DB") || sym.includes("PWD") ? "QYCUCSMGR" : (sym.includes("VALIDATION") || sym.includes("CERT") ? "QYCUCTMGR" : "QYCUCSMGR");
                 const jni = sym.includes("CERT") ? "qycu_listCertificatesJ" : "qycu_openStoreJ";
-                const target = sym.includes("STH") || sym.includes("PWD") ? "DEFAULT.STH" : (sym.includes("KDB") || sym.includes("DATABASE") ? "DEFAULT.KDB" : "DCM Subsystem");
+                const target = sym.includes("STH") || sym.includes("PWD") ? "DEFAULT.STH" : (sym.includes("KDB") || sym.includes("DATABASE") ? "DEFAULT.KDB" : "/QIBM/UserData/ICSS/Cert/*");
                 return {
                     code: rc,
                     constant: sym,
@@ -1487,40 +1492,44 @@ const DCM_DB = {
         }
 
         let currentMode = 'symptom';
+        let fuzzyDebounceTimer = null;
 
         function checkFuzzyFormat(val) {
-            const hintBox = document.getElementById("fuzzyHintBox");
-            if (!hintBox) return;
-            const trimmed = val.trim();
-            if (!trimmed) {
-                hintBox.style.display = "none";
-                return;
-            }
+            if (fuzzyDebounceTimer) clearTimeout(fuzzyDebounceTimer);
+            fuzzyDebounceTimer = setTimeout(() => {
+                const hintBox = document.getElementById("fuzzyHintBox");
+                if (!hintBox) return;
+                const trimmed = val ? val.trim() : "";
+                if (!trimmed) {
+                    hintBox.style.display = "none";
+                    return;
+                }
 
-            let detected = null;
-            let targetMode = null;
-            let modeLabel = "";
+                let detected = null;
+                let targetMode = null;
+                let modeLabel = "";
 
-            if (trimmed.includes("SystemOut") || trimmed.includes("ProgramParameter") || (trimmed.toLowerCase().includes("function:") && trimmed.toLowerCase().includes("rc:")) || trimmed.toLowerCase().includes("certificateaction") || /qycu_[a-zA-Z0-9_]+\s*\/\s*rc:\s*-?\d+/i.test(trimmed)) {
-                detected = "ADMIN3 / Liberty SystemOut Log Trace";
-                targetMode = "admin3";
-                modeLabel = "ADMIN3 / Liberty SystemOut Log";
-            } else if (/(?:5770|5722)\s+SP\/[A-Z0-9_]+/i.test(trimmed) || /SP\/[A-Z0-9_]+\s+MOD\/[A-Z0-9_]+/i.test(trimmed) || /RC\d{6,}/i.test(trimmed) || /QYCU[A-Z0-9_]+\s+\d{6,}/i.test(trimmed)) {
-                detected = "WRKPRB / IBM Symptom String";
-                targetMode = "symptom";
-                modeLabel = "Symptom String / WRKPRB";
-            } else if (/^(?:RC\s*)?-?\d{1,5}$/i.test(trimmed) || /^rc:\s*-?\d+$/i.test(trimmed)) {
-                detected = "Pure Return Code (GSKit / QYCU)";
-                targetMode = "gsk";
-                modeLabel = "GSKit / API Return Codes";
-            }
+                if (trimmed.includes("SystemOut") || trimmed.includes("ProgramParameter") || (trimmed.toLowerCase().includes("function:") && trimmed.toLowerCase().includes("rc:")) || trimmed.toLowerCase().includes("certificateaction") || /qycu_[a-zA-Z0-9_]+\s*\/\s*rc:\s*-?\d+/i.test(trimmed)) {
+                    detected = "ADMIN3 / Liberty SystemOut Log Trace";
+                    targetMode = "admin3";
+                    modeLabel = "ADMIN3 / Liberty SystemOut Log";
+                } else if (/(?:5770|5722)\s+SP\/[A-Z0-9_]+/i.test(trimmed) || /SP\/[A-Z0-9_]+\s+MOD\/[A-Z0-9_]+/i.test(trimmed) || /RC\d{6,}/i.test(trimmed) || /QYCU[A-Z0-9_]+\s+\d{6,}/i.test(trimmed)) {
+                    detected = "WRKPRB / IBM Symptom String";
+                    targetMode = "symptom";
+                    modeLabel = "Symptom String / WRKPRB";
+                } else if (/^(?:RC\s*)?-?\d{1,5}$/i.test(trimmed) || /^rc:\s*-?\d+$/i.test(trimmed)) {
+                    detected = "Pure Return Code (GSKit / QYCU)";
+                    targetMode = "gsk";
+                    modeLabel = "GSKit / API Return Codes";
+                }
 
-            if (detected && targetMode && targetMode !== currentMode && currentMode !== "directory") {
-                hintBox.innerHTML = `💡 <strong>Format Notice:</strong> The input you entered looks like a <strong>${detected}</strong> format. The analyzer will automatically decode it with the appropriate engine. <a href="javascript:void(0)" onclick="setMode('${targetMode}')">Click here to switch to the ${modeLabel} tab</a>.`;
-                hintBox.style.display = "block";
-            } else {
-                hintBox.style.display = "none";
-            }
+                if (detected && targetMode && targetMode !== currentMode && currentMode !== "directory") {
+                    hintBox.innerHTML = `💡 <strong>Format Notice:</strong> The input you entered looks like a <strong>${detected}</strong> format. The analyzer will automatically decode it with the appropriate engine. <a href="javascript:void(0)" onclick="setMode('${targetMode}')">Click here to switch to the ${modeLabel} tab</a>.`;
+                    hintBox.style.display = "block";
+                } else {
+                    hintBox.style.display = "none";
+                }
+            }, 120);
         }
 
         function setMode(mode) {
@@ -1708,19 +1717,25 @@ const DCM_DB = {
             const parameters = [];
 
             for (const line of lines) {
-                // User & function line
-                const userFuncMatch = line.match(/(?:user:\s*([^\\s/]+)\s*\/\s*)?(?:function:\s*)?([a-zA-Z0-9_]+)\s*\/\s*rc:\s*(-?\d+)/i);
-                if (userFuncMatch) {
-                    if (userFuncMatch[1]) user = userFuncMatch[1];
-                    funcName = userFuncMatch[2];
-                    rcVal = parseInt(userFuncMatch[3], 10);
-                } else {
-                    const uMatch = line.match(/(?:^|\s)user:\s*([^\\s/]+)/i);
-                    if (uMatch) user = uMatch[1];
-                    const fMatch = line.match(/(?:^|\s)function:\s*([^\\s/]+)/i);
-                    if (fMatch) funcName = fMatch[1];
-                    const rMatch = line.match(/(?:^|\s|\/)rc:\s*(-?\d+)/i);
-                    if (rMatch) rcVal = parseInt(rMatch[1], 10);
+                // Match user if present
+                const uMatch = line.match(/(?:^|\s|\/)user:\s*([^\s/]+)/i);
+                if (uMatch) user = uMatch[1];
+
+                // Match function if present
+                const fMatch = line.match(/(?:^|\s|\/)function:\s*([^\s/]+)/i);
+                if (fMatch) funcName = fMatch[1];
+
+                // Match rc if present
+                const rMatch = line.match(/(?:^|\s|\/)rc:\s*(-?\d+)/i);
+                if (rMatch) rcVal = parseInt(rMatch[1], 10);
+
+                // Fallback for compact format e.g. "qycu_listCertificatesJ / rc: 6"
+                if (funcName === "N/A") {
+                    const compactMatch = line.match(/([a-zA-Z0-9_]+)\s*\/\s*rc:\s*(-?\d+)/i);
+                    if (compactMatch) {
+                        funcName = compactMatch[1];
+                        if (rcVal === null) rcVal = parseInt(compactMatch[2], 10);
+                    }
                 }
 
                 // Job line
@@ -1735,24 +1750,38 @@ const DCM_DB = {
                     actionFailure = actMatch[1];
                 }
 
-                // ProgramParameter lines
-                const paramMatch = line.match(/(\d+)\s*:\s*ProgramParameter\s*\(\s*input:\s*([0-9A-Fa-f]*)\s*\/\s*output length:\s*(\d+)\s*\/\s*output:\s*([0-9A-Fa-f]*)\s*\)/i);
-                if (paramMatch) {
-                    const idx = paramMatch[1];
-                    const inputHex = paramMatch[2];
-                    const outLen = paramMatch[3];
-                    const outHex = paramMatch[4];
-                    const decodedInput = decodeEbcdicHex(inputHex);
-                    const decodedOutput = decodeEbcdicHex(outHex);
+                // ProgramParameter lines (safe non-backtracking)
+                if (line.includes("ProgramParameter") || line.includes("input:") || line.includes("output:")) {
+                    let idx = null;
+                    const idxMatch = line.match(/(\d+)\s*:\s*ProgramParameter/i);
+                    if (idxMatch) idx = idxMatch[1];
 
-                    parameters.push({
-                        index: idx,
-                        inputHex,
-                        outLen,
-                        outHex,
-                        decodedInput,
-                        decodedOutput
-                    });
+                    let inputHex = "";
+                    const inMatch = line.match(/input:\s*([0-9A-Fa-f]+)/i);
+                    if (inMatch) inputHex = inMatch[1];
+
+                    let outLen = "0";
+                    const lenMatch = line.match(/output length:\s*(\d+)/i);
+                    if (lenMatch) outLen = lenMatch[1];
+
+                    let outHex = "";
+                    const outMatch = line.match(/output:\s*([0-9A-Fa-f]+)/i);
+                    if (outMatch) outHex = outMatch[1];
+
+                    if (idx !== null || inputHex || outHex) {
+                        if (idx === null) idx = String(parameters.length);
+                        const decodedInput = decodeEbcdicHex(inputHex);
+                        const decodedOutput = decodeEbcdicHex(outHex);
+
+                        parameters.push({
+                            index: idx,
+                            inputHex,
+                            outLen,
+                            outHex,
+                            decodedInput,
+                            decodedOutput
+                        });
+                    }
                 }
             }
 
