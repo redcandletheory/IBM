@@ -982,7 +982,7 @@ public class DcmSearchService {
             cmds.add("WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')");
             cmds.add("CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)");
         } else if (domain.contains("Local Certificate Authority")) {
-            cmds.add("WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/LocalCA/*')");
+            cmds.add("WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/CertAuth/LOCAL_CERTIFICATE*.txt') (Verify Local CA certificate files)");
             cmds.add("WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)");
         } else if (domain.contains("Hardware")) {
             cmds.add("WRKHDWRSC TYPE(*CRP) (Work with Cryptographic Hardware Resources)");
@@ -1007,7 +1007,7 @@ public class DcmSearchService {
             objs.add("/QIBM/UserData/ICSS/Cert/Server/DEFAULT.RDB");
             objs.add("/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH (Password Stash)");
         } else if (domain.contains("Local Certificate Authority")) {
-            objs.add("/QIBM/UserData/ICSS/Cert/LocalCA/RECEIVE.KDB");
+            objs.add("/QIBM/UserData/ICSS/Cert/CertAuth/LOCAL_CERTIFICATE*.txt");
             objs.add("Local CA Policy Database (*VLDL)");
         } else if (domain.contains("Hardware")) {
             objs.add("PCIe Cryptographic Coprocessors (4767, 4769, 4770)");

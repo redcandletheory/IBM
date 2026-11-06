@@ -268,7 +268,7 @@ When diagnosing DCM errors, use these IBM i commands in 5250:
 | **Verify Admin Server Jobs** | `WRKACTJOB SBS(QHTTPSVR) JOB(ADMIN*)` |
 | **Verify Application Registration** | `WRKREGINF` |
 | **Inspect *SYSTEM Key Store Files** | `WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')` |
-| **Inspect Local CA Files** | `WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/LocalCA/*')` |
+| **Inspect Local CA Files** | `WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/CertAuth/LOCAL_CERTIFICATE*.txt')` |
 | **Inspect Validation Lists** | `WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)` |
 | **Fix IFS Authority for HTTP Server** | `CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)` |
 | **Work with Crypto Coprocessors** | `WRKHDWRSC TYPE(*CRP)` |
@@ -305,11 +305,11 @@ curl -G "http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/dcm/decode" \
   "operationalDomain": "Local Certificate Authority",
   "useCaseExplanation": "During processing in Local Certificate Authority Manager (QYCULCAMGR), entry point 'QYCU_RECEIVESERVERCERT' was executing. A failure occurred in utility function 'QYCU_RECEIVECERT' (Certificate Utility).",
   "targetObjects": [
-    "/QIBM/UserData/ICSS/Cert/LocalCA/RECEIVE.KDB",
+    "/QIBM/UserData/ICSS/Cert/CertAuth/LOCAL_CERTIFICATE*.txt",
     "Local CA Policy Database (*VLDL)"
   ],
   "diagnosticCommands": [
-    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/LocalCA/*')",
+    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/CertAuth/LOCAL_CERTIFICATE*.txt')",
     "WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)"
   ]
 }
