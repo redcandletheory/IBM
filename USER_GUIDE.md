@@ -260,7 +260,20 @@ Because all 110+ tables and parsing algorithms are compiled directly into the cl
 
 ---
 
-## 6. IBM i CL Diagnostic Commands Cheatsheet
+## 6. Authoritative Source Locations & IBM i Header Provenance
+
+Every table, error constant, and cross-reference in this application is rooted in physical source members, C header files, and service programs shipped by IBM under licensed programs **5770-SS1 Option 13** (System Openness Includes) and **5770-SS1 Option 34** (Digital Certificate Manager).
+
+| Source Header / Member | Physical Location on IBM i | Shipped Licensed Program | Implementing Service Program(s) | Scope & Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **`QSYSINC/H(GSKSSL)`**<br>`/QIBM/include/gskssl.h` | `WRKMBRPDM FILE(QSYSINC/H) MBR(GSKSSL)`<br>`DSPF STMF('/QIBM/include/gskssl.h')` | **5770-SS1 Option 13** (*System Openness Includes*) | `QSYS/QFLAGSK`<br>(Bound via `QSYS/QUSAPIBD`) | Defines TLS/SSL protocol errors (`0` to `408`) and IBM i extended return codes (`6000` to `6024` / `GSK_AS400_ERROR_*`). Emitted during live TLS handshakes, socket I/O, cipher suite negotiation (`QSSLCSL`), and Application ID resolution (`WRKREGINF`). |
+| **`gskkmerr.h`**<br>`c3.xpf` | `/QOpenSys/QIBM/ProdData/GSK/include/gskkmerr.h`<br>`/QIBM/ProdData/OS400/GSK/include/gskkmerr.h` | **5770-SS1 Base & Option 34** (*Digital Certificate Manager*) | `QSYS/QYCUCSMGR`<br>`QSYS/QYCUCTMGR` | Defines the 187 return codes for certificate storage (`.KDB`), stash files (`.STH`), PKCS#12 import/export, ASN.1 parsing, and CCA cryptographic coprocessor key token handling. Emitted during JNI store/cert operations in ADMIN3. |
+| **`qycuretcodes.H`**<br>`QSYSINC/H(QYCURET)` | `QSYSINC/H(QYCURET)`<br>`/QIBM/ProdData/OS400/DCM/include/qycuretcodes.H` | **5770-SS1 Option 34** (*Digital Certificate Manager*) | All 9 `QYCU*MGR` Service Programs | Defines the 107 API return codes emitted by DCM SPI functions when high-level operations fail in the DCM subsystem. |
+| **`qycuutl.H`** | Internal DCM Header (Table 11) | **5770-SS1 Option 34** (*Digital Certificate Manager*) | DCM Utility Subsystem | Defines the 95 utility routine offsets (`+100` to `+101000`) enabling multi-digit reason codes (`xxxyyyyzz`) to be deconstructed into the exact internal C function where execution failed. |
+
+---
+
+## 7. IBM i CL Diagnostic Commands Cheatsheet
 
 When diagnosing DCM errors, use these IBM i commands in 5250:
 
@@ -278,7 +291,7 @@ When diagnosing DCM errors, use these IBM i commands in 5250:
 
 ---
 
-## 7. Automated REST API Integration (CLI & Scripting)
+## 8. Automated REST API Integration (CLI & Scripting)
 
 In addition to the interactive Web UI, `dcm-service.war` exposes REST API endpoints for automated monitoring scripts:
 

@@ -639,6 +639,60 @@ The decoder converts any arbitrary EBCDIC hex stream into plaintext:
 
 ---
 
+## 🏛️ Authoritative Source Locations & IBM i Header Provenance
+
+Every table, error constant, and cross-reference in this application is rooted directly in physical source members, C header files, and service programs shipped by IBM under licensed programs **5770-SS1 Option 13** (System Openness Includes) and **5770-SS1 Option 34** (Digital Certificate Manager).
+
+### 1. `QSYSINC/H(GSKSSL)` & `/QIBM/include/gskssl.h` (TLS & Secure Sockets Engine)
+* **Physical Source Member**: `QSYSINC/H` member `GSKSSL`
+* **IFS Header Path**: `/QIBM/include/gskssl.h` (and `/QOpenSys/usr/include/gskssl.h`)
+* **Shipped Licensed Program**: **5770-SS1 Option 13** (*System Openness Includes*)
+* **Runtime Service Program**: `QSYS/QFLAGSK` (bound via `QSYS/QUSAPIBD`)
+* **How to Verify on IBM i**:
+  ```cl
+  WRKMBRPDM FILE(QSYSINC/H) MBR(GSKSSL)
+  /* Option 5 to display or DSPPFM FILE(QSYSINC/H) MBR(GSKSSL) */
+  DSPF STMF('/QIBM/include/gskssl.h')
+  ```
+* **Why It Matters**:
+  * Contains the definitive `#define` constants for TLS/SSL handshakes, cipher negotiation, and socket I/O.
+  * Base error codes (`0` to `408`): `GSK_OK` (0), `GSK_ERROR_IO` (406), `GSK_ERROR_BAD_KEYFILE_LABEL` (407), `GSK_ERROR_BAD_KEYFILE_PASSWORD` (408).
+  * IBM i Extended Return Codes (`6000` to `6024`): `GSK_AS400_ERROR_NOT_TRUSTED` (6000), `GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED` (6007), `GSK_AS400_ERROR_BAD_CIPHER_SUITE` (6011), `GSK_AS400_ERROR_NO_DEFAULT_CERT` (6019).
+  * When TLS handshakes fail in Apache HTTP Server, WebSphere Liberty, or IBM i FTP/Telnet/Db2 clients, these exact codes are returned by `gsk_secure_soc_init()` and `gsk_environment_init()`.
+
+---
+
+### 2. `gskkmerr.h` / `c3.xpf` (GSKit Key & Certificate Management Layer)
+* **Component Archive / Subsystem**: `c3.xpf` (IBM GSKit Key Management Component)
+* **IFS Header Paths**: `/QOpenSys/QIBM/ProdData/GSK/include/gskkmerr.h` and `/QIBM/ProdData/OS400/GSK/include/gskkmerr.h`
+* **Shipped Licensed Program**: **5770-SS1 Base & Option 34** (*Digital Certificate Manager*)
+* **Runtime Service Programs**: `QSYS/QYCUCSMGR` (*Certificate Store Manager*) and `QSYS/QYCUCTMGR` (*Certificate Manager*)
+* **How to Verify on IBM i**:
+  ```cl
+  DSPF STMF('/QOpenSys/QIBM/ProdData/GSK/include/gskkmerr.h')
+  DSPOBJAUT OBJ(QSYS/QYCUCSMGR) OBJTYPE(*SRVPGM)
+  ```
+* **Why It Matters**:
+  * Defines the **187 return codes** governing low-level key database operations (`.KDB`), password stash files (`.STH`), PKCS#12 bundles (`.P12`/`.PFX`), ASN.1 encoding, and hardware cryptographic coprocessor (CCA) tokens.
+  * When ADMIN3 logs JNI operations like `qycu_listCertificatesJ`, `qycu_openStoreJ`, or `qycu_validateCertificateJ`, any database or certificate validation error returns a `gskkmerr.h` code (e.g., `rc: 6` = `GSKKM_ERR_DATABASE_OPEN`, `rc: 16` = `GSKKM_ERR_DATABASE_INVALID_PASSWORD`, `rc: 42` = `GSKKM_ERR_VALIDATION_KEY_ISSUER_NOT_FOUND`).
+
+---
+
+### 3. `qycuretcodes.H` & `qycuutl.H` (Digital Certificate Manager SPI Layer)
+* **Physical Source Member / Header**: `QSYSINC/H(QYCURET)` / `qycuretcodes.H` / `qycuutl.H`
+* **Shipped Licensed Program**: **5770-SS1 Option 34** (*Digital Certificate Manager*)
+* **Runtime Service Programs**: All 9 DCM Manager Service Programs (`QYCUAPPMGR`, `QYCUCRLMGR`, `QYCUCSMGR`, `QYCUCTMGR`, `QYCUGENMGR`, `QYCUHDWMGR`, `QYCULCAMGR`, `QYCUUCMGR`, `QYCUYDOMGR`)
+* **How to Verify on IBM i**:
+  ```cl
+  WRKOBJ OBJ(QSYS/QYCU*) OBJTYPE(*SRVPGM)
+  DSPSRVMBR SRVPGM(QSYS/QYCUCSMGR)
+  ```
+* **Why It Matters**:
+  * `qycuretcodes.H` defines the **107 API return codes** emitted directly by DCM SPI functions (e.g., `-992` = `QYCU_CERT_ALREADY_EXISTS`, `3843` = `QYCU_RC_NO_VALID_PASSWORD`, `3845` = `YCU_RC_AUTH_PROB`).
+  * `qycuutl.H` defines the **95 utility routine offsets** (`+100` to `+101000`) that allow multi-digit symptom reason codes (`xxxyyyyzz`) to be deconstructed into the exact internal C function where execution stopped.
+
+---
+
 ## 🔍 GSKKM & GSKSSL Function & Module Cross-Reference Matrix
 
 Every return code traces directly back to its **Origin C API Routine**, **DCM Service Program Module**, **Java / JNI SPI Method**, and **Target IFS Object**:
