@@ -2419,70 +2419,75 @@ const DCM_DB = {
         }
 
         let selectedDomainFilter = 'ALL';
+        let directoryPopulated = false;
 
         function populateDirectoryTable() {
+            if (directoryPopulated) return;
             const tbody = document.getElementById("dirTableBody");
-            tbody.innerHTML = "";
+            const rows = [];
 
             // 1. GSKKM Errors
             for (const [val, name] of Object.entries(DCM_DB.gskkmerr)) {
-                tbody.innerHTML += `
+                rows.push(`
                     <tr>
                         <td>GSKit / GSKKM Error</td>
                         <td>gskkmerr.h</td>
                         <td data-val="${val}"><strong style="color:#6929c4; font-family:var(--font-mono);">${val}</strong></td>
                         <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
                     </tr>
-                `;
+                `);
             }
 
             // 2. QYCU Return Codes
             for (const [val, name] of Object.entries(DCM_DB.qycuretcodes)) {
-                tbody.innerHTML += `
+                rows.push(`
                     <tr>
                         <td>QYCU Return Code</td>
                         <td>qycuretcodes.H</td>
                         <td data-val="${val}"><strong style="color:#0043ce; font-family:var(--font-mono);">${val}</strong></td>
                         <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
                     </tr>
-                `;
+                `);
             }
 
             // 3. Service programs and entry points
             for (const [sp, prog] of Object.entries(DCM_DB.programs)) {
                 for (const [val, name] of Object.entries(prog.entryPoints)) {
-                    tbody.innerHTML += `
+                    rows.push(`
                         <tr>
                             <td>Entry Point (${prog.name})</td>
                             <td>${sp}</td>
                             <td data-val="${val}"><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
                             <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
                         </tr>
-                    `;
+                    `);
                 }
                 for (const [val, name] of Object.entries(prog.localFailures)) {
-                    tbody.innerHTML += `
+                    rows.push(`
                         <tr>
                             <td>Local Failure (${prog.name})</td>
                             <td>${sp}</td>
                             <td data-val="${val}"><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
                             <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
                         </tr>
-                    `;
+                    `);
                 }
             }
 
             // 4. Utilities
             for (const [val, u] of Object.entries(DCM_DB.utilityFunctions)) {
-                tbody.innerHTML += `
+                rows.push(`
                     <tr>
                         <td>${u.category}</td>
                         <td>qycuutl.H</td>
                         <td data-val="${val}"><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
                         <td><code style="font-family:var(--font-mono); font-weight:600;">${u.name}</code></td>
                     </tr>
-                `;
+                `);
             }
+
+            tbody.innerHTML = rows.join("");
+            directoryPopulated = true;
         }
 
         function filterByDomainChip(domain, btn) {
@@ -2498,15 +2503,20 @@ const DCM_DB = {
             filterDirectory();
         }
 
+        let filterDebounceTimer = null;
         function filterDirectory() {
-            const filter = document.getElementById("dirFilterInput").value.toUpperCase();
-            const rows = document.querySelectorAll("#dirTableBody tr");
-            rows.forEach(r => {
-                const text = r.textContent.toUpperCase();
-                const matchesText = text.includes(filter);
-                const matchesDomain = (selectedDomainFilter === 'ALL') || text.includes(selectedDomainFilter.toUpperCase());
-                r.style.display = (matchesText && matchesDomain) ? "" : "none";
-            });
+            if (filterDebounceTimer) clearTimeout(filterDebounceTimer);
+            filterDebounceTimer = setTimeout(() => {
+                const inputElem = document.getElementById("dirFilterInput");
+                const filter = inputElem ? inputElem.value.toUpperCase() : "";
+                const rows = document.querySelectorAll("#dirTableBody tr");
+                rows.forEach(r => {
+                    const text = r.textContent.toUpperCase();
+                    const matchesText = !filter || text.includes(filter);
+                    const matchesDomain = (selectedDomainFilter === 'ALL') || text.includes(selectedDomainFilter.toUpperCase());
+                    r.style.display = (matchesText && matchesDomain) ? "" : "none";
+                });
+            }, 60);
         }
 
         let sortDirections = [1, 1, 1, 1];
