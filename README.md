@@ -556,8 +556,8 @@ The web dashboard is a responsive Single Page Application (SPA) providing **5 de
 | Mode | Target Input | Description | Output Provided |
 | :--- | :--- | :--- | :--- |
 | **1. Symptom String / WRKPRB** | `5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500` or `RC5003000` | Deconstructs IBM i symptom strings and WRKPRB problem logs into the 3-tier mathematical model. | Service Program, Entry Point, `qycuutl.H` utility, local failure offset, and CL commands. |
-| **2. ADMIN3 Log Analyzer** | Raw multi-line trace from `SystemOut.log` | Dissects Liberty WebSphere DCM backend traces including `ProgramParameter` EBCDIC hex dumps. | Host job, user profile, native function name, decoded IFS paths, GSKKM error diagnosis & recovery plan. |
-| **3. GSKit & API Return Codes** | Pure return codes: `6`, `16`, `-992`, `3843` | Direct lookup of GSKit errors (`gskkmerr.h`) and DCM SPI codes (`qycuretcodes.H`). | Symbolic constant, header source, failure categorization, and permission checklists. |
+| **2. ADMIN3 Log Analyzer** | Raw multi-line trace from `SystemOut.log` | Dissects Liberty WebSphere DCM backend traces including `ProgramParameter` EBCDIC hex dumps. | Host job, user profile, native function name, decoded IFS paths, and GSKKM error diagnosis. |
+| **3. GSKit & API Return Codes** | Pure return codes: `6`, `16`, `-992`, `3843` | Direct lookup of GSKit errors (`gskkmerr.h`) and DCM SPI codes (`qycuretcodes.H`). | Symbolic constant, header source, and failure categorization. |
 | **4. Keyword / Regex Search** | Search terms: `KEYSTORE`, `PASSWORD`, `^QYCU_.*CA` | Fast regex matching across 500+ cataloged return codes and manager APIs. | Filtered table of constants, numeric values, source modules, and functional descriptions. |
 | **5. Complete Matrix Directory** | Interactive browsing | Complete searchable matrix of all 9 managers, 95+ utilities, 107 API codes, and 187 GSKKM codes. | Domain chips for 1-click filtering, multi-column sorting, and instant code lookup. |
 
@@ -611,13 +611,6 @@ CertificateAction.listCertificates: API failed
 4. **GSKKM / GSKSSL Root-Cause Mapping**:
    * Evaluates `rc: 6` &rarr; **`GSKKM_ERR_DATABASE_OPEN`** (Cannot open key database).
    * Maps to origin C API `gskkm_open_database()` and module `QYCUCSMGR`.
-5. **Actionable CL Remediation Checklist**:
-   ```cl
-   WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')
-   CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)
-   WRKJOB JOB(123456)
-   ```
-
 ---
 
 ### 4. Built-in EBCDIC CP037 Hex Parameter Decoder Reference

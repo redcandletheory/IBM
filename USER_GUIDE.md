@@ -79,7 +79,6 @@ The web dashboard is a high-performance Single Page Application (SPA) providing 
 * **Output**:
   * Deconstructs into a **4-Column Decomposition Grid** (Service Program, Major Entry Point, Utility Routine, Local Offset).
   * Generates an English diagnostic narrative explaining what the program was trying to do.
-  * Recommends exact **IBM i CL verification commands**.
 
 ### Mode 2: ADMIN3 / Liberty SystemOut Log Analyzer & Whole-Log Hex Processor
 * **What to enter**:
@@ -91,7 +90,6 @@ The web dashboard is a high-performance Single Page Application (SPA) providing 
 * **Diagnostic Output**:
   * Resolves underlying **GSKit / GSKKM return codes** (e.g., `rc: 6` &rarr; `GSKKM_ERR_DATABASE_OPEN`, `rc: 16` &rarr; `GSKKM_ERR_DATABASE_INVALID_PASSWORD`) and **GSKSSL handshake codes** (e.g., `rc: 6000` &rarr; `GSK_AS400_ERROR_NOT_TRUSTED`).
   * Correlates the failure to the underlying C API routine (`gskkm_open_database()`, `gskkm_verify_password()`) and DCM Service Program module (`QYCUCSMGR`, `QYCUCTMGR`).
-  * Generates prioritized, copy-pasteable **IBM i CL recovery commands** tailored to the specific failure.
 
 ### Mode 3: GSKit & API Return Codes Mode
 * **What to enter**:
@@ -273,25 +271,9 @@ Every table, error constant, and cross-reference in this application is rooted i
 
 ---
 
-## 7. IBM i CL Diagnostic Commands Cheatsheet
-
-When diagnosing DCM errors, use these IBM i commands in 5250:
-
-| Diagnostic Objective | IBM i CL Command |
-| :--- | :--- |
-| **Start DCM Admin Server** | `STRTCPSVR SERVER(*HTTP) HTTPSVR(*ADMIN)` |
-| **Verify Admin Server Jobs** | `WRKACTJOB SBS(QHTTPSVR) JOB(ADMIN*)` |
-| **Verify Application Registration** | `WRKREGINF` |
-| **Inspect *SYSTEM Key Store Files** | `WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')` |
-| **Inspect Local CA Files** | `WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/CertAuth/LOCAL_CERTIFICATE*.txt')` |
-| **Inspect Validation Lists** | `WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)` |
-| **Fix IFS Authority for HTTP Server** | `CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)` |
-| **Work with Crypto Coprocessors** | `WRKHDWRSC TYPE(*CRP)` |
-| **Check System History Log** | `DSPLOG MSGID(CPF* CPD*)` |
-
 ---
 
-## 8. Automated REST API Integration (CLI & Scripting)
+## 7. Automated REST API Integration (CLI & Scripting)
 
 In addition to the interactive Web UI, `dcm-service.war` exposes REST API endpoints for automated monitoring scripts:
 
@@ -322,10 +304,6 @@ curl -G "http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/dcm/decode" \
   "targetObjects": [
     "/QIBM/UserData/ICSS/Cert/CertAuth/LOCAL_CERTIFICATE*.txt",
     "Local CA Policy Database (*VLDL)"
-  ],
-  "diagnosticCommands": [
-    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/CertAuth/LOCAL_CERTIFICATE*.txt')",
-    "WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)"
   ]
 }
 ```

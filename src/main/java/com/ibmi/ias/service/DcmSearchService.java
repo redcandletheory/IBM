@@ -817,17 +817,9 @@ public class DcmSearchService {
             result.put("failureDomain", detail.failureDomain);
             result.put("msgId", detail.msgId);
             result.put("useCaseExplanation", detail.rootCause);
-            List<String> cmds = new ArrayList<>(detail.recoveryCommands);
-            cmds.add("WRKJOB JOB(" + (job.contains("/") ? job.split("/")[0] : "*") + ") - Inspect host server job");
-            result.put("diagnosticCommands", cmds);
         } else {
             String explanation = "Executed " + funcName + " on IBM i host server job " + job + " under user " + user + ". Returned code " + rcVal + " (" + (gskName != null ? gskName : (qycuName != null ? qycuName : "General Code")) + ").";
             result.put("useCaseExplanation", explanation);
-            List<String> recovery = new ArrayList<>();
-            recovery.add("WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*') - Verify certificate store file existence and stash file");
-            recovery.add("CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)");
-            recovery.add("WRKJOB JOB(" + (job.contains("/") ? job.split("/")[0] : "*") + ") - Inspect host server job");
-            result.put("diagnosticCommands", recovery);
         }
 
         return result;
@@ -928,7 +920,6 @@ public class DcmSearchService {
         useCase.append(".");
 
         String operationalDomain = getOperationalDomain(sp, utilCategory);
-        List<String> diagnosticCommands = getDiagnosticCommands(sp, operationalDomain);
         List<String> affectedObjects = getAffectedObjects(sp, operationalDomain);
 
         result.put("isExact", isExact);
@@ -943,7 +934,6 @@ public class DcmSearchService {
         result.put("localFailureName", localName);
         result.put("useCaseExplanation", useCase.toString());
         result.put("targetObjects", affectedObjects);
-        result.put("diagnosticCommands", diagnosticCommands);
 
         if (!isExact) {
             result.put("cspReminder", "Reminder for technicians: Search iAI assisted support searches in CSP.");
@@ -975,30 +965,6 @@ public class DcmSearchService {
             return "Object & Signature Manager";
         }
         return "General DCM Subsystem";
-    }
-
-    private List<String> getDiagnosticCommands(String sp, String domain) {
-        List<String> cmds = new ArrayList<>();
-        if (domain.contains("Application")) {
-            cmds.add("WRKREGINF (Work with Registration Information for Application IDs)");
-            cmds.add("WRKAUT OBJ('/QIBM/UserData/ICSS/Cert/Server')");
-        } else if (domain.contains("Store")) {
-            cmds.add("WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')");
-            cmds.add("CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)");
-        } else if (domain.contains("Local Certificate Authority")) {
-            cmds.add("WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/CertAuth/LOCAL_CERTIFICATE*.txt') (Verify Local CA certificate files)");
-            cmds.add("WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)");
-        } else if (domain.contains("Hardware")) {
-            cmds.add("WRKHDWRSC TYPE(*CRP) (Work with Cryptographic Hardware Resources)");
-            cmds.add("WRKACTJOB SBS(QSEC) (Check Cryptographic subsystem jobs)");
-        } else if (domain.contains("Revocation")) {
-            cmds.add("WRKOBJ OBJ(QUSRSYS/QYCU*) OBJTYPE(*VLDL)");
-            cmds.add("PING <LDAP_OR_HTTP_CRL_SERVER>");
-        } else {
-            cmds.add("WRKACTJOB SBS(QHTTPSVR) (Check HTTP & Liberty server status)");
-            cmds.add("DSPLOG MSGID(CPF* CPD*)");
-        }
-        return cmds;
     }
 
     private List<String> getAffectedObjects(String sp, String domain) {
@@ -1046,7 +1012,6 @@ public class DcmSearchService {
                 result.put("failureDomain", detail.failureDomain);
                 result.put("msgId", detail.msgId);
                 result.put("useCaseExplanation", detail.rootCause);
-                result.put("diagnosticCommands", detail.recoveryCommands);
             } else {
                 result.put("useCaseExplanation", "GSKit / GSKKM return code " + rc + " maps to constant " + gskkmerr.get(rc) + ".");
             }
