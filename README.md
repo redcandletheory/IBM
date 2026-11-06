@@ -610,16 +610,28 @@ The dashboard includes a standalone **EBCDIC Hex Converter** tool located below 
 
 ---
 
-## 🔍 DCM Search Reference Matrix
+## 🔍 GSKKM & GSKSSL Function & Module Cross-Reference Matrix
 
-| Symptom String | Service Program | Entry Point | Utility Function |
-| :--- | :--- | :--- | :--- |
-| `5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500` | `QYCULCAMGR` (Local CA) | `QYCU_RECEIVESERVERCERT` (`+7000000`) | `QYCU_RECEIVECERT` (`+27500`) |
-| `5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000` | `QYCUAPPMGR` (App Mgr) | `QYCU_APPASSIGNCERT` (`+5000000`) | `QYCU_ASSIGNCERTTOAPP` (`+3000`) |
-| `5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC14000000` | `QYCUAPPMGR` (App Mgr) | `QYCU_APPUPDATEDEFINITION` (`+14000000`) | None (Direct Module Failure) |
-| `5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC12000000` | `QYCUAPPMGR` (App Mgr) | `QYCU_APPREMOVE` (`+12000000`) | None (Direct Module Failure) |
-| `5770 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC7000100` | `QYCUAPPMGR` (App Mgr) | `QYCU_APPLISTASSIGNEDCERT` (`+7000000`) | `QYCU_RTVAPPS` (`+100`) |
-| `rc: 6 (GSKKM Error)` | `GSKit / gskkmerr.h` | `GSKKM_ERR_DATABASE_OPEN` | Key database open failed (check IFS authority) |
-| `rc: 16 (GSKKM Error)` | `GSKit / gskkmerr.h` | `GSKKM_ERR_DATABASE_INVALID_PASSWORD` | Password stash `.STH` file mismatch or corruption |
-| `rc: 3845 (QYCU Return Code)` | `DCM API / qycuretcodes.H` | `YCU_RC_AUTH_PROB` | Authorization failure accessing DCM store |
-| `rc: -992 (QYCU Return Code)` | `DCM SPI / qycuretcodes.H` | `YCU_SWAP_USER` | Profile swap failure during privilege escalation |
+Every return code traces directly back to its **Origin C API Routine**, **DCM Service Program Module**, **Java / JNI SPI Method**, and **Target IFS Object**:
+
+| RC | Symbolic Constant | Origin C API Routine | DCM Service Program | JNI / ADMIN3 Method | Target IFS Object / Subsystem | Failure Mechanism & Root Cause |
+| :---: | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`6`** | `GSKKM_ERR_DATABASE_OPEN` | `gskkm_open_database()` | `QYCUCSMGR` (`QYCU_OPENSTORE`) | `qycu_listCertificatesJ` | `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB` | Certificate store `.KDB` missing or `QTMHHTTP` lacks `*RWX` IFS authority. |
+| **`16`** | `GSKKM_ERR_DATABASE_INVALID_PASSWORD` | `gskkm_verify_password()` | `QYCUCSMGR` (`QYCU_VALIDATEPASSWORD`) | `qycu_listCertificatesJ` | `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH` | Password stash `.STH` file mismatch or corrupted password store. |
+| **`18`** | `GSKKM_ERR_DATABASE_CORRUPTION` | `gskkm_read_record()` | `QYCUCSMGR` (`QYCU_READSTORE`) | `qycu_listCertificatesJ` | `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB` | Binary database corruption from truncated file transfer or disk fault. |
+| **`42`** | `GSKKM_ERR_VALIDATION_KEY_ISSUER_NOT_FOUND` | `gskkm_validate_certificate()` | `QYCUCTMGR` (`QYCU_VALIDATECERTIFICATE`) | `qycu_validateCertificateJ` | Trust Store (`DEFAULT.KDB`) | Intermediate or Root CA certificate missing from the trust store. |
+| **`46`** | `GSKKM_ERR_VALIDATION_KEY_ROOT_KEY_NOT_TRUSTED` | `gskkm_check_root_trust()` | `QYCUCTMGR` (`QYCU_ADDCERTIFICATETRUST`) | `qycu_addCertificateTrustJ` | Trust Store Root CA | Root CA exists in key database but is marked **Untrusted** in DCM. |
+| **`47`** | `GSKKM_ERR_VALIDATION_KEY_IS_REVOKED` | `gskkm_check_crl()` | `QYCUCRLMGR` (`QYCU_CHECKREVOCATION`) | `qycu_validateCertificateJ` | CRL / OCSP Responder | Certificate marked revoked on CRL distribution point or OCSP server. |
+| **`78`** | `GSKKM_ERR_FILE_OPEN` | `gskkm_file_open()` | `qycuutl.H` (`QYCU_OPENFILE`) | `qycu_importCertificateJ` | IFS File Stream | Generic IFS stream file open failure. |
+| **`81`** | `GSKKM_ERR_FILE_OPEN_NOT_EXIST` | `gskkm_file_open()` | `qycuutl.H` (`QYCU_OPENFILE`) | `qycu_importCertificateJ` | Import/Export IFS Path | Target certificate file or import directory does not exist on IFS. |
+| **`82`** | `GSKKM_ERR_FILE_OPEN_NOT_ALLOWED` | `gskkm_file_open()` | `qycuutl.H` (`QYCU_OPENFILE`) | `qycu_importCertificateJ` | Target IFS File | User profile lacks permission to open IFS file (`CHGAUT`). |
+| **`93`** | `GSKKM_ERR_KEYDB_NOT_EXIST` | `gskkm_locate_database()` | `QYCUCSMGR` (`QYCU_OPENSTORE`) | `qycu_openStoreJ` | `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB` | Certificate store `.KDB` does not exist at specified path. |
+| **`95`** | `GSKKM_ERR_PWDFILE_NOT_EXIST` | `gskkm_read_stash()` | `QYCUCSMGR` (`QYCU_GETPASSWORDSTASH`) | `qycu_listCertificatesJ` | `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH` | Password stash `.STH` file missing (needs password re-stash). |
+| **`109`** | `GSKKM_ERR_KEY_GET_BY_LABEL` | `gskkm_find_record_by_label()` | `QYCUCTMGR` (`QYCU_RETRIEVECERTIFICATEINFO`) | `qycu_retrieveCertificateInformationJ` | Certificate Label in `.KDB` | Requested certificate label was not found in key database. |
+| **`112`** | `GSKKM_ERR_PKCS12_PWD_CORRUPTION` | `gskkm_pkcs12_decrypt()` | `QYCUCTMGR` (`QYCU_IMPORTCERTIFICATE`) | `qycu_importCertificateJ` | `.P12` / `.PFX` File | PKCS#12 export password provided during import is incorrect. |
+| **`340`** | `GSKKM_ERR_CCA` | `gskkm_cca_call()` | `QYCUHDWMGR` (`QYCU_GETCRYPTODEVICELIST`) | `qycu_getCryptoDeviceListJ` | PCIe Coprocessor (4767/4769) | Hardware Cryptographic Coprocessor CCA subsystem error. |
+| **`6000`** | `GSK_AS400_ERROR_NOT_TRUSTED` | `gsk_secure_soc_init()` | `QSYS/QFLAGSK` | Native TLS Handshake | Peer Certificate / Trust Store | Peer certificate not trusted by client/server (missing CA in `.KDB`). |
+| **`6007`** | `GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED` | `gsk_environment_init()` | `QSYS/QFLAGSK` / `QWTSECA` | Application ID Binding | IBM i Registration Facility | Application ID not registered in `WRKREGINF`. |
+| **`6011`** | `GSK_AS400_ERROR_BAD_CIPHER_SUITE` | `gsk_secure_soc_init()` | `QSYS/QFLAGSK` | TLS Cipher Negotiation | System Value `QSSLCSL` | No mutual cipher suite negotiated between client and server. |
+| **`6019`** | `GSK_AS400_ERROR_NO_DEFAULT_CERT` | `gsk_environment_init()` | `QSYS/QFLAGSK` | DCM Application Binding | `WRKREGINF` &rarr; `*SYSTEM` | Application ID has no certificate assigned in DCM. |
+| **`406`** | `GSK_ERROR_IO` | `gsk_secure_soc_read()` | `QSYS/QFLAGSK` | Secure Socket I/O | TCP/IP Socket | Low-level socket communication failure or abrupt connection reset. |

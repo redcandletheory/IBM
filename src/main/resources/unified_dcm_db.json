@@ -1,0 +1,853 @@
+﻿{
+    "programs":  {
+                     "QYCUHDWMGR":  {
+                                        "name":  "Hardware Device Manager",
+                                        "localFailures":  {
+
+                                                          },
+                                        "entryPoints":  {
+                                                            "4000000":  "QYCU_CHANGECRYPTODEVICEASSIGNMENT",
+                                                            "6000000":  "QYCU_GETCRYPTODEVICESFORCERT",
+                                                            "1000000":  "QYCU_GETCRYPTODEVICELIST",
+                                                            "3000000":  "QYCU_ADDCRYPTODEVICEASSIGNMENT",
+                                                            "5000000":  "QYCU_GETALLCRYPTODEVICESBYCERT",
+                                                            "7000000":  "QYCU_REMOVECRYPTODEVICEASSIGNMENT",
+                                                            "2000000":  "QYCU_GETOTHERCRYPTODEVICES"
+                                                        }
+                                    },
+                     "QYCUCTMGR":  {
+                                       "name":  "Certificate Manager",
+                                       "localFailures":  {
+
+                                                         },
+                                       "entryPoints":  {
+                                                           "6000000":  "QYCU_DELETECERTIFICATEREQUEST",
+                                                           "32000000":  "QYCU_LISTCAFILES",
+                                                           "10000000":  "QYCU_LISTCERTIFICATEREQUESTS",
+                                                           "24000000":  "QYCU_LISTCERTIFICATESWITHKEYINHARDWARE",
+                                                           "18000000":  "QYCU_CHECKFORBASE64CERTIFICATE",
+                                                           "15000000":  "QYCU_EXPORTCERTIFICATETOSTORE",
+                                                           "30000000":  "QYCU_CHECKCERTIFICATEEXPIRATION",
+                                                           "27000000":  "QYCU_RENEWCERTIFICATE",
+                                                           "31000000":  "QYCU_IMPORTCERTIFICATEWITHLABEL",
+                                                           "5000000":  "QYCU_DELETECERTIFICATE",
+                                                           "28000000":  "QYCU_CHECKFORX509CERTIFICATE",
+                                                           "8000000":  "QYCU_IMPORTCERTIFICATE",
+                                                           "5":  "QYCU_OKAYTODELETEORREMOVETRUST",
+                                                           "17000000":  "QYCU_EXPORTCERTIFICATEWITHOUTKEYTOSTORE",
+                                                           "12000000":  "QYCU_RETRIEVECERTIFICATEINFORMATION",
+                                                           "22000000":  "QYCU_CREATESTOREANDCERTIFICATEREQUEST",
+                                                           "25000000":  "QYCU_VALIDATECERTIFICATE",
+                                                           "2000000":  "QYCU_CREATELOCALCERTIFICATE",
+                                                           "33000000":  "QYCU_LISTCACERTIFICATEFORPOPULATE",
+                                                           "34000000":  "QYCU_POPULATETRUSTCACERTIFICATE",
+                                                           "7000000":  "QYCU_EXPORTCERTIFICATE",
+                                                           "35000000":  "QYCU_RETRIEVEPOPULATECERTIFICATEINFORMATION",
+                                                           "1000000":  "QYCU_ADDCERTIFICATETRUST",
+                                                           "19000000":  "QYCU_RETRIEVECACERTIFICATEINFORMATION",
+                                                           "20000000":  "QYCU_ADDCRLASSOCIATIONTOCA",
+                                                           "11000000":  "QYCU_REMOVECERTIFICATETRUST",
+                                                           "16000000":  "QYCU_EXPORTCERTIFICATEWITHOUTKEY",
+                                                           "14000000":  "QYCU_REMOVECERTIFICATEREQUESTFILE",
+                                                           "23000000":  "QYCU_EXPORTALLCERTIFICATESWITHOUTKEYTOSTORE",
+                                                           "26000000":  "QYCU_VALIDATECACERTIFICATE",
+                                                           "4000000":  "QYCU_CREATESTOREANDCERTIFICATE",
+                                                           "3000000":  "QYCU_CREATENONLOCALCERTIFICATE",
+                                                           "29000000":  "QYCU_PREVIEWCERTIFICATEINFORMATION",
+                                                           "13000000":  "QYCU_RETRIEVECERTIFICATEREQUESTINFORMATION",
+                                                           "9000000":  "QYCU_LISTCERTIFICATES",
+                                                           "21000000":  "QYCU_REMOVECRLASSOCIATIONFROMCA"
+                                                       }
+                                   },
+                     "QYCUUCMGR":  {
+                                       "name":  "User Certificate Manager",
+                                       "localFailures":  {
+
+                                                         },
+                                       "entryPoints":  {
+                                                           "18000000":  "QYCU_SETDIGITALIDCONFIGINFO",
+                                                           "1000000":  "QYCU_USERCERTCREATEFROMOTHERBROWSER",
+                                                           "9000000":  "QYCU_USERCERTRETRIEVEFORCURRENT",
+                                                           "95":  "YCU_PARSEUSERCERT",
+                                                           "12000000":  "QYCU_USERGENANDSIGNCERTREQUEST",
+                                                           "90":  "YCU_FINDCERTUSER",
+                                                           "4000000":  "QYCU_USERCERTASSIGN_2",
+                                                           "6000000":  "QYCU_USERCERTGETVALIDITYPERIOD",
+                                                           "14000000":  "QYCU_USERCERTEXPLIST",
+                                                           "5000000":  "QYCU_USERCERTREMOVE",
+                                                           "80":  "YCU_ADDUSERCERT",
+                                                           "2000000":  "QYCU_USERCERTCREATEFROMMSIEBROWSER",
+                                                           "8000000":  "QYCU_USERCERTRETRIEVE",
+                                                           "13000000":  "QYCU_USERSIGNCERTREQUEST",
+                                                           "10":  "YCU_CREATEUSRSPCOBJECT",
+                                                           "17000000":  "QYCU_RETRIEVEDIGITALIDCONFIGINFO",
+                                                           "40":  "YCU_CONVERTBROWSERINFO",
+                                                           "3000000":  "QYCU_USERCERTASSIGN",
+                                                           "10000000":  "QYCU_USERCERTLIST",
+                                                           "70":  "YCU_REMOVEUSERCERT",
+                                                           "50":  "YCU_CONVERTTOPKCS7",
+                                                           "16000000":  "QYCU_REMOVEDIGITALIDCONFIGINFO",
+                                                           "11000000":  "QYCU_USERCERTLISTFORCURRENT",
+                                                           "60":  "YCU_GETUSERCERTLIST",
+                                                           "7000000":  "QYCU_USERCERTREMOVEFORCURRENT",
+                                                           "15000000":  "QYCU_USERCERTEXPLISTFORCURRENT"
+                                                       }
+                                   },
+                     "QYCUGENMGR":  {
+                                        "name":  "General DCM/PKIX Manager",
+                                        "localFailures":  {
+
+                                                          },
+                                        "entryPoints":  {
+                                                            "4000000":  "QYCU_UPDATEPKIXCAURL",
+                                                            "20":  "YCU_REMOVEURLENTRY",
+                                                            "1000000":  "QYCU_DCMSTARTUP",
+                                                            "3000000":  "QYCU_RETRIEVEPKIXCAURL",
+                                                            "30":  "YCU_RETRIEVEURLENTRY",
+                                                            "2000000":  "QYCU_REMOVEPKIXCAURL",
+                                                            "10":  "YCU_INSERTURLENTRY"
+                                                        }
+                                    },
+                     "QYCULCAMGR":  {
+                                        "name":  "Local Certificate Authority Manager",
+                                        "localFailures":  {
+
+                                                          },
+                                        "entryPoints":  {
+                                                            "1000000":  "QYCU_CREATELOCALCA",
+                                                            "9000000":  "QYCU_GETCACERTIFICATE",
+                                                            "12000000":  "QYCU_RETRIEVELOCALCACERTIFICATEINFORMATION",
+                                                            "2":  "YCU_CERT_OPEN",
+                                                            "4000000":  "QYCU_UPDATELOCALCA",
+                                                            "6000000":  "QYCU_RECEIVECACERT",
+                                                            "5000000":  "QYCU_GETLOCALCAPOLICY",
+                                                            "2000000":  "QYCU_DELETELOCALCA",
+                                                            "8000000":  "QYCU_SETLOCALCAPOLICY",
+                                                            "1":  "YCU_NO_CERT_FILE",
+                                                            "3":  "YCU_CERT_READ",
+                                                            "3000000":  "QYCU_EXPORTLOCALCA",
+                                                            "10000000":  "QYCU_GETISSUECLIENTPOLICY",
+                                                            "4":  "YCU_CONVERT_CERT",
+                                                            "11000000":  "QYCU_EXPORTLOCALCATOSTORE",
+                                                            "7000000":  "QYCU_RECEIVESERVERCERT"
+                                                        }
+                                    },
+                     "QYCUCRLMGR":  {
+                                        "name":  "Certificate Revocation List Manager",
+                                        "localFailures":  {
+
+                                                          },
+                                        "entryPoints":  {
+                                                            "4000000":  "QYCU_REMOVECRLLOCATION",
+                                                            "1000000":  "QYCU_ADDCRLLOCATION",
+                                                            "3000000":  "QYCU_LISTCRLLOCATION",
+                                                            "5000000":  "QYCU_UPDATECRLLOCATION",
+                                                            "2000000":  "QYCU_GETCRLLOCATION",
+                                                            "2":  "ADD_UPDATE_CRL_LOCATION"
+                                                        }
+                                    },
+                     "QYCUAPPMGR":  {
+                                        "name":  "Application Manager",
+                                        "localFailures":  {
+
+                                                          },
+                                        "entryPoints":  {
+                                                            "1000000":  "QYCU_APPLIST",
+                                                            "9000000":  "QYCU_APPLISTUSINGSYSTEMSTORE",
+                                                            "12000000":  "QYCU_APPREMOVE",
+                                                            "4000000":  "QYCU_APPREMOVECERT",
+                                                            "6000000":  "QYCU_APPSETCATRUST",
+                                                            "14000000":  "QYCU_APPUPDATEDEFINITION",
+                                                            "5000000":  "QYCU_APPASSIGNCERT",
+                                                            "2000000":  "QYCU_APPLISTFORCATRUST",
+                                                            "8000000":  "QYCU_APPLISTTRUSTINGCA",
+                                                            "13000000":  "QYCU_APPREGISTER",
+                                                            "3000000":  "QYCU_APPLISTCAS",
+                                                            "10000000":  "QYCU_APPLISTUSINGOBJECTSIGNSTORE",
+                                                            "16000000":  "QYCU_APPVALIDATE",
+                                                            "11000000":  "QYCU_APPGETSELECTEDINFO",
+                                                            "7000000":  "QYCU_APPLISTASSIGNEDCERT",
+                                                            "15000000":  "QYCU_APPLISTFORSIGNING"
+                                                        }
+                                    },
+                     "QYCUYDOMGR":  {
+                                        "name":  "Object Signing Manager",
+                                        "localFailures":  {
+
+                                                          },
+                                        "entryPoints":  {
+                                                            "4000000":  "QYCU_VERIFYSIGNATUREBATCH",
+                                                            "8000000":  "QYCU_VERIFYSIGNATUREINBATCH",
+                                                            "6000000":  "QYCU_BROWSEDIRECTORY",
+                                                            "1000000":  "QYCU_SIGNOBJECT",
+                                                            "3000000":  "QYCU_SIGNOBJECTBATCH",
+                                                            "5000000":  "QYCU_RETRIEVESIGNATURE",
+                                                            "7000000":  "QYCU_SIGNOBJECTINBATCH",
+                                                            "2000000":  "QYCU_VERIFYSIGNATURE"
+                                                        }
+                                    },
+                     "QYCUCSMGR":  {
+                                       "name":  "Certificate Store Manager",
+                                       "localFailures":  {
+
+                                                         },
+                                       "entryPoints":  {
+                                                           "4000000":  "QYCU_SETCERTIFICATESTOREDEFAULTCERTIFICATE",
+                                                           "6000000":  "QYCU_STOREVERIFYFILE",
+                                                           "1000000":  "QYCU_CHANGECERTIFICATESTOREPASSWORD",
+                                                           "3000000":  "QYCU_DELETECERTIFICATESTORE",
+                                                           "5000000":  "QYCU_STOREVERIFY",
+                                                           "7000000":  "QYCU_RESETCERTIFICATESTOREPASSWORD",
+                                                           "2000000":  "QYCU_CREATECERTIFICATESTORE"
+                                                       }
+                                   }
+                 },
+    "qycuretcodes":  {
+                         "4080":  "YCU_RC_VALIDATE_SELF_SIGNED",
+                         "-961":  "YCU_RENAME_CERT_FILE",
+                         "4021":  "YCU_RC_SEC_APP_REMOVE_APP",
+                         "4096":  "YCU_RC_YDO_OBJECT_NOT_FOUND",
+                         "4013":  "YCU_RC_SEC_APP_RMV_CERT_USAGE",
+                         "4000":  "YCU_RC_BAD_INPUT_PARAMETER",
+                         "3952":  "YCU_RC_RENAME_NEW_ERROR",
+                         "4057":  "YCU_RC_CRL_PORT_NUM_REQUIRED",
+                         "3912":  "YCU_RC_SOURCE_FILE_NO_EXIST",
+                         "3857":  "YCU_RC_ORGNAME_REQUIRED",
+                         "4066":  "YCU_RC_CRYPTO_RTV_RESOURCES",
+                         "3974":  "YCU_RC_ENVVAR_REQUIRED",
+                         "3947":  "YCU_RC_POLFILE_CREATE_ERROR",
+                         "3976":  "YCU_RC_EXPIREDATE_REQUIRED",
+                         "3850":  "YCU_RC_RESETPW_NOT_ALLOWED",
+                         "3944":  "YCU_RC_VALID_EXCEEDS_CA_EXPIRATION",
+                         "4009":  "YCU_RC_APPLICATION_ID_REQUIRED",
+                         "4056":  "YCU_RC_CRL_CONNECT_TYPE_REQUIRED",
+                         "4007":  "YCU_RC_FUNC_NOT_AT_THIS_TIME",
+                         "4055":  "YCU_RC_CRL_LDAP_SERVER_REQUIRED",
+                         "4022":  "YCU_RC_SEC_APP_UPDATE_APP",
+                         "-99":  "YCU_RC_UNEXPECTED_ERROR",
+                         "4020":  "YCU_RC_SEC_APP_ADD_APP",
+                         "3936":  "YCU_RC_POLFILE_READ_ERROR",
+                         "3973":  "YCU_RC_NEWPASSWORD_REQUIRED",
+                         "-951":  "YCU_RENAME_CAREQ_FILE",
+                         "3939":  "YCU_RC_LISTKEYS_ZERO_KEYS",
+                         "3969":  "YCU_RC_KEYRING_FILE_REQ",
+                         "4049":  "YCU_RC_CRL_UPDATE_LOCATION",
+                         "3968":  "YCU_RC_IMPORT_FILE_REQ",
+                         "4101":  "YCU_RC_YDO_NO_OBJECTS",
+                         "4064":  "YCU_RC_CRYPTO_NO_DEVICES",
+                         "4082":  "YCU_RC_VALIDATE_NO_TRUSTED_CAS",
+                         "3946":  "YCU_RC_FILENAME_CONFLICT_ERROR2",
+                         "4027":  "YCU_RC_SEC_NO_LIST_CAS",
+                         "4053":  "YCU_RC_CRL_LIST_LOCATIONS",
+                         "4050":  "YCU_RC_CRL_REMOVE_LOCATION",
+                         "3858":  "YCU_RC_VALID_TOO_LONG",
+                         "3865":  "YCU_RC_NULL_CERT_REQ",
+                         "3970":  "YCU_RC_KEYLABEL_REQ",
+                         "4098":  "YCU_RC_YDO_VERIFY_SIGNATURE",
+                         "3940":  "YCU_RC_CHECKEXPIRE_ZERO_KEYS",
+                         "3925":  "YCU_RC_POLFILE_OPEN_ERROR",
+                         "3933":  "YCU_RC_FILE_ALREADY_EXIST",
+                         "3926":  "YCU_RC_POLFILE_WRITE_ERROR",
+                         "4081":  "YCU_RC_VALIDATE_NOT_TRUSTED",
+                         "4051":  "YCU_RC_CRL_GET_LOCATION",
+                         "3864":  "YCU_RC_COMMNAME_SRV_REQUIRED",
+                         "4024":  "YCU_RC_SEC_APP_EXISTS",
+                         "4004":  "YCU_RC_PREV_REG",
+                         "4065":  "YCU_RC_CRYPTO_LIST_DEVICES",
+                         "4001":  "YCU_RC_INSUF_INPUT_PARAMETERS",
+                         "-3":  "YCU_RC_USER_CERT_NOT_FOUND",
+                         "4002":  "YCU_RC_BAD_FUNCTION_REQUEST",
+                         "4008":  "YCU_RC_NO_APPS",
+                         "3972":  "YCU_RC_ARMOR_PASSWORD_REQ",
+                         "4017":  "YCU_RC_SEC_APP_LST_APP_BYCERT",
+                         "4048":  "YCU_RC_CRL_ADD_LOCATION",
+                         "4067":  "YCU_RC_CRYPTO_DEVICE_LIST_REQUIRED",
+                         "4003":  "YCU_RC_NO_VAL_CERT",
+                         "3948":  "YCU_RC_POLFILE_CONVERSION_ERROR",
+                         "4015":  "YCU_RC_SEC_APP_RMV_CA_TRUST",
+                         "4010":  "YCU_RC_TRUST_REQ",
+                         "-902":  "YCU_RENAME_CA_FILE",
+                         "3843":  "YCU_RC_SHORT_STATE",
+                         "4018":  "YCU_RC_SEC_APP_UPD_CERT_USAGE",
+                         "-1":  "YCU_RC_USRPRF_NOT_FOUND",
+                         "3891":  "YCU_RC_EXISTS_EXPORTFILE",
+                         "3860":  "YCU_RC_PASSWORD_REQUIRED",
+                         "3975":  "YCU_RC_CERTREQ_FILE_REQ",
+                         "3892":  "YCU_RC_EXISTS_IMPORTFILE",
+                         "4014":  "YCU_RC_SEC_APP_ADD_CA_TRUST",
+                         "3859":  "YCU_RC_COUNTRY_REQUIRED",
+                         "3945":  "YCU_RC_KEYDB_FILENAME_ERROR",
+                         "3856":  "YCU_RC_COMMNAME_CA_REQUIRED",
+                         "4097":  "YCU_RC_YDO_SIGN_OBJECT",
+                         "4058":  "YCU_RC_CRL_LOGIN_PWD_TOO_LONG",
+                         "3846":  "YCU_RC_BAD_KEYRING_FILENAME",
+                         "4052":  "YCU_RC_CRL_NO_LOCATIONS",
+                         "3984":  "YCU_RC_CERT_NOT_FOUND3",
+                         "3845":  "YCU_RC_AUTH_PROB",
+                         "3956":  "YCU_RC_CA_NO_CREATE_CLIENT",
+                         "3943":  "YCU_RC_FILENAME_CONFLICT_ERROR",
+                         "-992":  "YCU_SWAP_USER",
+                         "3861":  "YCU_RC_MISSING_INPUT",
+                         "3913":  "YCU_RC_DEST_FILE_ALREADY_EXIST",
+                         "4100":  "YCU_RC_YDO_BROWSE_DIRECTORY",
+                         "4011":  "YCU_RC_SEC_APP_RTV_CERT_USAGE",
+                         "4099":  "YCU_RC_YDO_RETRIEVE_SIGNATURE",
+                         "4023":  "YCU_RC_CA_IN_USE",
+                         "4012":  "YCU_RC_SEC_APP_LABEL_TOO_BIG",
+                         "3953":  "YCU_RC_RENAME_EXISTING_ERROR",
+                         "4016":  "YCU_RC_SEC_APP_LST_APP_BYCA",
+                         "-2":  "YCU_RC_NOT_AUTH_USRPRF",
+                         "4068":  "YCU_RC_CRYPTO_DEVICE_NAME_REQUIRED",
+                         "3949":  "YCU_RC_POLFILE_LOCK_ERROR",
+                         "-999":  "YCU_RC_LAST_ENTRY",
+                         "3932":  "YCU_RC_KDB_FILE_ALREADY_EXIST2",
+                         "0":  "YCU_RC_SUCCESS",
+                         "4083":  "YCU_RC_VALIDATE_NO_CERT_ASSIGNED",
+                         "4059":  "YCU_RC_CRL_SERVER_LOGIN_DN_TOO_LONG",
+                         "3849":  "YCU_RC_PASSWORD_NOTEQUAL",
+                         "3985":  "YCU_RC_LDAP_MAPPING_NOT_DEFINED",
+                         "3844":  "YCU_RC_BAD_VALIDITY",
+                         "4054":  "YCU_RC_CRL_LOCATION_REQUIRED",
+                         "3971":  "YCU_RC_EXPORT_FILE_REQ",
+                         "3941":  "YCU_RC_COUNTRYNAME_REQUIRED"
+                     },
+    "gskkmerr":  {
+                     "313":  "GSKKM_WEBDB_PK_chgpw_and_armor",
+                     "384":  "#define GSKKM_ERR_INDEX_NOT_FOUND",
+                     "31":  "GSKKM_ERR_CRYPTO_UNSUPPORTED_ALGORITHM",
+                     "117":  "GSKKM_ERR_ISSUING_CERTIFICATE",
+                     "59":  "GSKKM_ERR_NUMBER_SIZE",
+                     "363":  "#define GSKKM_PKCS12_CERTTYPE_UNSUP",
+                     "5":  "GSKKM_ERR_DATABASE",
+                     "53":  "GSKKM_ERR_VALIDATION_KEY_UNKNOWN_CRITICAL_EXTENSION",
+                     "47":  "GSKKM_ERR_VALIDATION_KEY_IS_REVOKED",
+                     "100":  "GSKKM_ERR_REQKEY_FOR_CERT_NULL",
+                     "329":  "GSKKM_ERR_RENAME_STASH_FILE",
+                     "78":  "GSKKM_ERR_FILE_OPEN",
+                     "308":  "GSKKM_ERR_StashKdbPwd",
+                     "89":  "GSKKM_ERR_DN_TAG_NULL",
+                     "108":  "GSKKM_ERR_INVALID_DN_INPUT",
+                     "310":  "GSKKM_ERR_NoTrustedDNs",
+                     "39":  "GSKKM_ERR_VALIDATION_KEY_VALIDITY",
+                     "110":  "GSKKM_ERR_LABEL_LIST_CORRUPT",
+                     "325":  "GSKKM_ERR_CPY_OBJ",
+                     "51":  "GSKKM_ERR_VALIDATION_ISSUER_ALTERNATIVE_NAME",
+                     "344":  "GSKKM_ERR_CCA_KEYID",
+                     "13":  "GSKKM_ERR_DATABASE_WRITE",
+                     "23":  "GSKKM_ERR_DATABASE_LDAP",
+                     "72":  "GSKKM_ERR_UNSUPPORTED_OPTION",
+                     "45":  "GSKKM_ERR_VALIDATION_KEY_SIGNATURE",
+                     "14":  "GSKKM_ERR_DATABASE_VALIDATION",
+                     "103":  "GSKKM_ERR_KEYREC_PRIVATE_KEY_NULL",
+                     "87":  "GSKKM_ERR_BASE64_ENCODING",
+                     "49":  "GSKKM_ERR_VALIDATION_KEY_PRIVATE_KEY_USAGE_PERIOD",
+                     "116":  "GSKKM_ERR_KDB2KYR",
+                     "81":  "GSKKM_ERR_FILE_OPEN_NOT_EXIST",
+                     "125":  "GSKKM_ERR_NO_HDW_ALG",
+                     "3":  "GSKKM_ERR_ASN_INITIALIZATION",
+                     "75":  "GSKKM_ERR_CMDCAT_OPEN",
+                     "351":  "GSKKM_ERR_HARDWARE_KEYSIZE_2_LARGE",
+                     "301":  "GSKKM_WEBDB_InvalidVersion",
+                     "94":  "GSKKM_ERR_KEYPAIRDB_NOT_EXIST",
+                     "101":  "GSKKM_ERR_KEYDB_PRIVATE_KEY_NULL",
+                     "85":  "GSKKM_ERR_BASE64_INVALID_DATA",
+                     "314":  "GSKKM_WEBDB_webdb_findarmorstring",
+                     "114":  "GSKKM_ERR_PBE_ALG_UNSUPPORT",
+                     "21":  "GSKKM_ERR_DATABASE_DUPLICATE_KEY",
+                     "362":  "#define GSKKM_PKCS12_CONTENT_TYPE_UNSUP",
+                     "24":  "GSKKM_ERR_CRYPTO",
+                     "370":  "#define GSKKM_MULTDN_SLOT_OVERFLOW",
+                     "52":  "GSKKM_ERR_VALIDATION_KEY_USAGE",
+                     "345":  "GSKKM_ERR_CCA_DESIGNATE",
+                     "43":  "GSKKM_ERR_VALIDATION_KEY_MISSING_REQUIRED_EXTENSIONS",
+                     "383":  "#define GSKKM_ERR_INDEX_EXISTS",
+                     "340":  "GSKKM_ERR_CCA",
+                     "309":  "GSKKM_ERR_RecoverKdbPwd",
+                     "331":  "GSKKM_ERR_RENEW_CERT_ISSUER",
+                     "32":  "GSKKM_ERR_CRYPTO_INPUT_GREATER_THAN_MODULUS",
+                     "20":  "GSKKM_ERR_DATABASE_KEY_INTEGRITY",
+                     "73":  "GSKKM_ERR_GET_TIME",
+                     "361":  "#define GSKKM_PKCS12_MULTIPLE_AUTHSAFES_UNSUP",
+                     "8":  "GSKKM_ERR_DATABASE_CREATE",
+                     "29":  "GSKKM_ERR_CRYPTO_DIGEST",
+                     "347":  "GSKKM_ERR_CCA_CIPHER_OUTPUTTOOLARGE",
+                     "2":  "GSKKM_ERR_ASN",
+                     "62":  "GSKKM_ERR_PASSWORD_EXPIRATION_TIME",
+                     "33":  "GSKKM_ERR_CRYPTO_UNSUPPORTED_MODULUS_SIZE",
+                     "84":  "GSKKM_ERR_FILE_REMOVE",
+                     "107":  "GSKKM_ERR_UNDEFINED_KEY_TYPE",
+                     "58":  "GSKKM_ERR_NULL_PARAMETER",
+                     "112":  "GSKKM_ERR_PKCS12_PWD_CORRUPTION",
+                     "48":  "GSKKM_ERR_VALIDATION_KEY_AUTHORITY_KEY_IDENTIFIER",
+                     "390":  "#define GSKKM_ERR_DIR_INDEX_ERROR",
+                     "326":  "GSKKM_ERR_SWAP_USER",
+                     "42":  "GSKKM_ERR_VALIDATION_KEY_ISSUER_NOT_FOUND",
+                     "65":  "GSKKM_ERR_THREAD_WAIT_FOR_EXIT",
+                     "302":  "GSKKM_WEBDB_WrongAlgorithmID1",
+                     "395":  "#define GSKKM_ERR_NO_ACX_INSTALLED",
+                     "35":  "GSKKM_ERR_VALIDATION_KEY",
+                     "60":  "GSKKM_ERR_OLD_PASSWORD",
+                     "315":  "GSKKM_WEBDB_PK_chgpw_and_dearmor",
+                     "115":  "GSKKM_ERR_KYR2KDB",
+                     "34":  "GSKKM_ERR_VALIDATION",
+                     "126":  "GSKKM_ERR_VALIDATION_DUP_COMMON_NAME",
+                     "104":  "GSKKM_ERR_KEYREC_CERTIFICATE_NULL",
+                     "28":  "GSKKM_ERR_CRYPTO_VERIFY",
+                     "76":  "GSKKM_ERR_ERRCAT_OPEN",
+                     "382":  "#define GSKKM_ERR_INDEX_DAMAGED",
+                     "50":  "GSKKM_ERR_VALIDATION_SUBJECT_ALTERNATIVE_NAME",
+                     "317":  "GSKKM_ERR_FileRead",
+                     "330":  "GSKKM_ERR_RENEW_CERT_NOT_FOUND",
+                     "106":  "GSKKM_ERR_INVALID_KEYDB_NAME",
+                     "80":  "GSKKM_ERR_FILE_OPEN_TO_WRITE",
+                     "19":  "GSKKM_ERR_DATABASE_PASSWORD_CORRUPTION",
+                     "10":  "GSKKM_ERR_DATABASE_DELETE",
+                     "9":  "GSKKM_ERR_DATABASE_ALREADY_EXISTS",
+                     "346":  "GSKKM_ERR_CCA_INVALIDKEYSTORE",
+                     "57":  "GSKKM_ERR_PARAMETER",
+                     "321":  "GSKKM_ERR_NotEnoughSpace",
+                     "64":  "GSKKM_ERR_THREAD_CREATE",
+                     "327":  "GSKKM_ERR_SWAP_BACK",
+                     "319":  "GSKKM_ERR_GetDNInCharacterFormat",
+                     "12":  "GSKKM_ERR_DATABASE_READ",
+                     "119":  "GSKKM_ERR_WEBDB_DATA_BAD_FORMAT",
+                     "99":  "GSKKM_ERR_KEYDB_TRUSTCA_NULL",
+                     "113":  "GSKKM_ERR_EXPORT_TYPE",
+                     "93":  "GSKKM_ERR_KEYDB_NOT_EXIST",
+                     "367":  "#define GSKKM_PKCS7_CONTENT_TYPE_UNSUP",
+                     "1":  "GSKKM_ERR_UNKNOWN",
+                     "66":  "GSKKM_ERR_IO",
+                     "303":  "GSKKM_WEBDB_ProbablyWrongPassword",
+                     "82":  "GSKKM_ERR_FILE_OPEN_NOT_ALLOWED",
+                     "306":  "GSKKM_ERR_GET_CERTIFICATE_BY_DN",
+                     "41":  "GSKKM_ERR_VALIDATION_KEY_VALIDITY_PRIVATE_KEY_USAGE",
+                     "311":  "GSKKM_ERR_NoMatchingKeyRecord",
+                     "37":  "GSKKM_ERR_VALIDATION_KEY_WRONG_VERSION",
+                     "111":  "GSKKM_ERR_INVALID_PKCS12_DATA",
+                     "91":  "GSKKM_ERR_DN_C_NULL",
+                     "365":  "#define GSKKM_PKCS12_DIGEST_ERROR",
+                     "79":  "GSKKM_ERR_FILE_OPEN_TO_READ",
+                     "68":  "GSKKM_ERR_PKCS11",
+                     "360":  "#define GSKKM_PKCS12_VERSION_UNSUP",
+                     "318":  "GSKKM_ERR_NotSystemState",
+                     "118":  "GSKKM_ERR_FIND_ISSUER_CHAIN",
+                     "18":  "GSKKM_ERR_DATABASE_CORRUPTION",
+                     "90":  "GSKKM_ERR_DN_CN_NULL",
+                     "366":  "#define GSKKM_PKCS12_PRIVATE_KEYPAIR_MISMATCH",
+                     "121":  "GSKKM_ERR_EXPIRE_DAYS_TOO_LARGE",
+                     "56":  "GSKKM_ERR_MUTEX",
+                     "341":  "GSKKM_ERR_CCA_RESOLVE",
+                     "83":  "GSKKM_ERR_FILE_WRITE",
+                     "92":  "GSKKM_ERR_INVALID_DB_HANDLE",
+                     "71":  "GSKKM_ERR_MEMORY_ALLOCATE",
+                     "0":  "GSKKM_OK",
+                     "305":  "GSKKM_WEBDB_WrongAlgorithmID2",
+                     "11":  "GSKKM_ERR_DATABASE_NOT_OPENED",
+                     "105":  "GSKKM_ERR_CRLS_NULL",
+                     "16":  "GSKKM_ERR_DATABASE_INVALID_PASSWORD",
+                     "77":  "GSKKM_ERR_FILENAME_NULL",
+                     "25":  "GSKKM_ERR_CRYPTO_ENGINE",
+                     "123":  "GSKKM_ERR_PWD_NO_NUMBER",
+                     "54":  "GSKKM_ERR_VALIDATION_KEY_PAIR",
+                     "343":  "GSKKM_ERR_CCA_ALLOC",
+                     "6":  "GSKKM_ERR_DATABASE_OPEN",
+                     "67":  "GSKKM_ERR_LOAD",
+                     "324":  "GSKKM_ERR_Bsafe_Call",
+                     "40":  "GSKKM_ERR_VALIDATION_KEY_VALIDITY_PERIOD",
+                     "307":  "GSKKM_ERR_Base64Conversion",
+                     "353":  "GSKKM_ERR_CERT_WITH_HDWPRIVKEY_FOUND",
+                     "27":  "GSKKM_ERR_CRYPTO_SIGN",
+                     "30":  "GSKKM_ERR_CRYPTO_PARAMETER",
+                     "96":  "GSKKM_ERR_PASSWORD_CHANGE_MATCH",
+                     "312":  "GSKKM_WEBDB_ConversionError",
+                     "97":  "GSKKM_ERR_KEYDB_NULL",
+                     "364":  "#define GSKKM_PKCS12_BAG_TYPE_UNKNOWN",
+                     "380":  "#define GSKKM_ERR_INDEX_NOT_AUTH",
+                     "352":  "GSKKM_ERR_CCA_CARD_NO_MEMORY",
+                     "4":  "GSKKM_ERR_ASN_PARAMETER",
+                     "46":  "GSKKM_ERR_VALIDATION_KEY_ROOT_KEY_NOT_TRUSTED",
+                     "120":  "GSKKM_ERR_WEBDB_NOTHING_TO_WRITE",
+                     "74":  "GSKKM_ERR_CREATE_MUTEX",
+                     "98":  "GSKKM_ERR_REQKEYDB_NULL",
+                     "70":  "GSKKM_ERR_DB_TABLE_CORRUPTED",
+                     "381":  "#define GSKKM_ERR_INDEX_LOCKED",
+                     "17":  "GSKKM_ERR_DATABASE_INVALID_FILE_TYPE",
+                     "69":  "GSKKM_ERR_NOT_INITIALIZED",
+                     "88":  "GSKKM_ERR_BASE64_DECODING",
+                     "385":  "#define GSKKM_ERR_INDEX_NO_ENTRY",
+                     "349":  "GSKKM_ERR_CCA_DEV_VOFF",
+                     "55":  "GSKKM_ERR_VALIDATION_CRL",
+                     "22":  "GSKKM_ERR_DATABASE_PASSWORD_ENCRYPTION",
+                     "44":  "GSKKM_ERR_VALIDATION_KEY_BASIC_CONSTRAINTS",
+                     "328":  "GSKKM_ERR_CHGOWN_OBJ",
+                     "323":  "GSKKM_ERR_Parsing_Certificate_Chain",
+                     "109":  "GSKKM_ERR_KEY_GET_BY_LABEL",
+                     "61":  "GSKKM_ERR_NEW_PASSWORD",
+                     "322":  "GSKKM_ERR_NotEnoughSpaceForChain",
+                     "342":  "GSKKM_ERR_CCA_MATDEV",
+                     "15":  "GSKKM_ERR_DATABASE_INVALID_VERSION",
+                     "102":  "GSKKM_ERR_KEYDB_DEFAULT_KEY_NULL",
+                     "86":  "GSKKM_ERR_BASE64_INVALID_MSGTYPE",
+                     "350":  "GSKKM_ERR_CCA_DUPLABEL",
+                     "26":  "GSKKM_ERR_CRYPTO_ALGORITHM",
+                     "122":  "GSKKM_ERR_PWD_TOO_SHORT",
+                     "36":  "GSKKM_ERR_VALIDATION_DUPLICATE_EXTENSIONS",
+                     "38":  "GSKKM_ERR_VALIDATION_KEY_EXTENSIONS_REQUIRED",
+                     "316":  "GSKKM_ERR_ChangeObjectAuthority",
+                     "7":  "GSKKM_ERR_DATABASE_RE_OPEN",
+                     "348":  "GSKKM_ERR_CCA_DEV_UNAVAIL",
+                     "63":  "GSKKM_ERR_THREAD",
+                     "124":  "GSKKM_ERR_PWD_NO_CONTROL_KEY",
+                     "95":  "GSKKM_ERR_PWDFILE_NOT_EXIST"
+                 },
+    "utilityFunctions":  {
+                             "25500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_GETREQUESTCERTIFICATEITEM_2"
+                                       },
+                             "10500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_BASE64DECODEBUFTOBUF"
+                                       },
+                             "101000":  {
+                                            "category":  "Hardware Device Utility",
+                                            "name":  "QYCU_LIST_CRYPTO_DEVICES"
+                                        },
+                             "28000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_REMOVECRLASSOCIATION"
+                                       },
+                             "27000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_ISSUECERT"
+                                       },
+                             "57000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_GETSTASHFILENAME"
+                                       },
+                             "3000":  {
+                                          "category":  "Application Utility",
+                                          "name":  "QYCU_ASSIGNCERTTOAPP"
+                                      },
+                             "92000":  {
+                                           "category":  "Certificate Revocation List Utility",
+                                           "name":  "QYCU_LOCK_CRL_VLDL"
+                                       },
+                             "14500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_CREATESELFSIGNED"
+                                       },
+                             "74500":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_CONVERT_DATA_TO_ASCII"
+                                       },
+                             "22500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_GETCERTIFICATESTATUS"
+                                       },
+                             "20500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_EXTRACTFILETOBUF3"
+                                       },
+                             "72000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_TOD_ERROR2"
+                                       },
+                             "17500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_EXPORTCERT"
+                                       },
+                             "31500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_VALIDATECERT"
+                                       },
+                             "19000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_EXTRACTCERTDATA"
+                                       },
+                             "55000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_OPENCERTIFICATESTORE2"
+                                       },
+                             "50000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_SETDEFAULTCERT"
+                                       },
+                             "10000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_ADDCRLASSOCIATION"
+                                       },
+                             "90000":  {
+                                           "category":  "Certificate Revocation List Utility",
+                                           "name":  "QYCU_CREATE_CRL_VLDL"
+                                       },
+                             "81000":  {
+                                           "category":  "Local Certificate Authority Utility",
+                                           "name":  "QYCU_READ_POLICY2"
+                                       },
+                             "82000":  {
+                                           "category":  "Local Certificate Authority Utility",
+                                           "name":  "QYCU_READ_POLICY3"
+                                       },
+                             "56000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_CONVETRKDBTOKYR"
+                                       },
+                             "73000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_ALLOCATE_IOVEC2"
+                                       },
+                             "26700":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_IMPORTCERTWITHLABEL"
+                                       },
+                             "75000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_CONVERT_DATA_TO_JOB_CCSID"
+                                       },
+                             "60000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_STASHPASSWORD"
+                                       },
+                             "26500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_IMPORTCERT"
+                                       },
+                             "100000":  {
+                                            "category":  "Hardware Device Utility",
+                                            "name":  "QYCU_RTV_CRYPTO_RESOURCES"
+                                        },
+                             "13000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_CHECKIFTHEREANDSTORE"
+                                       },
+                             "21000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_GETCERTIFICATEITEM"
+                                       },
+                             "22000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_GETCERTIFICATELABELLIST"
+                                       },
+                             "71500":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_TOD_ERROR"
+                                       },
+                             "54000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_OPENCERTIFICATESTORE"
+                                       },
+                             "84000":  {
+                                           "category":  "Local Certificate Authority Utility",
+                                           "name":  "QYCU_FLUSH_POLICY"
+                                       },
+                             "91000":  {
+                                           "category":  "Certificate Revocation List Utility",
+                                           "name":  "QYCU_FIND_CRL_VLDL"
+                                       },
+                             "73500":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_MALLOC_STORAGE"
+                                       },
+                             "59000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_CREATECERTSTORE"
+                                       },
+                             "16000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_DELETEREQUESTCERT"
+                                       },
+                             "11500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_CHANGECRYPTODEVICELIST"
+                                       },
+                             "11000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_BASE64ENCODEBUFTOBUF"
+                                       },
+                             "23000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_GETCERTSIGNERS"
+                                       },
+                             "30500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_SETCERTIFICATETRUSTSTATUS"
+                                       },
+                             "85000":  {
+                                           "category":  "Local Certificate Authority Utility",
+                                           "name":  "QYCU_FLUSH_POLICY2"
+                                       },
+                             "86000":  {
+                                           "category":  "Local Certificate Authority Utility",
+                                           "name":  "QYCU_FLUSH_POLICY3"
+                                       },
+                             "28500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_REMOVECRLASSOCIATION2"
+                                       },
+                             "74000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_CREATE_USRSPC_OBJECT"
+                                       },
+                             "93000":  {
+                                           "category":  "Certificate Revocation List Utility",
+                                           "name":  "QYCU_RTV_VLDL_ENTRY"
+                                       },
+                             "62000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_OPENCERTIFICATESTORE4"
+                                       },
+                             "12000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_CHECKFORBASE64FILE"
+                                       },
+                             "13500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_CHECKIFTHEREANDSTORE2"
+                                       },
+                             "29000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_REMOVEPRIVATEKEYINFO"
+                                       },
+                             "21500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_GETCERTIFICATEITEM_2"
+                                       },
+                             "14000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_CREATECERTREQ"
+                                       },
+                             "53000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_CHANGESTASHFILEPASSWORD"
+                                       },
+                             "19500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_EXTRACTFILETOBUF"
+                                       },
+                             "23500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_GETCERTSIGNERS2"
+                                       },
+                             "80000":  {
+                                           "category":  "Local Certificate Authority Utility",
+                                           "name":  "QYCU_READ_POLICY"
+                                       },
+                             "72500":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_ALLOCATE_IOVEC1"
+                                       },
+                             "58000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_GETREQUESTFILENAME"
+                                       },
+                             "17000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_ENCRYPTWITHPUBLICKEY"
+                                       },
+                             "70000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_RENAME"
+                                       },
+                             "70500":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_CHGOWN"
+                                       },
+                             "24000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_GETCRLASSOCIATION"
+                                       },
+                             "30000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_RETRIEVECERTITEM"
+                                       },
+                             "87000":  {
+                                           "category":  "Local Certificate Authority Utility",
+                                           "name":  "QYCU_CHGOWN_POLICY"
+                                       },
+                             "18000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_EXPORTCERTDATA"
+                                       },
+                             "29500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_RENEWCERT"
+                                       },
+                             "51000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_OPENCERTIFICATESTORE3"
+                                       },
+                             "63000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_GETCERTSTOREPASSWORD"
+                                       },
+                             "12500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_CHECKFORX509CERT"
+                                       },
+                             "1000":  {
+                                          "category":  "Application Utility",
+                                          "name":  "QYCU_UPDATEAPPCATRUST"
+                                      },
+                             "24500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_GET1STCERTWITHPRIVATEKEY"
+                                       },
+                             "15000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_CREATESIGNEDCERT"
+                                       },
+                             "83000":  {
+                                           "category":  "Local Certificate Authority Utility",
+                                           "name":  "QYCU_CREATE_POLICY"
+                                       },
+                             "26000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_GETREQUESTCERTIFICATELABELLIST"
+                                       },
+                             "18500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_EXPORTCERT_2"
+                                       },
+                             "71000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_CPYOBJ"
+                                       },
+                             "27500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_RECEIVECERT"
+                                       },
+                             "2000":  {
+                                          "category":  "Application Utility",
+                                          "name":  "QYCU_REMOVEAPPSASSIGNEDCERT"
+                                      },
+                             "15500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_DELETECERT"
+                                       },
+                             "25000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_GETREQUESTCERTIFICATEITEM"
+                                       },
+                             "52000":  {
+                                           "category":  "Certificate Store Utility",
+                                           "name":  "QYCU_CERTSTOREPASSWORD"
+                                       },
+                             "31000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_STORECACERTIFICATE"
+                                       },
+                             "20000":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_EXTRACTFILETOBUF2"
+                                       },
+                             "16500":  {
+                                           "category":  "Certificate Utility",
+                                           "name":  "QYCU_ENCRYPTWITHPRIVATEKEY"
+                                       },
+                             "100":  {
+                                         "category":  "Application Utility",
+                                         "name":  "QYCU_RTVAPPS"
+                                     }
+                         }
+}

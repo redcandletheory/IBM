@@ -30,11 +30,42 @@ public class DcmSearchService {
         }
     }
 
+    public static class GskDetail {
+        public long code;
+        public String constant;
+        public String originFunction;
+        public String serviceProgram;
+        public String entryPoint;
+        public String jniFunction;
+        public String targetObject;
+        public String failureDomain;
+        public String rootCause;
+        public String msgId;
+        public List<String> recoveryCommands = new ArrayList<>();
+
+        public GskDetail(long code, String constant, String originFunction, String serviceProgram, String entryPoint, String jniFunction, String targetObject, String failureDomain, String rootCause, String msgId, String... cmds) {
+            this.code = code;
+            this.constant = constant;
+            this.originFunction = originFunction;
+            this.serviceProgram = serviceProgram;
+            this.entryPoint = entryPoint;
+            this.jniFunction = jniFunction;
+            this.targetObject = targetObject;
+            this.failureDomain = failureDomain;
+            this.rootCause = rootCause;
+            this.msgId = msgId;
+            if (cmds != null) {
+                this.recoveryCommands.addAll(Arrays.asList(cmds));
+            }
+        }
+    }
+
     private final Map<String, ProgramInfo> programs = new HashMap<>();
     private final Map<Long, UtilityInfo> utilityFunctions = new HashMap<>();
     private final List<Long> sortedUtilityCodes = new ArrayList<>();
     private final Map<Long, String> qycuretcodes = new HashMap<>();
     private final Map<Long, String> gskkmerr = new HashMap<>();
+    private final Map<Long, GskDetail> gskDetails = new HashMap<>();
 
     public DcmSearchService() {
         initDatabase();
@@ -569,8 +600,75 @@ public class DcmSearchService {
         gskkmerr.put(63L, "GSKKM_ERR_THREAD");
         gskkmerr.put(124L, "GSKKM_ERR_PWD_NO_CONTROL_KEY");
         gskkmerr.put(95L, "GSKKM_ERR_PWDFILE_NOT_EXIST");
+
+        // gskssl.h SSL / TLS protocol codes
+        gskkmerr.put(406L, "GSK_ERROR_IO");
+        gskkmerr.put(407L, "GSK_ERROR_BAD_KEYFILE_LABEL");
+        gskkmerr.put(408L, "GSK_ERROR_BAD_KEYFILE_PASSWORD");
+        gskkmerr.put(6000L, "GSK_AS400_ERROR_NOT_TRUSTED");
+        gskkmerr.put(6001L, "GSK_AS400_ERROR_NO_TEMPORARY_STORAGE");
+        gskkmerr.put(6002L, "GSK_AS400_ERROR_TIMED_OUT");
+        gskkmerr.put(6003L, "GSK_AS400_ERROR_PASSWORD_EXPIRED");
+        gskkmerr.put(6004L, "GSK_AS400_ERROR_ALREADY_INITIALIZED");
+        gskkmerr.put(6005L, "GSK_AS400_ERROR_NOT_INITIALIZED");
+        gskkmerr.put(6006L, "GSK_AS400_ERROR_NO_APPLICATION_ID");
+        gskkmerr.put(6007L, "GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED");
+        gskkmerr.put(6008L, "GSK_AS400_ERROR_INVALID_CERTIFICATE_NAME");
+        gskkmerr.put(6009L, "GSK_AS400_ERROR_CERT_EXPIRED");
+        gskkmerr.put(6010L, "GSK_AS400_ERROR_CLOSED");
+        gskkmerr.put(6011L, "GSK_AS400_ERROR_BAD_CIPHER_SUITE");
+        gskkmerr.put(6012L, "GSK_AS400_ERROR_INVALID_STATE");
+        gskkmerr.put(6013L, "GSK_AS400_ERROR_UNSUPPORTED_PROTOCOL");
+        gskkmerr.put(6014L, "GSK_AS400_ERROR_CRYPTO_HARDWARE_FAILED");
+        gskkmerr.put(6015L, "GSK_AS400_ERROR_BAD_CERT_STORE_PASSWORD");
+        gskkmerr.put(6016L, "GSK_AS400_ERROR_NO_CERT_STORE_PASSWORD");
+        gskkmerr.put(6017L, "GSK_AS400_ERROR_KEYRING_NOT_FOUND");
+        gskkmerr.put(6018L, "GSK_AS400_ERROR_APPLICATION_ALREADY_DEFINED");
+        gskkmerr.put(6019L, "GSK_AS400_ERROR_NO_DEFAULT_CERT");
+        gskkmerr.put(6020L, "GSK_AS400_ERROR_NO_KEYRING_PASSWORD");
+
+        initGskDetails();
+
         sortedUtilityCodes.addAll(utilityFunctions.keySet());
         Collections.sort(sortedUtilityCodes, Collections.reverseOrder());
+    }
+
+    private void initGskDetails() {
+        // Detailed Functional, Module, and JNI mappings
+        gskDetails.put(6L, new GskDetail(6L, "GSKKM_ERR_DATABASE_OPEN", "gskkm_open_database() / gskkm_open_key_database()", "QYCUCSMGR / QYCUCTMGR", "QYCU_OPENSTORE / QYCU_LISTCERTIFICATES", "qycu_listCertificatesJ / qycu_openStoreJ", "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB", "Key Database Open & IFS Authority", "Cannot open certificate store file. The .KDB file does not exist or user profile QTMHHTTP lacks *RWX data authority.", "CPDB701", "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')", "CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)", "WRKJOB JOB(*)"));
+        gskDetails.put(16L, new GskDetail(16L, "GSKKM_ERR_DATABASE_INVALID_PASSWORD", "gskkm_verify_password() / gskkm_check_stash()", "QYCUCSMGR", "QYCU_VALIDATEPASSWORD / QYCU_CHANGESTOREPASSWORD", "qycu_listCertificatesJ / qycu_listCACertificatesJ / qycu_changePasswordJ", "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH", "Password Stash & Decryption", "The certificate store password or password stash file (.STH) is invalid, corrupted, or does not match the key database.", "CPDB702", "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH')", "DCM -> Manage Certificate Store -> Select Store -> Change/Reset Password & Stash", "WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)"));
+        gskDetails.put(18L, new GskDetail(18L, "GSKKM_ERR_DATABASE_CORRUPTION", "gskkm_read_record() / gskkm_parse_kdb_header()", "QYCUCSMGR / QYCUCTMGR", "QYCU_READSTORE / QYCU_LISTCERTIFICATES", "qycu_listCertificatesJ / qycu_getCertificateListJ", "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB", "CMS Database Integrity", "Key database file header or record blocks are corrupted. Often caused by binary file transfer truncation or disk fault.", "CPDB703", "RST OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') from backup", "WRKOBJ OBJ(QUSRSYS/QYCU*)"));
+        gskDetails.put(42L, new GskDetail(42L, "GSKKM_ERR_VALIDATION_KEY_ISSUER_NOT_FOUND", "gskkm_validate_certificate() / gskkm_build_certificate_chain()", "QYCUCTMGR / QYCUAPPMGR", "QYCU_VALIDATECERTIFICATE / QYCU_APPASSIGNCERT", "qycu_validateCertificateJ / qycu_validateCertificateTrustJ", "Trust Store (DEFAULT.KDB)", "X.509 Chain Building & Trust", "The Certificate Authority (CA) that issued the certificate could not be found in the current certificate store.", "CPDB704", "DCM -> Manage Certificate Store -> Populate / Import CA Certificate", "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/*')"));
+        gskDetails.put(46L, new GskDetail(46L, "GSKKM_ERR_VALIDATION_KEY_ROOT_KEY_NOT_TRUSTED", "gskkm_check_root_trust()", "QYCUCTMGR / QYCUAPPMGR", "QYCU_VALIDATECERTIFICATE / QYCU_ADDCERTIFICATETRUST", "qycu_addCertificateTrustJ / qycu_validateCertificateJ", "Trust Store Root CA", "Root CA Trust Setting", "The Root CA is present in the database, but is marked as Untrusted in DCM.", "CPDB705", "DCM -> Manage Certificate Store -> Work with CA Certificates -> Trust Status -> Mark Trusted"));
+        gskDetails.put(47L, new GskDetail(47L, "GSKKM_ERR_VALIDATION_KEY_IS_REVOKED", "gskkm_check_crl() / gskkm_query_ocsp()", "QYCUCRLMGR / QYCUCTMGR", "QYCU_CHECKREVOCATION / QYCU_VALIDATECERTIFICATE", "qycu_validateCertificateJ", "CRL / OCSP Responder", "Certificate Revocation", "Certificate has been revoked by the issuing Certificate Authority on the CRL or OCSP server.", "CPDB706", "PING <CRL_SERVER_IP>", "WRKOBJ OBJ(QUSRSYS/QYCU*) OBJTYPE(*VLDL)"));
+        gskDetails.put(78L, new GskDetail(78L, "GSKKM_ERR_FILE_OPEN", "gskkm_file_open() / gskkm_open_stream()", "QYCUCSMGR / qycuutl.H", "QYCU_OPENFILE", "qycu_importCertificateJ / qycu_exportCertificateJ", "IFS File Stream", "File I/O Subsystem", "Generic file open error occurred on the IFS path.", "CPDBC05", "WRKLNK OBJ('<FILE_PATH>')", "DSPLOG MSGID(CPFA*)"));
+        gskDetails.put(81L, new GskDetail(81L, "GSKKM_ERR_FILE_OPEN_NOT_EXIST", "gskkm_file_open()", "QYCUCSMGR / qycuutl.H", "QYCU_OPENFILE", "qycu_importCertificateJ", "Import/Export IFS Path", "IFS File Existence", "The target certificate file or directory specified does not exist.", "CPFA0A9", "WRKLNK OBJ('<IFS_PATH>')"));
+        gskDetails.put(82L, new GskDetail(82L, "GSKKM_ERR_FILE_OPEN_NOT_ALLOWED", "gskkm_file_open()", "QYCUCSMGR / qycuutl.H", "QYCU_OPENFILE", "qycu_importCertificateJ", "Target IFS File", "IFS Authority & Permissions", "Permission denied accessing IFS file.", "CPFA09C", "CHGAUT OBJ('<IFS_PATH>') USER(QTMHHTTP) DTAAUT(*RWX)"));
+        gskDetails.put(93L, new GskDetail(93L, "GSKKM_ERR_KEYDB_NOT_EXIST", "gskkm_locate_database()", "QYCUCSMGR / QYCULCAMGR", "QYCU_OPENSTORE / QYCU_OPENLOCALCA", "qycu_openStoreJ / qycu_listCertificatesJ", "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB", "Certificate Store Location", "Key database does not exist at specified IFS path.", "CPDB707", "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')"));
+        gskDetails.put(95L, new GskDetail(95L, "GSKKM_ERR_PWDFILE_NOT_EXIST", "gskkm_read_stash()", "QYCUCSMGR", "QYCU_GETPASSWORDSTASH", "qycu_listCertificatesJ", "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH", "Stash File Location", "Password stash file (.STH) does not exist.", "CPDB708", "DCM -> Manage Certificate Store -> Re-stash Password"));
+        gskDetails.put(109L, new GskDetail(109L, "GSKKM_ERR_KEY_GET_BY_LABEL", "gskkm_find_record_by_label()", "QYCUCTMGR", "QYCU_RETRIEVECERTIFICATEINFORMATION", "qycu_retrieveCertificateInformationJ / qycu_assignCertToAppJ", "Certificate Label in .KDB", "Key Record Lookup", "Certificate label was not found inside the key database.", "CPDB709", "DCM -> Manage Certificate Store -> Work with Certificates -> Verify Label"));
+        gskDetails.put(112L, new GskDetail(112L, "GSKKM_ERR_PKCS12_PWD_CORRUPTION", "gskkm_pkcs12_decrypt() / gskkm_parse_pfx()", "QYCUCTMGR", "QYCU_IMPORTCERTIFICATE", "qycu_importCertificateJ", ".P12 / .PFX Archive", "PKCS#12 Archive Password", "Password provided to decrypt PKCS#12 / PFX certificate file was incorrect or corrupted.", "CPDB710", "Verify PKCS#12 password on export workstation"));
+        gskDetails.put(340L, new GskDetail(340L, "GSKKM_ERR_CCA", "gskkm_cca_call() / gskkm_crypt_hw()", "QYCUHDWMGR", "QYCU_GETCRYPTODEVICELIST", "qycu_getCryptoDeviceListJ", "PCIe Crypto Coprocessor (4767/4769)", "Hardware Cryptography", "Cryptographic Coprocessor CCA subsystem error.", "CPDBC14", "WRKHDWRSC TYPE(*CRP)", "WRKACTJOB SBS(QSEC)"));
+        gskDetails.put(6000L, new GskDetail(6000L, "GSK_AS400_ERROR_NOT_TRUSTED", "gsk_secure_soc_init()", "QSYS/QFLAGSK", "gsk_secure_soc_init", "Native TLS Handshake", "Peer Certificate / Trust Store", "TLS Handshake Trust", "Peer certificate is not trusted. The issuing CA is missing from the *SYSTEM certificate store.", "CPDBC01", "Import Issuing CA into /QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB", "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')"));
+        gskDetails.put(6007L, new GskDetail(6007L, "GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED", "gsk_environment_init()", "QSYS/QFLAGSK / QWTSECA", "gsk_environment_init", "Application ID Lookup", "Registration Facility", "Application ID not registered in IBM i Registration Facility.", "CPDBC07", "WRKREGINF (Work with Registration Information)", "DCM -> Manage Applications -> Add Application"));
+        gskDetails.put(6011L, new GskDetail(6011L, "GSK_AS400_ERROR_BAD_CIPHER_SUITE", "gsk_secure_soc_init()", "QSYS/QFLAGSK", "gsk_secure_soc_init", "TLS Handshake Negotiation", "System Value QSSLCSL", "Cipher Suite Negotiation", "No overlapping cipher suite found between client and server.", "CPDBC0B", "DSPSYSVAL SYSVAL(QSSLCSL)", "DSPSYSVAL SYSVAL(QSSLPCL)"));
+        gskDetails.put(6019L, new GskDetail(6019L, "GSK_AS400_ERROR_NO_DEFAULT_CERT", "gsk_environment_init()", "QSYS/QFLAGSK", "gsk_environment_init", "DCM Certificate Assignment", "Application ID Binding", "Application ID has no certificate assigned in DCM.", "CPDBC13", "DCM -> Manage Certificate Store -> Select *SYSTEM -> Update Application Assignment"));
+        gskDetails.put(406L, new GskDetail(406L, "GSK_ERROR_IO", "gsk_secure_soc_read() / gsk_secure_soc_write()", "QSYS/QFLAGSK", "gsk_secure_soc_read", "Secure Socket I/O", "TCP/IP Socket", "Socket Communication Failure", "Secure socket I/O error or abrupt TCP connection reset.", "CPDBC06", "NETSTAT *CNN (Check socket state)", "WRKJOB JOB(*)"));
+    }
+
+    public GskDetail getGskDetail(long rc) {
+        if (gskDetails.containsKey(rc)) {
+            return gskDetails.get(rc);
+        }
+        String sym = gskkmerr.get(rc);
+        if (sym != null) {
+            String origin = sym.toLowerCase().startsWith("gskkm_") ? "gskkm_" + sym.substring(6).toLowerCase() + "()" : "gsk_secure_soc_*()";
+            String sp = sym.contains("DATABASE") || sym.contains("DB") || sym.contains("PWD") ? "QYCUCSMGR" : (sym.contains("VALIDATION") || sym.contains("CERT") ? "QYCUCTMGR" : "QSYS/QFLAGSK");
+            String jni = sym.contains("CERT") ? "qycu_listCertificatesJ" : "qycu_openStoreJ";
+            String target = sym.contains("STH") || sym.contains("PWD") ? "DEFAULT.STH" : (sym.contains("KDB") || sym.contains("DATABASE") ? "DEFAULT.KDB" : "DCM Subsystem");
+            return new GskDetail(rc, sym, origin, sp, "DCM Routine", jni, target, "Cryptographic Key Management", "GSKit / DCM return code " + rc + " (" + sym + ").", "CPDBCxx", "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/*')", "WRKJOB JOB(*)");
+        }
+        return null;
     }
 
     public Map<String, Object> decode(String rawInput) {
@@ -705,19 +803,28 @@ public class DcmSearchService {
         result.put("gskkmName", gskName);
         result.put("qycuretName", qycuName);
 
-        String explanation = "Executed " + funcName + " on IBM i host server job " + job + " under user " + user + ". Returned code " + rcVal + " (" + (gskName != null ? gskName : (qycuName != null ? qycuName : "General Code")) + ").";
-        if (rcVal != null && rcVal == 6L) {
-            explanation = "GSKit Keyfile Database Open Failure (GSKKM_ERR_DATABASE_OPEN). The DCM / Liberty backend attempted to open the certificate store IFS file but the file could not be opened. Check IFS permissions (*RWX for QTMHHTTP) or file path existence.";
-        } else if (rcVal != null && rcVal == 16L) {
-            explanation = "GSKit Database Invalid Password (GSKKM_ERR_DATABASE_INVALID_PASSWORD). The password or password stash file (.STH) for the key store is invalid, corrupted, or does not match.";
+        GskDetail detail = rcVal != null ? getGskDetail(rcVal) : null;
+        if (detail != null) {
+            result.put("originFunction", detail.originFunction);
+            result.put("associatedServiceProgram", detail.serviceProgram);
+            result.put("associatedEntryPoint", detail.entryPoint);
+            result.put("associatedJniFunction", detail.jniFunction);
+            result.put("targetObject", detail.targetObject);
+            result.put("failureDomain", detail.failureDomain);
+            result.put("msgId", detail.msgId);
+            result.put("useCaseExplanation", detail.rootCause);
+            List<String> cmds = new ArrayList<>(detail.recoveryCommands);
+            cmds.add("WRKJOB JOB(" + (job.contains("/") ? job.split("/")[0] : "*") + ") - Inspect host server job");
+            result.put("diagnosticCommands", cmds);
+        } else {
+            String explanation = "Executed " + funcName + " on IBM i host server job " + job + " under user " + user + ". Returned code " + rcVal + " (" + (gskName != null ? gskName : (qycuName != null ? qycuName : "General Code")) + ").";
+            result.put("useCaseExplanation", explanation);
+            List<String> recovery = new ArrayList<>();
+            recovery.add("WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*') - Verify certificate store file existence and stash file");
+            recovery.add("CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)");
+            recovery.add("WRKJOB JOB(" + (job.contains("/") ? job.split("/")[0] : "*") + ") - Inspect host server job");
+            result.put("diagnosticCommands", recovery);
         }
-        result.put("useCaseExplanation", explanation);
-
-        List<String> recovery = new ArrayList<>();
-        recovery.add("WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*') - Verify certificate store file existence and stash file");
-        recovery.add("CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)");
-        recovery.add("WRKJOB JOB(" + (job.contains("/") ? job.split("/")[0] : "*") + ") - Inspect host server job");
-        result.put("diagnosticCommands", recovery);
 
         return result;
     }
@@ -915,7 +1022,7 @@ public class DcmSearchService {
     }
 
     private Map<String, Object> findBestGlobalMatch(String raw, long rc) {
-        // 1. Check GSKKM
+        // 1. Check GSKKM & GSKSSL
         if (gskkmerr.containsKey(rc)) {
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("success", true);
@@ -923,8 +1030,22 @@ public class DcmSearchService {
             result.put("input", raw);
             result.put("returnCode", rc);
             result.put("symbolicName", gskkmerr.get(rc));
-            result.put("source", "gskkmerr.h / c3.xpf (GSKit Error)");
-            result.put("useCaseExplanation", "GSKit / GSKKM return code " + rc + " maps to constant " + gskkmerr.get(rc) + ".");
+            result.put("source", rc >= 6000L || rc == 406L || rc == 407L || rc == 408L ? "gskssl.h / QSYSINC/H(GSKSSL)" : "gskkmerr.h / c3.xpf (GSKit Error)");
+
+            GskDetail detail = getGskDetail(rc);
+            if (detail != null) {
+                result.put("originFunction", detail.originFunction);
+                result.put("associatedServiceProgram", detail.serviceProgram);
+                result.put("associatedEntryPoint", detail.entryPoint);
+                result.put("associatedJniFunction", detail.jniFunction);
+                result.put("targetObject", detail.targetObject);
+                result.put("failureDomain", detail.failureDomain);
+                result.put("msgId", detail.msgId);
+                result.put("useCaseExplanation", detail.rootCause);
+                result.put("diagnosticCommands", detail.recoveryCommands);
+            } else {
+                result.put("useCaseExplanation", "GSKit / GSKKM return code " + rc + " maps to constant " + gskkmerr.get(rc) + ".");
+            }
             return result;
         }
 

@@ -158,7 +158,8 @@
             
             <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;" id="domainFilterChips">
                 <button class="sample-btn" style="background:#0f62fe; color:#fff; border-color:#0f62fe;" onclick="filterByDomainChip('ALL', this)">All Codes (500+)</button>
-                <button class="sample-btn" onclick="filterByDomainChip('GSKKM', this)">GSKit / GSKKM Codes</button>
+                <button class="sample-btn" onclick="filterByDomainChip('GSKKM', this)">GSKit Key Management (gskkmerr.h)</button>
+                <button class="sample-btn" onclick="filterByDomainChip('GSK_', this)">GSKit SSL / TLS (gskssl.h)</button>
                 <button class="sample-btn" onclick="filterByDomainChip('qycuretcodes', this)">QYCU API Return Codes</button>
                 <button class="sample-btn" onclick="filterByDomainChip('Application', this)">Application Manager</button>
                 <button class="sample-btn" onclick="filterByDomainChip('Store', this)">Store & Passwords</button>
@@ -1092,6 +1093,368 @@ const DCM_DB = {
             return result.trim();
         }
 
+        // Inject GSK SSL / TLS Handshake codes into DCM_DB.gskkmerr if not present
+        const GSK_SSL_EXTRAS = {
+            "406": "GSK_ERROR_IO",
+            "407": "GSK_ERROR_BAD_KEYFILE_LABEL",
+            "408": "GSK_ERROR_BAD_KEYFILE_PASSWORD",
+            "6000": "GSK_AS400_ERROR_NOT_TRUSTED",
+            "6001": "GSK_AS400_ERROR_NO_TEMPORARY_STORAGE",
+            "6002": "GSK_AS400_ERROR_TIMED_OUT",
+            "6003": "GSK_AS400_ERROR_PASSWORD_EXPIRED",
+            "6004": "GSK_AS400_ERROR_ALREADY_INITIALIZED",
+            "6005": "GSK_AS400_ERROR_NOT_INITIALIZED",
+            "6006": "GSK_AS400_ERROR_NO_APPLICATION_ID",
+            "6007": "GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED",
+            "6008": "GSK_AS400_ERROR_INVALID_CERTIFICATE_NAME",
+            "6009": "GSK_AS400_ERROR_CERT_EXPIRED",
+            "6010": "GSK_AS400_ERROR_CLOSED",
+            "6011": "GSK_AS400_ERROR_BAD_CIPHER_SUITE",
+            "6012": "GSK_AS400_ERROR_INVALID_STATE",
+            "6013": "GSK_AS400_ERROR_UNSUPPORTED_PROTOCOL",
+            "6014": "GSK_AS400_ERROR_CRYPTO_HARDWARE_FAILED",
+            "6015": "GSK_AS400_ERROR_BAD_CERT_STORE_PASSWORD",
+            "6016": "GSK_AS400_ERROR_NO_CERT_STORE_PASSWORD",
+            "6017": "GSK_AS400_ERROR_KEYRING_NOT_FOUND",
+            "6018": "GSK_AS400_ERROR_APPLICATION_ALREADY_DEFINED",
+            "6019": "GSK_AS400_ERROR_NO_DEFAULT_CERT",
+            "6020": "GSK_AS400_ERROR_NO_KEYRING_PASSWORD"
+        };
+        for (const [k, v] of Object.entries(GSK_SSL_EXTRAS)) {
+            if (!DCM_DB.gskkmerr[k]) DCM_DB.gskkmerr[k] = v;
+        }
+
+        const GSK_DETAIL_MAP = {
+            "6": {
+                code: 6,
+                constant: "GSKKM_ERR_DATABASE_OPEN",
+                originFunction: "gskkm_open_database() / gskkm_open_key_database()",
+                serviceProgram: "QYCUCSMGR / QYCUCTMGR",
+                entryPoint: "QYCU_OPENSTORE / QYCU_LISTCERTIFICATES",
+                jniFunction: "qycu_listCertificatesJ / qycu_openStoreJ",
+                targetObject: "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB",
+                failureDomain: "Key Database Open & IFS Authority",
+                msgId: "CPDB701",
+                rootCause: "Cannot open certificate store. The .KDB file does not exist, or user profile QTMHHTTP lacks *RWX data authority to the IFS path.",
+                recoveryCommands: [
+                    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')",
+                    "CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)"
+                ]
+            },
+            "16": {
+                code: 16,
+                constant: "GSKKM_ERR_DATABASE_INVALID_PASSWORD",
+                originFunction: "gskkm_verify_password() / gskkm_check_stash()",
+                serviceProgram: "QYCUCSMGR",
+                entryPoint: "QYCU_VALIDATEPASSWORD / QYCU_CHANGESTOREPASSWORD",
+                jniFunction: "qycu_listCertificatesJ / qycu_listCACertificatesJ / qycu_changePasswordJ",
+                targetObject: "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH",
+                failureDomain: "Password Stash & Decryption",
+                msgId: "CPDB702",
+                rootCause: "The certificate store password or password stash file (.STH) is invalid, corrupted, or out of sync with the key database.",
+                recoveryCommands: [
+                    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH')",
+                    "DCM Web UI -> Manage Certificate Store -> Select Store -> Change/Reset Password & Stash",
+                    "WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)"
+                ]
+            },
+            "18": {
+                code: 18,
+                constant: "GSKKM_ERR_DATABASE_CORRUPTION",
+                originFunction: "gskkm_read_record() / gskkm_parse_kdb_header()",
+                serviceProgram: "QYCUCSMGR / QYCUCTMGR",
+                entryPoint: "QYCU_READSTORE / QYCU_LISTCERTIFICATES",
+                jniFunction: "qycu_listCertificatesJ / qycu_getCertificateListJ",
+                targetObject: "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB",
+                failureDomain: "CMS Database Integrity",
+                msgId: "CPDB703",
+                rootCause: "Key database file header or record blocks are corrupted. Frequently caused by binary file transfer truncation or disk faults.",
+                recoveryCommands: [
+                    "RST OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') from backup",
+                    "WRKOBJ OBJ(QUSRSYS/QYCU*)"
+                ]
+            },
+            "42": {
+                code: 42,
+                constant: "GSKKM_ERR_VALIDATION_KEY_ISSUER_NOT_FOUND",
+                originFunction: "gskkm_validate_certificate() / gskkm_build_certificate_chain()",
+                serviceProgram: "QYCUCTMGR / QYCUAPPMGR",
+                entryPoint: "QYCU_VALIDATECERTIFICATE / QYCU_APPASSIGNCERT",
+                jniFunction: "qycu_validateCertificateJ / qycu_validateCertificateTrustJ",
+                targetObject: "Trust Store (DEFAULT.KDB)",
+                failureDomain: "X.509 Chain Building & Trust",
+                msgId: "CPDB704",
+                rootCause: "The Certificate Authority (CA) that signed the certificate could not be found in the current certificate store.",
+                recoveryCommands: [
+                    "DCM -> Manage Certificate Store -> Populate / Import CA Certificate",
+                    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/*')"
+                ]
+            },
+            "46": {
+                code: 46,
+                constant: "GSKKM_ERR_VALIDATION_KEY_ROOT_KEY_NOT_TRUSTED",
+                originFunction: "gskkm_check_root_trust()",
+                serviceProgram: "QYCUCTMGR / QYCUAPPMGR",
+                entryPoint: "QYCU_VALIDATECERTIFICATE / QYCU_ADDCERTIFICATETRUST",
+                jniFunction: "qycu_addCertificateTrustJ / qycu_validateCertificateJ",
+                targetObject: "Trust Store Root CA",
+                failureDomain: "Root CA Trust Setting",
+                msgId: "CPDB705",
+                rootCause: "The Root CA is present in the database, but is marked as Untrusted in DCM.",
+                recoveryCommands: [
+                    "DCM -> Manage Certificate Store -> Work with CA Certificates -> Trust Status -> Mark Trusted"
+                ]
+            },
+            "47": {
+                code: 47,
+                constant: "GSKKM_ERR_VALIDATION_KEY_IS_REVOKED",
+                originFunction: "gskkm_check_crl() / gskkm_query_ocsp()",
+                serviceProgram: "QYCUCRLMGR / QYCUCTMGR",
+                entryPoint: "QYCU_CHECKREVOCATION / QYCU_VALIDATECERTIFICATE",
+                jniFunction: "qycu_validateCertificateJ",
+                targetObject: "CRL / OCSP Responder",
+                failureDomain: "Certificate Revocation",
+                msgId: "CPDB706",
+                rootCause: "Certificate has been revoked by the issuing Certificate Authority on the CRL or OCSP server.",
+                recoveryCommands: [
+                    "PING <CRL_SERVER_IP>",
+                    "WRKOBJ OBJ(QUSRSYS/QYCU*) OBJTYPE(*VLDL)"
+                ]
+            },
+            "78": {
+                code: 78,
+                constant: "GSKKM_ERR_FILE_OPEN",
+                originFunction: "gskkm_file_open() / gskkm_open_stream()",
+                serviceProgram: "QYCUCSMGR / qycuutl.H",
+                entryPoint: "QYCU_OPENFILE",
+                jniFunction: "qycu_importCertificateJ / qycu_exportCertificateJ",
+                targetObject: "IFS File Stream",
+                failureDomain: "File I/O Subsystem",
+                msgId: "CPDBC05",
+                rootCause: "Generic file open error occurred on the IFS path.",
+                recoveryCommands: [
+                    "WRKLNK OBJ('<FILE_PATH>')",
+                    "DSPLOG MSGID(CPFA*)"
+                ]
+            },
+            "81": {
+                code: 81,
+                constant: "GSKKM_ERR_FILE_OPEN_NOT_EXIST",
+                originFunction: "gskkm_file_open()",
+                serviceProgram: "QYCUCSMGR / qycuutl.H",
+                entryPoint: "QYCU_OPENFILE",
+                jniFunction: "qycu_importCertificateJ",
+                targetObject: "Import/Export IFS Path",
+                failureDomain: "IFS File Existence",
+                msgId: "CPFA0A9",
+                rootCause: "The target certificate file or directory specified does not exist.",
+                recoveryCommands: [
+                    "WRKLNK OBJ('<IFS_PATH>')"
+                ]
+            },
+            "82": {
+                code: 82,
+                constant: "GSKKM_ERR_FILE_OPEN_NOT_ALLOWED",
+                originFunction: "gskkm_file_open()",
+                serviceProgram: "QYCUCSMGR / qycuutl.H",
+                entryPoint: "QYCU_OPENFILE",
+                jniFunction: "qycu_importCertificateJ",
+                targetObject: "Target IFS File",
+                failureDomain: "IFS Authority & Permissions",
+                msgId: "CPFA09C",
+                rootCause: "Permission denied accessing IFS file.",
+                recoveryCommands: [
+                    "CHGAUT OBJ('<IFS_PATH>') USER(QTMHHTTP) DTAAUT(*RWX)"
+                ]
+            },
+            "93": {
+                code: 93,
+                constant: "GSKKM_ERR_KEYDB_NOT_EXIST",
+                originFunction: "gskkm_locate_database()",
+                serviceProgram: "QYCUCSMGR / QYCULCAMGR",
+                entryPoint: "QYCU_OPENSTORE / QYCU_OPENLOCALCA",
+                jniFunction: "qycu_openStoreJ / qycu_listCertificatesJ",
+                targetObject: "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB",
+                failureDomain: "Certificate Store Location",
+                msgId: "CPDB707",
+                rootCause: "Key database does not exist at specified IFS path.",
+                recoveryCommands: [
+                    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')"
+                ]
+            },
+            "95": {
+                code: 95,
+                constant: "GSKKM_ERR_PWDFILE_NOT_EXIST",
+                originFunction: "gskkm_read_stash()",
+                serviceProgram: "QYCUCSMGR",
+                entryPoint: "QYCU_GETPASSWORDSTASH",
+                jniFunction: "qycu_listCertificatesJ",
+                targetObject: "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH",
+                failureDomain: "Stash File Location",
+                msgId: "CPDB708",
+                rootCause: "Password stash file (.STH) does not exist.",
+                recoveryCommands: [
+                    "DCM -> Manage Certificate Store -> Re-stash Password"
+                ]
+            },
+            "109": {
+                code: 109,
+                constant: "GSKKM_ERR_KEY_GET_BY_LABEL",
+                originFunction: "gskkm_find_record_by_label()",
+                serviceProgram: "QYCUCTMGR",
+                entryPoint: "QYCU_RETRIEVECERTIFICATEINFORMATION",
+                jniFunction: "qycu_retrieveCertificateInformationJ / qycu_assignCertToAppJ",
+                targetObject: "Certificate Label in .KDB",
+                failureDomain: "Key Record Lookup",
+                msgId: "CPDB709",
+                rootCause: "Certificate label was not found inside the key database.",
+                recoveryCommands: [
+                    "DCM -> Manage Certificate Store -> Work with Certificates -> Verify Label"
+                ]
+            },
+            "112": {
+                code: 112,
+                constant: "GSKKM_ERR_PKCS12_PWD_CORRUPTION",
+                originFunction: "gskkm_pkcs12_decrypt() / gskkm_parse_pfx()",
+                serviceProgram: "QYCUCTMGR",
+                entryPoint: "QYCU_IMPORTCERTIFICATE",
+                jniFunction: "qycu_importCertificateJ",
+                targetObject: ".P12 / .PFX Archive",
+                failureDomain: "PKCS#12 Archive Password",
+                msgId: "CPDB710",
+                rootCause: "Password provided to decrypt PKCS#12 / PFX certificate file was incorrect or corrupted.",
+                recoveryCommands: [
+                    "Verify PKCS#12 password on export workstation"
+                ]
+            },
+            "340": {
+                code: 340,
+                constant: "GSKKM_ERR_CCA",
+                originFunction: "gskkm_cca_call() / gskkm_crypt_hw()",
+                serviceProgram: "QYCUHDWMGR",
+                entryPoint: "QYCU_GETCRYPTODEVICELIST",
+                jniFunction: "qycu_getCryptoDeviceListJ",
+                targetObject: "PCIe Crypto Coprocessor (4767/4769)",
+                failureDomain: "Hardware Cryptography",
+                msgId: "CPDBC14",
+                rootCause: "Cryptographic Coprocessor CCA subsystem error.",
+                recoveryCommands: [
+                    "WRKHDWRSC TYPE(*CRP)",
+                    "WRKACTJOB SBS(QSEC)"
+                ]
+            },
+            "6000": {
+                code: 6000,
+                constant: "GSK_AS400_ERROR_NOT_TRUSTED",
+                originFunction: "gsk_secure_soc_init()",
+                serviceProgram: "QSYS/QFLAGSK",
+                entryPoint: "gsk_secure_soc_init",
+                jniFunction: "Native TLS Handshake",
+                targetObject: "Peer Certificate / Trust Store",
+                failureDomain: "TLS Handshake Trust",
+                msgId: "CPDBC01",
+                rootCause: "Peer certificate is not trusted. The issuing CA is missing from the *SYSTEM certificate store.",
+                recoveryCommands: [
+                    "Import Issuing CA into /QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB",
+                    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')"
+                ]
+            },
+            "6007": {
+                code: 6007,
+                constant: "GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED",
+                originFunction: "gsk_environment_init()",
+                serviceProgram: "QSYS/QFLAGSK / QWTSECA",
+                entryPoint: "gsk_environment_init",
+                jniFunction: "Application ID Lookup",
+                targetObject: "Registration Facility",
+                failureDomain: "Application Registration",
+                msgId: "CPDBC07",
+                rootCause: "Application ID not registered in IBM i Registration Facility.",
+                recoveryCommands: [
+                    "WRKREGINF (Work with Registration Information)",
+                    "DCM -> Manage Applications -> Add Application"
+                ]
+            },
+            "6011": {
+                code: 6011,
+                constant: "GSK_AS400_ERROR_BAD_CIPHER_SUITE",
+                originFunction: "gsk_secure_soc_init()",
+                serviceProgram: "QSYS/QFLAGSK",
+                entryPoint: "gsk_secure_soc_init",
+                jniFunction: "TLS Handshake Negotiation",
+                targetObject: "System Value QSSLCSL",
+                failureDomain: "Cipher Suite Negotiation",
+                msgId: "CPDBC0B",
+                rootCause: "No overlapping cipher suite found between client and server.",
+                recoveryCommands: [
+                    "DSPSYSVAL SYSVAL(QSSLCSL)",
+                    "DSPSYSVAL SYSVAL(QSSLPCL)"
+                ]
+            },
+            "6019": {
+                code: 6019,
+                constant: "GSK_AS400_ERROR_NO_DEFAULT_CERT",
+                originFunction: "gsk_environment_init()",
+                serviceProgram: "QSYS/QFLAGSK",
+                entryPoint: "gsk_environment_init",
+                jniFunction: "DCM Certificate Assignment",
+                targetObject: "Application ID Binding",
+                failureDomain: "Application Certificate Assignment",
+                msgId: "CPDBC13",
+                rootCause: "Application ID has no certificate assigned in DCM.",
+                recoveryCommands: [
+                    "DCM -> Manage Certificate Store -> Select *SYSTEM -> Update Application Assignment"
+                ]
+            },
+            "406": {
+                code: 406,
+                constant: "GSK_ERROR_IO",
+                originFunction: "gsk_secure_soc_read() / gsk_secure_soc_write()",
+                serviceProgram: "QSYS/QFLAGSK",
+                entryPoint: "gsk_secure_soc_read",
+                jniFunction: "Secure Socket I/O",
+                targetObject: "TCP/IP Socket",
+                failureDomain: "Socket Communication Failure",
+                msgId: "CPDBC06",
+                rootCause: "Secure socket I/O error or abrupt TCP connection reset.",
+                recoveryCommands: [
+                    "NETSTAT *CNN (Check socket state)",
+                    "WRKJOB JOB(*)"
+                ]
+            }
+        };
+
+        function getGskDetail(rc) {
+            const rcStr = rc.toString();
+            if (GSK_DETAIL_MAP[rcStr]) {
+                return GSK_DETAIL_MAP[rcStr];
+            }
+            const sym = DCM_DB.gskkmerr[rcStr];
+            if (sym) {
+                const origin = sym.toLowerCase().startsWith("gskkm_") ? "gskkm_" + sym.substring(6).toLowerCase() + "()" : "gsk_secure_soc_*()";
+                const sp = sym.includes("DATABASE") || sym.includes("DB") || sym.includes("PWD") ? "QYCUCSMGR" : (sym.includes("VALIDATION") || sym.includes("CERT") ? "QYCUCTMGR" : "QSYS/QFLAGSK");
+                const jni = sym.includes("CERT") ? "qycu_listCertificatesJ" : "qycu_openStoreJ";
+                const target = sym.includes("STH") || sym.includes("PWD") ? "DEFAULT.STH" : (sym.includes("KDB") || sym.includes("DATABASE") ? "DEFAULT.KDB" : "DCM Subsystem");
+                return {
+                    code: rc,
+                    constant: sym,
+                    originFunction: origin,
+                    serviceProgram: sp,
+                    entryPoint: "DCM Routine",
+                    jniFunction: jni,
+                    targetObject: target,
+                    failureDomain: "Cryptographic Key Management",
+                    msgId: "CPDBCxx",
+                    rootCause: `GSKit / DCM return code ${rc} (${sym}).`,
+                    recoveryCommands: [
+                        "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/*')",
+                        "WRKJOB JOB(*)"
+                    ]
+                };
+            }
+            return null;
+        }
+
         let currentMode = 'symptom';
 
         function setMode(mode) {
@@ -1281,8 +1644,7 @@ const DCM_DB = {
             // Look up RC in GSKKM and QYCU tables
             let gskkmName = null;
             let qycuName = null;
-            let explanation = "";
-            let recoveryCommands = [];
+            let detail = null;
 
             if (rcVal !== null) {
                 const rcStr = rcVal.toString();
@@ -1292,29 +1654,15 @@ const DCM_DB = {
                 if (DCM_DB.qycuretcodes[rcStr]) {
                     qycuName = DCM_DB.qycuretcodes[rcStr];
                 }
-
-                if (rcVal === 6) {
-                    explanation = `GSKit Keyfile Database Open Failure (GSKKM_ERR_DATABASE_OPEN). The DCM / Liberty backend attempted to open the certificate store but the file could not be opened. Probable root causes: (1) The certificate store IFS file does not exist, (2) User ${user} or HTTP profile QTMHHTTP lacks *RWX data authority, or (3) The file is locked by another process.`;
-                    recoveryCommands = [
-                        `WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*') - Verify file existence`,
-                        `CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX) - Grant HTTP server authority`,
-                        `WRKJOB JOB(${job.split('/')[0] || '*'}) - Inspect host server job ${job}`
-                    ];
-                } else if (rcVal === 16) {
-                    explanation = `GSKit Database Invalid Password (GSKKM_ERR_DATABASE_INVALID_PASSWORD). The password supplied or the password stash file (.STH) for the key store is invalid, corrupted, or does not match the certificate store.`;
-                    recoveryCommands = [
-                        `WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/CertAuth/DEFAULT.STH') - Inspect stash file`,
-                        `DCM Web UI -> Manage Certificate Store -> Select Store -> Change/Reset Password & Stash`,
-                        `WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL) - Check validation lists`
-                    ];
-                } else {
-                    explanation = `API executed function ${funcName} under user ${user} on host job ${job} and returned code ${rcVal} (${gskkmName || qycuName || 'Unknown GSK/QYCU Code'}).`;
-                    recoveryCommands = [
-                        `WRKJOB JOB(${job.split('/')[0] || '*'}) - View host server job log`,
-                        `DSPLOG MSGID(CPF* CPD*) - Inspect security history log`
-                    ];
-                }
+                detail = getGskDetail(rcVal);
             }
+
+            const explanation = detail ? detail.rootCause : `API executed function ${funcName} under user ${user} on host job ${job} and returned code ${rcVal} (${gskkmName || qycuName || 'Unknown GSK/QYCU Code'}).`;
+            const recoveryCommands = detail ? [...detail.recoveryCommands, `WRKJOB JOB(${job.split('/')[0] || '*'}) - View host server job log`] : [
+                `WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*') - Verify file existence`,
+                `WRKJOB JOB(${job.split('/')[0] || '*'}) - View host server job log`,
+                `DSPLOG MSGID(CPF* CPD*) - Inspect security history log`
+            ];
 
             return {
                 isAdmin3Log: true,
@@ -1327,6 +1675,7 @@ const DCM_DB = {
                 job,
                 actionFailure,
                 parameters,
+                detail,
                 explanation,
                 recoveryCommands
             };
@@ -1678,38 +2027,39 @@ const DCM_DB = {
                 `;
             }
 
+            const d = res.detail;
             card.innerHTML = `
                 <div class="result-header">
                     <div>
-                        <div class="result-title">ADMIN3 / Liberty Trace Diagnostic &bull; RC ${res.rc}</div>
+                        <div class="result-title">ADMIN3 / Liberty Trace Diagnostic &bull; RC ${res.rc} &bull; ${res.gskkmName || res.qycuName || 'Diagnostic Failure'}</div>
                         <div class="result-sub">User: <strong>${res.user}</strong> &bull; Function: <code>${res.funcName}</code> &bull; Job: <code>${res.job}</code></div>
                     </div>
                     <span class="result-badge badge-admin3">ADMIN3 Log Trace</span>
                 </div>
                 <div class="decomp-grid">
                     <div class="decomp-item">
-                        <div class="decomp-label">Target Function</div>
-                        <div class="decomp-val">${res.funcName}</div>
-                        <div class="decomp-sub">${res.actionFailure || 'Java / JT400 Native Wrapper'}</div>
+                        <div class="decomp-label">GSKit C API Function</div>
+                        <div class="decomp-val" style="font-size:0.85rem;">${d ? d.originFunction : 'gskkm_*() / gsk_*()'}</div>
+                        <div class="decomp-sub">Origin API Routine</div>
                     </div>
                     <div class="decomp-item">
-                        <div class="decomp-label">GSKit / Return Code</div>
-                        <div class="decomp-val" style="color:#da1e28;">RC ${res.rc}</div>
-                        <div class="decomp-sub">${res.gskkmName || res.qycuName || 'Unknown RC'}</div>
+                        <div class="decomp-label">DCM Service Program Module</div>
+                        <div class="decomp-val">${d ? d.serviceProgram : 'QYCUCSMGR / QYCUCTMGR'}</div>
+                        <div class="decomp-sub">${d ? d.entryPoint : 'Service Program Entry Point'}</div>
                     </div>
                     <div class="decomp-item">
-                        <div class="decomp-label">IBM i User Profile</div>
-                        <div class="decomp-val">${res.user}</div>
-                        <div class="decomp-sub">Executing User</div>
+                        <div class="decomp-label">Java / JNI Method Trace</div>
+                        <div class="decomp-val" style="font-size:0.85rem;">${res.funcName}</div>
+                        <div class="decomp-sub">${d ? d.jniFunction : 'ADMIN3 Native SPI Bridge'}</div>
                     </div>
                     <div class="decomp-item">
-                        <div class="decomp-label">Host Server Job</div>
-                        <div class="decomp-val" style="font-size:0.85rem;">${res.job}</div>
-                        <div class="decomp-sub">Remote Command Server</div>
+                        <div class="decomp-label">Target IFS Object / Subsystem</div>
+                        <div class="decomp-val" style="font-size:0.82rem; color:#0e6027;">${d ? d.targetObject : '/QIBM/UserData/ICSS/Cert/*'}</div>
+                        <div class="decomp-sub">${d ? d.failureDomain : 'Certificate Subsystem'}</div>
                     </div>
                 </div>
                 <div class="explanation-box warning-tone">
-                    <div class="explanation-title">Diagnostic Root Cause Analysis</div>
+                    <div class="explanation-title">Diagnostic Root Cause Analysis &bull; ${d ? d.msgId : 'CPDB7xx'}</div>
                     <div class="explanation-text">${res.explanation}</div>
                 </div>
                 ${paramsHtml}
@@ -1722,23 +2072,55 @@ const DCM_DB = {
             const resultsContainer = document.getElementById("results");
             const card = document.createElement("div");
             card.className = "result-card gsk-card";
+            const d = getGskDetail(res.rc);
+
+            let commandsHtml = "";
+            if (d && d.recoveryCommands && d.recoveryCommands.length > 0) {
+                commandsHtml = `
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px 16px; margin-top:12px; font-size:0.88rem;">
+                        <strong style="color:#0f62fe;">Recommended IBM i Diagnostic Verification Commands:</strong>
+                        <ul style="margin-left:20px; margin-top:6px; color:#374151;">
+                            ${d.recoveryCommands.map(c => `<li><code>${c}</code></li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
 
             card.innerHTML = `
                 <div class="result-header">
                     <div>
                         <div class="result-title">${res.name} &bull; Return Code ${res.rc}</div>
-                        <div class="result-sub">${res.source}</div>
+                        <div class="result-sub">${res.source} &bull; ${d ? d.msgId : 'Diagnostic Code'}</div>
                     </div>
-                    <span class="result-badge badge-gsk">${res.isGskCode ? 'GSKit Error' : 'QYCU RetCode'}</span>
+                    <span class="result-badge badge-gsk">${res.rc >= 6000 ? 'GSKit SSL (TLS)' : (res.isGskCode ? 'GSKit Key Management' : 'QYCU RetCode')}</span>
+                </div>
+                <div class="decomp-grid">
+                    <div class="decomp-item">
+                        <div class="decomp-label">Origin C API Function</div>
+                        <div class="decomp-val" style="font-size:0.85rem;">${d ? d.originFunction : 'gskkm_*() / gsk_*()'}</div>
+                        <div class="decomp-sub">GSKit Core Function</div>
+                    </div>
+                    <div class="decomp-item">
+                        <div class="decomp-label">Associated Module / Service Program</div>
+                        <div class="decomp-val">${d ? d.serviceProgram : 'QYCUCSMGR / QYCUCTMGR'}</div>
+                        <div class="decomp-sub">${d ? d.entryPoint : 'Manager Module Entry'}</div>
+                    </div>
+                    <div class="decomp-item">
+                        <div class="decomp-label">Associated JNI / ADMIN3 Function</div>
+                        <div class="decomp-val" style="font-size:0.85rem;">${d ? d.jniFunction : 'qycu_*'}</div>
+                        <div class="decomp-sub">Web Admin Wrapper</div>
+                    </div>
+                    <div class="decomp-item">
+                        <div class="decomp-label">Target Object / Subsystem</div>
+                        <div class="decomp-val" style="font-size:0.82rem; color:#0e6027;">${d ? d.targetObject : '/QIBM/UserData/ICSS/Cert/*'}</div>
+                        <div class="decomp-sub">${d ? d.failureDomain : 'Key Management'}</div>
+                    </div>
                 </div>
                 <div class="explanation-box">
-                    <div class="explanation-title">Definition & Meaning</div>
-                    <div class="explanation-text">${res.explanation}</div>
+                    <div class="explanation-title">Technical Root Cause & Explanation</div>
+                    <div class="explanation-text">${d ? d.rootCause : res.explanation}</div>
                 </div>
-                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px 16px; margin-top:12px; font-size:0.88rem;">
-                    <strong style="color:#0f62fe;">Recommended Action:</strong>
-                    <p style="margin-top:4px; color:#374151;">Verify if the return code was emitted during certificate creation, keyfile opening, or validation list access. Check job log for corresponding diagnostic message.</p>
-                </div>
+                ${commandsHtml}
             `;
             resultsContainer.appendChild(card);
         }

@@ -174,14 +174,65 @@ When a return code does not have a 100% exact decomposition (for instance, if an
 
 ---
 
-### Scenario C: Password Stash File or Key Store Error (`RC50000`)
-* **Input**: `50000`
-* **Decomposition**:
-  * Source: `qycuutl.H` (Certificate Store Utility)
-  * Utility Routine ($+50000$): `QYCU_SETDEFAULTCERT`
-* **Root Cause Verification**:
-  1. Verify IFS files exist: `WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')`
-  2. Verify HTTP user profile authority: `CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)`
+### Scenario C: ADMIN3 Trace & Keystore Open Failure (`RC: 6`)
+* **Log Signature**: `function: qycu_listCertificatesJ / rc: 6`
+* **Function Trace**:
+  * Origin C API: `gskkm_open_database() / gskkm_open_key_database()`
+  * DCM Manager: `QYCUCSMGR` (`QYCU_OPENSTORE`), `QYCUCTMGR` (`QYCU_LISTCERTIFICATES`)
+  * JNI Bridge: `qycu_listCertificatesJ`
+  * Target File: `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB`
+* **Root Cause**:
+  * User profile `QTMHHTTP` lacks `*RWX` data authority to `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB`.
+* **Actionable Remediation**:
+  ```cl
+  WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')
+  CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)
+  ```
+
+---
+
+### Scenario D: Password Stash File Mismatch (`RC: 16`)
+* **Log Signature**: `function: qycu_listCertificatesJ / rc: 16`
+* **Function Trace**:
+  * Origin C API: `gskkm_verify_password() / gskkm_check_stash()`
+  * DCM Manager: `QYCUCSMGR` (`QYCU_VALIDATEPASSWORD`)
+  * JNI Bridge: `qycu_listCertificatesJ`
+  * Target File: `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH`
+* **Root Cause**:
+  * The password stash file (`DEFAULT.STH`) does not match the active password of the `.KDB` file.
+* **Actionable Remediation**:
+  1. Open DCM web interface (`http://<host>:2001/HTTPAdmin`).
+  2. Navigate to *Manage Certificate Store* &rarr; *Select Store* &rarr; *Change Password / Re-create Password Stash*.
+
+---
+
+### Scenario E: TLS Peer Certificate Not Trusted (`RC: 6000`)
+* **Job Log / Socket Failure**: `GSK_AS400_ERROR_NOT_TRUSTED (Message CPDBC01)`
+* **Function Trace**:
+  * Origin C API: `gsk_secure_soc_init()`
+  * Module: `QSYS/QFLAGSK`
+  * Subsystem: Native TLS Handshake / Trust Store
+* **Root Cause**:
+  * The peer certificate presented during TLS handshake was signed by a CA not present in the local certificate store (`DEFAULT.KDB`).
+* **Actionable Remediation**:
+  1. Export the root and intermediate CA certificates from the remote server.
+  2. Import into DCM under `*SYSTEM` certificate store.
+
+---
+
+### Scenario F: Application ID Not Registered (`RC: 6007`)
+* **Job Log / Socket Failure**: `GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED (Message CPDBC07)`
+* **Function Trace**:
+  * Origin C API: `gsk_environment_init()`
+  * Module: `QSYS/QFLAGSK` / `QSYSINC/H(QWTSECA)`
+  * Subsystem: IBM i Registration Facility
+* **Root Cause**:
+  * The Application ID specified in `GSK_OS400_APPLICATION_ID` has not been registered in the Registration Facility.
+* **Actionable Remediation**:
+  ```cl
+  WRKREGINF (Inspect registered Application IDs)
+  ```
+  Register the application using `QWTSECA` API or via DCM *Manage Applications*.
 
 ---
 

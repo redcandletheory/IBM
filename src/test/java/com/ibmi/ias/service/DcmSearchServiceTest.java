@@ -24,10 +24,24 @@ public class DcmSearchServiceTest {
         String name16 = service.getGskkmName(16);
         assertEquals("GSKKM_ERR_DATABASE_INVALID_PASSWORD", name16);
 
+        DcmSearchService.GskDetail detail6 = service.getGskDetail(6);
+        assertNotNull(detail6);
+        assertEquals("GSKKM_ERR_DATABASE_OPEN", detail6.constant);
+        assertEquals("gskkm_open_database() / gskkm_open_key_database()", detail6.originFunction);
+        assertEquals("QYCUCSMGR / QYCUCTMGR", detail6.serviceProgram);
+        assertEquals("/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB", detail6.targetObject);
+
+        DcmSearchService.GskDetail detail6000 = service.getGskDetail(6000);
+        assertNotNull(detail6000);
+        assertEquals("GSK_AS400_ERROR_NOT_TRUSTED", detail6000.constant);
+        assertEquals("gsk_secure_soc_init()", detail6000.originFunction);
+        assertEquals("QSYS/QFLAGSK", detail6000.serviceProgram);
+
         Map<String, Object> dec = service.decode("6");
         assertNotNull(dec);
         assertTrue((Boolean) dec.get("success"));
         assertEquals("GSKKM_ERR_DATABASE_OPEN", dec.get("symbolicName"));
+        assertEquals("gskkm_open_database() / gskkm_open_key_database()", dec.get("originFunction"));
     }
 
     @Test
@@ -68,6 +82,9 @@ public class DcmSearchServiceTest {
         assertEquals("ALL_KEYS", params.get(1).get("decodedInput"));
 
         assertEquals("GSKKM_ERR_DATABASE_OPEN", result.get("gskkmName"));
+        assertEquals("gskkm_open_database() / gskkm_open_key_database()", result.get("originFunction"));
+        assertEquals("QYCUCSMGR / QYCUCTMGR", result.get("associatedServiceProgram"));
+        assertEquals("/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB", result.get("targetObject"));
     }
 
     @Test
