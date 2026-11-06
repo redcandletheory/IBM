@@ -52,58 +52,84 @@ $$\mathbf{\text{Point of Failure}} = \mathbf{xxx} \text{ (Major Entry Point)} + 
 
 ---
 
-## 2. Interface Walkthrough & Operating Modes
+## 2. Interface Walkthrough & 5 Operating Modes
 
-The web application runs entirely client-side inside your browser with **zero risk of 404 network errors**.
+The web dashboard is a high-performance Single Page Application (SPA) providing **5 dedicated diagnostic modes**, an automated **ADMIN3 / Liberty Trace Log Analyzer**, an **EBCDIC CP037 Hex Decoder**, and a complete **500+ Code Return Matrix**.
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│ [ Symptom String / RC Search ]  [ Keyword / Regex ]  [ Complete Directory ] │
-├────────────────────────────────────────────────────────────────────────┤
-│ Query Input Box (Multi-line textarea)                                  │
-│ Quick Example Buttons: [RC7027500] [RC5003000] [RC14000000] [Load All] │
-├────────────────────────────────────────────────────────────────────────┤
-│ [ Search & Deconstruct ]  [ Clear ]                                    │
-└────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  🔐 IBM i DCM Return Code & Diagnostic Analyzer            [ IBM i V7R5 / V7R6 ] [ 500+ Codes ] │
+│  IAS v8.5+ & WebSphere Liberty 24.0.0.12+ | Context Root: /dcm-service                          │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  [ 🔍 1. Symptom String / WRKPRB ]  [ 📋 2. ADMIN3 Log Analyzer ]  [ ⚙️ 3. GSKit & API Codes ]     │
+│  [ 🔎 4. Keyword / Regex Search ]   [ 📊 5. Complete Matrix Directory (500+) ]                   │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  Input Area (Multi-line textarea) & Example Presets:                                             │
+│  [ Sample 1: Symptom String ]  [ Sample 2: ADMIN3 Trace Log ]  [ Sample 3: GSKit RC: 6 ]        │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  [ 🚀 Execute Analysis ]  [ 🧹 Clear Input ]                                                     │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Mode 1: Symptom String / Return Code Search (Default)
+### Mode 1: Symptom String / WRKPRB Mode (Default)
 * **What to enter**:
   * Full IBM Symptom String: `5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500`
   * Service Program + Return Code: `QYCUAPPMGR 5003000`
   * Pure Return Code Number: `7027500` or `RC5003000`
-  * Multiple codes at once: Paste an entire block of error strings (one per line).
 * **Output**:
   * Deconstructs into a **4-Column Decomposition Grid** (Service Program, Major Entry Point, Utility Routine, Local Offset).
   * Generates an English diagnostic narrative explaining what the program was trying to do.
-  * Provides recommended **IBM i CL verification commands**.
+  * Recommends exact **IBM i CL verification commands**.
 
-### Mode 2: Keyword & Regular Expression Search
+### Mode 2: ADMIN3 / Liberty SystemOut Log Analyzer
 * **What to enter**:
-  * Function keywords: `RECEIVECERT`, `APPLIST`, `STORE`, `KEYSTORE`, `ALLOCATE`
-  * Regular expressions: `QYCU_.*CA`, `^QYCU_APP.*`, `.*PASSWORD.*`
+  * Paste multi-line raw log snippets directly from `/www/ADMIN3/wlp/usr/servers/ADMIN3/logs/SystemOut.log`.
 * **Output**:
-  * Instant table of all matching Symbolic Constants, Source Files, Code Offsets, and Categories.
+  * Extracts executing User Profile (e.g., `RZSDOWE`) and IBM i Host Job (e.g., `123456/QTMHHTTP/ADMIN3`).
+  * Maps native SPI method calls (e.g., `qycu_listCertificatesJ`).
+  * **Decodes EBCDIC (CP037) Hex Parameters** into plaintext IFS paths and option tags.
+  * Resolves underlying **GSKit / GSKKM return codes** (e.g., `rc: 6` &rarr; `GSKKM_ERR_DATABASE_OPEN`).
+  * Generates tailored recovery checklists and CL commands.
 
-### Mode 3: Complete Code Reference Directory
+### Mode 3: GSKit & API Return Codes Mode
+* **What to enter**:
+  * GSKit / GSKKM codes: `6`, `16`, `1`, `5`, `78`, `311`
+  * QYCU API / SPI return codes: `3845`, `3856`, `3945`, `4011`, `-992`, `-2`
+* **Output**:
+  * Symbolic C constant name (`GSKKM_ERR_DATABASE_OPEN`, `YCU_RC_AUTH_PROB`, `YCU_SWAP_USER`).
+  * Source header definition file (`gskkmerr.h`, `qycuretcodes.H`).
+  * Technical root-cause explanation and suggested authority / configuration fixes.
+
+### Mode 4: Keyword & Regular Expression Search
+* **What to enter**:
+  * Function keywords: `RECEIVECERT`, `APPLIST`, `STORE`, `KEYSTORE`, `ALLOCATE`, `DATABASE_OPEN`
+  * Regular expressions: `QYCU_.*CA`, `^QYCU_APP.*`, `.*PASSWORD.*`, `GSKKM_ERR_.*`
+* **Output**:
+  * Filtered table of all matching Symbolic Constants, Source Files, Code Offsets, and Categories.
+
+### Mode 5: Complete Matrix Directory (500+ Codes)
 * **What it offers**:
-  * Real-time search across all 110+ cataloged DCM Service Program entry points, local failures, and `qycuutl.H` utility routines.
-  * Category chips for 1-click domain filtering.
-  * Sortable columns.
+  * Live searchable matrix spanning all 9 Service Program Managers, 95+ `qycuutl.H` utility routines, 107 `qycuretcodes.H` API codes, and 187 `gskkmerr.h` GSKit codes.
+  * 1-click Domain Filtering Chips.
+  * Multi-column ascending and descending sorting.
 
 ---
 
 ## 3. Mastering Sorting, Filtering, and Matrix Navigation
 
 ### A. Domain Category Filtering Chips
-Located at the top of the **Complete Code Reference Directory** tab:
-* **All Categories**: Full database (110+ definitions).
+Located at the top of the **Complete Matrix Directory (500+)** tab:
+* **All (500+ Codes)**: Entire unified database across all 13 source tables.
+* **GSKit Errors (gskkmerr.h)**: 187 GSKit / GSKKM cryptography & key database error codes.
+* **API RetCodes (qycuretcodes.H)**: 107 public and internal QYCU return codes.
 * **Application Integration**: Covers `QYCUAPPMGR` and application trust utilities (`+100` to `+3000`).
 * **Store & Passwords**: Covers `QYCUCSMGR` and key store/stash routines (`+50000` to `+75000`).
 * **Certificate Lifecycle**: Covers `QYCUCTMGR` and CSR/Import/Export routines (`+10000` to `+31500`).
 * **Local CA**: Covers `QYCULCAMGR` and CA policy routines (`+80000` to `+87000`).
 * **Hardware Crypto**: Covers `QYCUHDWMGR` and PCIe Coprocessor hardware routines (`+100000` to `+101000`).
 * **Revocation & CRL**: Covers `QYCUCRLMGR` and Validation List routines (`+90000` to `+93000`).
+* **User Certificates**: Covers `QYCUUCMGR` and user space digital ID routines.
+* **Object Signing**: Covers `QYCUYDOMGR` object signing routines.
 
 ### B. Multi-Column Sorting
 Click any table column header with the `↕` indicator to sort:

@@ -492,14 +492,121 @@ For automated CI/CD pipelines or headless administration via IBM i QShell:
 
 ---
 
-## 🌐 Application URL Reference
+## 🌐 Application URL Reference & Query Search Formats
 
 | Resource | URL Pattern | Description |
 | :--- | :--- | :--- |
-| **Interactive Search Dashboard** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/` | Zero-dependency Web UI for symptom strings, closest match & regex search |
-| **DCM Single Decode API** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/dcm/decode?symptom=5770%20SP/QYCULCAMGR%20MOD/QYCULCAMGR%20RC7027500` | REST API for single symptom deconstruction |
-| **DCM Batch Search API** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/dcm/search` | REST API (POST) for batch searches |
-| **Server Health & Diagnostics** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/status` | Returns OS version, Java version, and runtime status |
+| **Interactive Web Dashboard** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/` | Responsive 5-Mode UI with ADMIN3 Log Analyzer, EBCDIC Decoder & 500+ Code Matrix |
+| **Symptom String Query** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/dcm/decode?symptom=5770%20SP/QYCULCAMGR%20MOD/QYCULCAMGR%20RC7027500` | Deconstructs `5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500` into exact 4-tier failure chain |
+| **Numeric RC Query** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/dcm/decode?symptom=5003000` | Evaluates pure numeric return code `5003000` across all 9 Service Program Managers |
+| **GSKit Return Code Query** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/dcm/decode?symptom=6` | Resolves GSKit error code `6` &rarr; `GSKKM_ERR_DATABASE_OPEN` with root-cause checklist |
+| **Keyword / Regex Search API** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/dcm/decode?symptom=KEYSTORE` | Searches 500+ database constants for `KEYSTORE`, returning matching symbolic names |
+| **Server Status & Health Check** | `http://<YOUR_IBMI_HOST>:<PORT>/dcm-service/api/status` | Returns IBM i OS release, Java runtime, and active JVM memory metrics |
+
+---
+
+## 🖥️ Web GUI Interface & Added Functionality
+
+The web dashboard is a responsive Single Page Application (SPA) providing **5 dedicated diagnostic modes**, a live **ADMIN3 / Liberty Log Analyzer**, an **EBCDIC CP037 Hex Decoder**, and an interactive **500+ Return Code Matrix**.
+
+### 1. Visual Layout of the Diagnostic Interface
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  🔐 IBM i DCM Return Code & Diagnostic Analyzer            [ IBM i V7R5 / V7R6 ] [ 500+ Codes ] │
+│  IAS v8.5+ & WebSphere Liberty 24.0.0.12+ | Context Root: /dcm-service                          │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  [ 🔍 1. Symptom String / WRKPRB ]  [ 📋 2. ADMIN3 Log Analyzer ]  [ ⚙️ 3. GSKit & API Codes ]     │
+│  [ 🔎 4. Keyword / Regex Search ]   [ 📊 5. Complete Matrix Directory (500+) ]                   │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│  ┌─ MODE 2: ADMIN3 / Liberty SystemOut Log Analyzer ──────────────────────────────────────────┐ │
+│  │ Paste multi-line log snippets from /www/ADMIN3/wlp/usr/servers/ADMIN3/logs/SystemOut.log   │ │
+│  │                                                                                            │ │
+│  │  user: RZSDOWE / current thread: Thread[WebContainer : 3,5,main]                           │ │
+│  │  function: qycu_listCertificatesJ                                                          │ │
+│  │  0: ProgramParameter(input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E3... / output: )│ │
+│  │  1: ProgramParameter(input: C1D3D36DD2C5E8E200 / output length: 0 / output: )              │ │
+│  │  rc: 6                                                                                     │ │
+│  │  Job: 123456/QTMHHTTP/ADMIN3                                                               │ │
+│  │                                                                                            │ │
+│  │  [ 🚀 Analyze ADMIN3 Trace Log ]   [ 📋 Load Sample Log ]   [ 🧹 Clear ]                    │ │
+│  └────────────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                                  │
+│  ┌─ 📊 DIAGNOSTIC ANALYSIS BREAKDOWN ─────────────────────────────────────────────────────────┐ │
+│  │ 👤 User: RZSDOWE     🏢 Job: 123456/QTMHHTTP/ADMIN3     ⚙️ Function: qycu_listCertificatesJ │ │
+│  │ 🔴 Return Code: 6 &rarr; GSKKM_ERR_DATABASE_OPEN (Database Open Failure)                         │ │
+│  ├────────────────────────────────────────────────────────────────────────────────────────────┤ │
+│  │ 🧩 Decoded Program Parameters (EBCDIC CP037 &rarr; ASCII):                                     │ │
+│  │   • Param 0: /QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB (Target Key Database)             │ │
+│  │   • Param 1: ALL_KEYS (Certificate Filter Scope)                                           │ │
+│  ├────────────────────────────────────────────────────────────────────────────────────────────┤ │
+│  │ 🛠️ Actionable IBM i Remediation Checklist:                                                 │ │
+│  │   [x] Check IFS file existence: WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')            │ │
+│  │   [x] Grant QTMHHTTP authority: CHGAUT OBJ('/QIBM/.../DEFAULT.KDB') USER(QTMHHTTP) *RWX   │ │
+│  │   [x] Check lock on password stash: WRKLNK OBJ('/QIBM/.../DEFAULT.STH')                    │ │
+│  └────────────────────────────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 2. Five Interactive Operating Modes
+
+| Mode | Target Input | Description | Output Provided |
+| :--- | :--- | :--- | :--- |
+| **1. Symptom String / WRKPRB** | `5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500` or `RC5003000` | Deconstructs IBM i symptom strings and WRKPRB problem logs into the 3-tier mathematical model. | Service Program, Entry Point, `qycuutl.H` utility, local failure offset, and CL commands. |
+| **2. ADMIN3 Log Analyzer** | Raw multi-line trace from `SystemOut.log` | Dissects Liberty WebSphere DCM backend traces including `ProgramParameter` EBCDIC hex dumps. | Host job, user profile, native function name, decoded IFS paths, GSKKM error diagnosis & recovery plan. |
+| **3. GSKit & API Return Codes** | Pure return codes: `6`, `16`, `-992`, `3843` | Direct lookup of GSKit errors (`gskkmerr.h`) and DCM SPI codes (`qycuretcodes.H`). | Symbolic constant, header source, failure categorization, and permission checklists. |
+| **4. Keyword / Regex Search** | Search terms: `KEYSTORE`, `PASSWORD`, `^QYCU_.*CA` | Fast regex matching across 500+ cataloged return codes and manager APIs. | Filtered table of constants, numeric values, source modules, and functional descriptions. |
+| **5. Complete Matrix Directory** | Interactive browsing | Complete searchable matrix of all 9 managers, 95+ utilities, 107 API codes, and 187 GSKKM codes. | Domain chips for 1-click filtering, multi-column sorting, and instant code lookup. |
+
+---
+
+### 3. ADMIN3 / Liberty SystemOut Log Analyzer Deep Dive
+
+When managing DCM via the IBM Web Administration for i interface (`http://<host>:2001/HTTPAdmin`), backend operations execute inside the **`ADMIN3`** Liberty server instance (`/www/ADMIN3/wlp/usr/servers/ADMIN3/logs/SystemOut.log`).
+
+#### Sample Input Log Snippet:
+```text
+user: RZSDOWE
+current thread: Thread[WebContainer : 3,5,main]
+class: com.ibm.as400.access.AS400
+function: qycu_listCertificatesJ
+0: ProgramParameter(input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output: )
+1: ProgramParameter(input: C1D3D36DD2C5E8E200 / output length: 0 / output: )
+rc: 6
+Job: 123456/QTMHHTTP/ADMIN3
+CertificateAction.listCertificates: API failed
+```
+
+#### What the Analyzer Extracts & Displays:
+1. **Host Job & User Tracking**: Displays executing user `RZSDOWE` and job `123456/QTMHHTTP/ADMIN3`.
+2. **Native SPI Function**: Identifies `qycu_listCertificatesJ` as the failing routine.
+3. **EBCDIC Parameter Hex Decoding**:
+   * Input `61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200` &rarr; Decodes to `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB`.
+   * Input `C1D3D36DD2C5E8E200` &rarr; Decodes to `ALL_KEYS`.
+4. **GSKKM Root-Cause Resolution**:
+   * Evaluates `rc: 6` &rarr; **`GSKKM_ERR_DATABASE_OPEN`** (Cannot open key database).
+   * Generates step-by-step remediation commands:
+     ```cl
+     WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')
+     CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)
+     WRKJOB JOB(123456)
+     ```
+
+---
+
+### 4. Built-in EBCDIC CP037 Hex Parameter Decoder
+
+The dashboard includes a standalone **EBCDIC Hex Converter** tool located below the search panels.
+
+* **Example 1**: `61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361C3C5D9E3C1E4E3C861C4C5C6C1E4D3E34BD2C4C200`
+  &rarr; Decodes to: `/QIBM/UserData/ICSS/Cert/CertAuth/DEFAULT.KDB`
+* **Example 2**: `C8C1E2D7D9C9E5C1E3C5D2C5E800`
+  &rarr; Decodes to: `HASPRIVATEKEY`
+* **Example 3**: `C1D3D36DD2C5E8E200`
+  &rarr; Decodes to: `ALL_KEYS`
 
 ---
 
@@ -512,3 +619,7 @@ For automated CI/CD pipelines or headless administration via IBM i QShell:
 | `5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC14000000` | `QYCUAPPMGR` (App Mgr) | `QYCU_APPUPDATEDEFINITION` (`+14000000`) | None (Direct Module Failure) |
 | `5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC12000000` | `QYCUAPPMGR` (App Mgr) | `QYCU_APPREMOVE` (`+12000000`) | None (Direct Module Failure) |
 | `5770 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC7000100` | `QYCUAPPMGR` (App Mgr) | `QYCU_APPLISTASSIGNEDCERT` (`+7000000`) | `QYCU_RTVAPPS` (`+100`) |
+| `rc: 6 (GSKKM Error)` | `GSKit / gskkmerr.h` | `GSKKM_ERR_DATABASE_OPEN` | Key database open failed (check IFS authority) |
+| `rc: 16 (GSKKM Error)` | `GSKit / gskkmerr.h` | `GSKKM_ERR_DATABASE_INVALID_PASSWORD` | Password stash `.STH` file mismatch or corruption |
+| `rc: 3845 (QYCU Return Code)` | `DCM API / qycuretcodes.H` | `YCU_RC_AUTH_PROB` | Authorization failure accessing DCM store |
+| `rc: -992 (QYCU Return Code)` | `DCM SPI / qycuretcodes.H` | `YCU_SWAP_USER` | Profile swap failure during privilege escalation |
