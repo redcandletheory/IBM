@@ -85,7 +85,7 @@ The web dashboard is a high-performance Single Page Application (SPA) providing 
 * **What to enter**:
   * Paste multi-line raw log snippets directly from `/www/ADMIN3/wlp/usr/servers/ADMIN3/logs/SystemOut.log`.
 * **Output**:
-  * Extracts executing User Profile (e.g., `RZSDOWE`) and IBM i Host Job (e.g., `123456/QTMHHTTP/ADMIN3`).
+  * Extracts executing User Profile (e.g., `QSECOFR`) and IBM i Host Job (e.g., `123456/QTMHHTTP/ADMIN3`).
   * Maps native SPI method calls (e.g., `qycu_listCertificatesJ`).
   * **Decodes EBCDIC (CP037) Hex Parameters** into plaintext IFS paths and option tags.
   * Resolves underlying **GSKit / GSKKM return codes** (e.g., `rc: 6` &rarr; `GSKKM_ERR_DATABASE_OPEN`).

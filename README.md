@@ -523,7 +523,7 @@ The web dashboard is a responsive Single Page Application (SPA) providing **5 de
 │  ┌─ MODE 2: ADMIN3 / Liberty SystemOut Log Analyzer ──────────────────────────────────────────┐ │
 │  │ Paste multi-line log snippets from /www/ADMIN3/wlp/usr/servers/ADMIN3/logs/SystemOut.log   │ │
 │  │                                                                                            │ │
-│  │  user: RZSDOWE / current thread: Thread[WebContainer : 3,5,main]                           │ │
+│  │  user: QSECOFR / current thread: Thread[WebContainer : 3,5,main]                           │ │
 │  │  function: qycu_listCertificatesJ                                                          │ │
 │  │  0: ProgramParameter(input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E3... / output: )│ │
 │  │  1: ProgramParameter(input: C1D3D36DD2C5E8E200 / output length: 0 / output: )              │ │
@@ -534,7 +534,7 @@ The web dashboard is a responsive Single Page Application (SPA) providing **5 de
 │  └────────────────────────────────────────────────────────────────────────────────────────────┘ │
 │                                                                                                  │
 │  ┌─ 📊 DIAGNOSTIC ANALYSIS BREAKDOWN ─────────────────────────────────────────────────────────┐ │
-│  │ 👤 User: RZSDOWE     🏢 Job: 123456/QTMHHTTP/ADMIN3     ⚙️ Function: qycu_listCertificatesJ │ │
+│  │ 👤 User: QSECOFR     🏢 Job: 123456/QTMHHTTP/ADMIN3     ⚙️ Function: qycu_listCertificatesJ │ │
 │  │ 🔴 Return Code: 6 &rarr; GSKKM_ERR_DATABASE_OPEN (Database Open Failure)                         │ │
 │  ├────────────────────────────────────────────────────────────────────────────────────────────┤ │
 │  │ 🧩 Decoded Program Parameters (EBCDIC CP037 &rarr; ASCII):                                     │ │
@@ -569,7 +569,7 @@ When managing DCM via the IBM Web Administration for i interface (`http://<host>
 
 #### Sample Input Log Snippet:
 ```text
-user: RZSDOWE
+user: QSECOFR
 current thread: Thread[WebContainer : 3,5,main]
 class: com.ibm.as400.access.AS400
 function: qycu_listCertificatesJ
@@ -581,7 +581,7 @@ CertificateAction.listCertificates: API failed
 ```
 
 #### What the Analyzer Extracts & Displays:
-1. **Host Job & User Tracking**: Displays executing user `RZSDOWE` and job `123456/QTMHHTTP/ADMIN3`.
+1. **Host Job & User Tracking**: Displays executing user `QSECOFR` and job `123456/QTMHHTTP/ADMIN3`.
 2. **Native SPI Function**: Identifies `qycu_listCertificatesJ` as the failing routine.
 3. **EBCDIC Parameter Hex Decoding**:
    * Input `61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200` &rarr; Decodes to `/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB`.

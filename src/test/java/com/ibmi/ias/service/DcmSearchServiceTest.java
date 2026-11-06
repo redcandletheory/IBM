@@ -45,7 +45,7 @@ public class DcmSearchServiceTest {
 
     @Test
     public void testAdmin3LogParsing() {
-        String sampleLog = "user: RZSDOWE\n" +
+        String sampleLog = "user: QSECOFR\n" +
                 "current thread: Thread[WebContainer : 3,5,main]\n" +
                 "class: com.ibm.as400.access.AS400\n" +
                 "function: qycu_listCertificatesJ\n" +
@@ -56,7 +56,7 @@ public class DcmSearchServiceTest {
 
         Map<String, Object> result = service.parseAdmin3Log(sampleLog);
         assertNotNull(result);
-        assertEquals("RZSDOWE", result.get("user"));
+        assertEquals("QSECOFR", result.get("user"));
         assertEquals("qycu_listCertificatesJ", result.get("function"));
         assertEquals(6L, result.get("returnCode"));
 

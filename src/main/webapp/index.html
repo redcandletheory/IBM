@@ -1120,7 +1120,7 @@ const DCM_DB = {
             } else if (mode === 'admin3') {
                 document.getElementById('tabAdmin3').classList.add('active');
                 inputLabel.textContent = "Paste ADMIN3 / Liberty SystemOut.log Lines (extracts user, function, rc, job, & decodes EBCDIC hex parameters):";
-                symptomInput.placeholder = `Paste log trace snippet, e.g.:\n[11/4/26, 12:19:34:617 CET] 00000032 SystemOut O user: RZSDOWE / function: qycu_listCertificatesJ / rc: 6\n0 : ProgramParameter ( input: F1F5F900 ... )\n6 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 )\njob: 559042/QUSER_NC/QZRCSRVS`;
+                symptomInput.placeholder = `Paste log trace snippet, e.g.:\n[11/4/26, 12:19:34:617 CET] 00000032 SystemOut O user: QSECOFR / function: qycu_listCertificatesJ / rc: 6\n0 : ProgramParameter ( input: F1F5F900 ... )\n6 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 )\njob: 123456/QTMHHTTP/ADMIN3`;
                 sampleRow.innerHTML = `
                     <span>Sample Logs:</span>
                     <button class="sample-btn" onclick="setSampleAdmin3_RC6()">ADMIN3 Log (RC 6 - Store Open Error)</button>
@@ -1158,28 +1158,28 @@ const DCM_DB = {
 
         function setSampleAdmin3_RC6() {
             setMode('admin3');
-            document.getElementById('symptomInput').value = 
-`[11/4/26, 12:19:34:617 CET] 00000032 SystemOut                                                    O user: RZSDOWE / function: qycu_listCertificatesJ / rc: 6
+            document.getElementById('symptomInput').value =
+`[11/4/26, 12:19:34:617 CET] 00000032 SystemOut                                                    O user: QSECOFR / function: qycu_listCertificatesJ / rc: 6
 [11/4/26, 12:19:34:618 CET] 00000032 SystemOut                                                    O 0 : ProgramParameter ( input: F1F5F900 / output length: 0 / output:  )
 [11/4/26, 12:19:34:618 CET] 00000032 SystemOut                                                    O 1 : ProgramParameter ( input: 8396944B8982944B8483944B998300 / output length: 0 / output:  )
 [11/4/26, 12:19:34:618 CET] 00000032 SystemOut                                                    O 2 : ProgramParameter ( input:  / output length: 4 / output: 00000006 )
 [11/4/26, 12:19:34:619 CET] 00000032 SystemOut                                                    O 6 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )
 [11/4/26, 12:19:34:620 CET] 00000032 SystemOut                                                    O 8 : ProgramParameter ( input: C1D3D36DD2C5E8E200 / output length: 0 / output:  )
-[11/4/26, 12:19:34:620 CET] 00000032 SystemOut                                                    O job: 559042/QUSER_NC/QZRCSRVS
+[11/4/26, 12:19:34:620 CET] 00000032 SystemOut                                                    O job: 123456/QTMHHTTP/ADMIN3
 [11/4/26, 12:19:34:621 CET] 00000032 SystemOut                                                    O CertificateAction.listCertificates: API failed`;
             performSearch();
         }
 
         function setSampleAdmin3_RC16() {
             setMode('admin3');
-            document.getElementById('symptomInput').value = 
-`[11/4/26, 12:20:21:205 CET] 00000053 SystemOut                                                    O user: RZSDOWE / function: qycu_listCertificatesJ / rc: 16
+            document.getElementById('symptomInput').value =
+`[11/4/26, 12:20:21:205 CET] 00000053 SystemOut                                                    O user: QSECOFR / function: qycu_listCertificatesJ / rc: 16
 [11/4/26, 12:20:21:206 CET] 00000053 SystemOut                                                    O 0 : ProgramParameter ( input: F1F5F900 / output length: 0 / output:  )
 [11/4/26, 12:20:21:206 CET] 00000053 SystemOut                                                    O 1 : ProgramParameter ( input: 8396944B8982944B8483944B998300 / output length: 0 / output:  )
 [11/4/26, 12:20:21:206 CET] 00000053 SystemOut                                                    O 2 : ProgramParameter ( input:  / output length: 4 / output: 00000010 )
 [11/4/26, 12:20:21:208 CET] 00000053 SystemOut                                                    O 6 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361C3C5D9E3C1E4E3C861C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )
 [11/4/26, 12:20:21:209 CET] 00000053 SystemOut                                                    O 8 : ProgramParameter ( input: C8C1E2D7D9C9E5C1E3C5D2C5E800 / output length: 0 / output:  )
-[11/4/26, 12:20:21:209 CET] 00000053 SystemOut                                                    O job: 559060/QUSER_NC/QZRCSRVS
+[11/4/26, 12:20:21:209 CET] 00000053 SystemOut                                                    O job: 123457/QTMHHTTP/ADMIN3
 [11/4/26, 12:20:21:209 CET] 00000053 SystemOut                                                    O CertificateAction.listCACertificates: API failed`;
             performSearch();
         }
