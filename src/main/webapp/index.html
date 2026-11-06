@@ -79,10 +79,15 @@
         .decomp-val { font-size: 0.95rem; font-weight: 700; margin-top: 3px; color: #0f62fe; font-family: var(--font-mono); }
         .decomp-sub { font-size: 0.82rem; color: #4b5563; margin-top: 2px; }
 
-        .param-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; font-family: var(--font-mono); }
-        .param-table th, .param-table td { border: 1px solid #e2e8f0; padding: 6px 10px; text-align: left; }
-        .param-table th { background: #f1f5f9; font-weight: 600; color: #334155; }
-        .param-decoded { color: #0f62fe; font-weight: 600; }
+        .param-table-container { width: 100%; overflow-x: auto; margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .param-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.85rem; font-family: var(--font-mono); }
+        .param-table th, .param-table td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; vertical-align: top; }
+        .param-table th { background: #f1f5f9; font-weight: 600; color: #334155; position: sticky; top: 0; }
+        .param-table th:nth-child(1), .param-table td:nth-child(1) { width: 50px; text-align: center; }
+        .param-table th:nth-child(2), .param-table td:nth-child(2) { width: 48%; }
+        .param-table th:nth-child(3), .param-table td:nth-child(3) { width: 48%; }
+        .hex-scroll-box { max-height: 85px; overflow-x: auto; overflow-y: auto; font-size: 0.75rem; color: #475569; word-break: break-all; white-space: pre-wrap; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 8px; margin-bottom: 4px; }
+        .param-decoded { color: #0f62fe; font-weight: 600; margin-top: 2px; word-break: break-word; }
 
         .explanation-box { background: var(--success-bg); border: 1px solid #a7f3d0; border-radius: 6px; padding: 14px 18px; margin-top: 14px; }
         .explanation-box.warning-tone { background: var(--warning-bg); border-color: #fde68a; }
@@ -2094,30 +2099,32 @@ const DCM_DB = {
                 paramsHtml = `
                     <div style="margin-top:14px;">
                         <strong style="font-size:0.85rem; color:#0369a1;">Decoded ProgramParameter Stack (EBCDIC CP037 / Hex):</strong>
-                        <table class="param-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Input Hex / Decoded Text</th>
-                                    <th>Output Hex / Decoded Text</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${res.parameters.map(p => `
+                        <div class="param-table-container">
+                            <table class="param-table">
+                                <thead>
                                     <tr>
-                                        <td>${p.index}</td>
-                                        <td>
-                                            ${p.inputHex ? `<div style="font-size:0.75rem; color:#64748b;">${p.inputHex}</div>` : ''}
-                                            ${p.decodedInput ? `<div class="param-decoded">&#8594; "${p.decodedInput}"</div>` : ''}
-                                        </td>
-                                        <td>
-                                            ${p.outHex ? `<div style="font-size:0.75rem; color:#64748b;">${p.outHex} (Len: ${p.outLen})</div>` : ''}
-                                            ${p.decodedOutput ? `<div class="param-decoded">&#8594; "${p.decodedOutput}"</div>` : ''}
-                                        </td>
+                                        <th>#</th>
+                                        <th>Input Hex / Decoded Text</th>
+                                        <th>Output Hex / Decoded Text</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${res.parameters.map(p => `
+                                        <tr>
+                                            <td><strong>${p.index}</strong></td>
+                                            <td>
+                                                ${p.inputHex ? `<div class="hex-scroll-box">${p.inputHex}</div>` : '<span style="color:#94a3b8; font-size:0.75rem;">(None)</span>'}
+                                                ${p.decodedInput ? `<div class="param-decoded">&#8594; "${p.decodedInput}"</div>` : ''}
+                                            </td>
+                                            <td>
+                                                ${p.outHex ? `<div class="hex-scroll-box">${p.outHex} <span style="color:#0284c7; font-weight:700;">(Len: ${p.outLen})</span></div>` : (p.outLen && p.outLen !== '0' ? `<div style="font-size:0.75rem; color:#0284c7; font-weight:700;">Length: ${p.outLen}</div>` : '<span style="color:#94a3b8; font-size:0.75rem;">(None)</span>')}
+                                                ${p.decodedOutput ? `<div class="param-decoded">&#8594; "${p.decodedOutput}"</div>` : ''}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 `;
             }
