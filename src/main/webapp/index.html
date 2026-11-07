@@ -92,25 +92,24 @@
             font-size: 0.94rem;
         }
 
-        /* Interactive Return Code Hover Badges */
+        /* Interactive Return Code Hover Badges matching red output theme */
         .rc-hover-badge {
             display: inline-block;
-            background: #fef08a;
-            color: #713f12;
+            color: #ff4d4f;
+            background: rgba(255, 77, 79, 0.18);
+            border: 1px solid rgba(255, 77, 79, 0.4);
             font-weight: 700;
-            padding: 1px 7px;
-            border-radius: 4px;
-            cursor: help;
-            border: 1px solid #eab308;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-            transition: all 0.15s ease;
+            padding: 1px 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease;
             user-select: text;
             -webkit-user-select: text;
         }
         .rc-hover-badge:hover, .rc-hover-badge:focus {
-            background: #facc15;
-            color: #422006;
-            box-shadow: 0 0 0 2px #38bdf8;
+            background: rgba(255, 77, 79, 0.35);
+            border-color: rgba(255, 77, 79, 0.8);
+            color: #ff7875;
         }
 
         .sequence-box {
@@ -187,40 +186,40 @@
 
         <div class="search-card">
             <div class="search-mode-tabs">
-                <button id="tabAdmin3" class="tab-btn active" onclick="setMode('admin3')">📋 1. ADMIN3 Log Analyzer</button>
-                <button id="tabGsk" class="tab-btn" onclick="setMode('gsk')">⚙️ 2. GSKit Return Codes</button>
-                <button id="tabKeyword" class="tab-btn" onclick="setMode('keyword')">🔎 3. Keyword Search</button>
-                <button id="tabDirectory" class="tab-btn" onclick="setMode('directory')">📊 4. Official GSKSSL Code Matrix</button>
-                <button id="tabCommands" class="tab-btn" onclick="setMode('commands')">🛠️ 5. Verified IBM i Commands</button>
+                <button id="tabWrkprb" class="tab-btn active" onclick="setMode('wrkprb')">🔍 1. Symptom String / WRKPRB</button>
+                <button id="tabAdmin3" class="tab-btn" onclick="setMode('admin3')">📋 2. ADMIN3 Log Analyzer</button>
+                <button id="tabGsk" class="tab-btn" onclick="setMode('gsk')">⚙️ 3. GSKit & API Return Codes</button>
+                <button id="tabKeyword" class="tab-btn" onclick="setMode('keyword')">🔎 4. Keyword / Regex Search</button>
+                <button id="tabDirectory" class="tab-btn" onclick="setMode('directory')">📊 5. Complete Matrix Directory (500+)</button>
             </div>
 
             <div id="modeGuidance" class="mode-guidance">
-                <div class="mode-guidance-title"><span>📋</span> Mode 1: ADMIN3 / Liberty SystemOut Log Analyzer & EBCDIC CP037 Hex Decoder</div>
-                <div>Paste multi-line trace log blocks or single-line JNI API failures from <code>SystemOut.log</code>. Automatically decodes all hexadecimal EBCDIC CP037 parameters (IFS paths, certificate flags) in-place and correlates <code>rc:</code> failure codes to official GSKSSL constants.</div>
+                <div class="mode-guidance-title"><span>🔍</span> Mode 1: Symptom String / WRKPRB Mathematical Deconstructor</div>
+                <div>Deconstructs IBM i symptom strings (e.g. <code>5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500</code>) or raw numeric codes into the 3-tier mathematical model: <strong>Major Entry Point (xxx)</strong> + <strong>Utility Function (yyyy)</strong> + <strong>Local Minor Failure Point (zz)</strong>.</div>
             </div>
 
             <div id="searchControls">
                 <div class="input-group">
-                    <label id="inputLabel" for="symptomInput">Paste ADMIN3 / Liberty SystemOut.log Lines (extracts user, function, rc, job, & decodes EBCDIC hex parameters):</label>
-                    <textarea id="symptomInput" rows="6" placeholder="Paste log trace snippet, e.g.:&#10;[11/4/26, 12:19:34:617 CET] 00000032 SystemOut O user: QSECOFR / function: qycu_listCertificatesJ / rc: 6000&#10;0 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )&#10;1 : ProgramParameter ( input: C1D3D36DD2C5E8E200 / output length: 0 / output:  )&#10;job: 123456/QTMHHTTP/ADMIN3"></textarea>
+                    <label id="inputLabel" for="symptomInput">Enter Symptom String(s) or WRKPRB Problem Log (one per line):</label>
+                    <textarea id="symptomInput" rows="5" placeholder="e.g. 5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500&#10;or: 5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000&#10;or: RC7027500"></textarea>
                 </div>
 
                 <div class="samples" id="sampleRow">
-                    <span>Sample Presets:</span>
-                    <button class="sample-btn" onclick="setSampleAdmin3_RC24()">RC 24 / CPDB702 (.STH Password Mismatch)</button>
-                    <button class="sample-btn" onclick="setSampleAdmin3_RC16()">RC 16 (Keystore Password Invalid)</button>
-                    <button class="sample-btn" onclick="setSampleAdmin3_RC6000()">RC 6000 (CA Not Trusted)</button>
-                    <button class="sample-btn" onclick="setSampleAdmin3_RC6019()">RC 6019 (No Default Cert)</button>
-                    <button class="sample-btn" onclick="setSampleAdmin3_RC406()">RC 406 (Socket I/O Error)</button>
+                    <span>Quick Examples:</span>
+                    <button class="sample-btn" onclick="setSample('5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500')">RC7027500 (Local CA)</button>
+                    <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000')">RC5003000 (App Mgr + Util)</button>
+                    <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC14000000')">RC14000000 (App Mgr)</button>
+                    <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC12000000')">RC12000000 (App Mgr Remove)</button>
+                    <button class="sample-btn" onclick="setSample('5770 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC7000100')">RC7000100 (App Mgr + Rtv)</button>
                 </div>
 
                 <div class="btn-row">
-                    <button class="btn-primary" onclick="performSearch()">Analyze & Decode</button>
+                    <button class="btn-primary" onclick="performSearch()">Search & Deconstruct</button>
                     <button class="btn-secondary" onclick="clearResults()">Clear</button>
                 </div>
             </div>
 
-            <!-- Mode 4 Directory Section -->
+            <!-- Mode 5 Directory Section -->
             <div id="directorySection" style="display:none; margin-top:16px;">
                 <input type="text" id="dirFilterInput" class="ref-filter" placeholder="Filter by return code number or constant name..." oninput="filterDirectory()">
                 <div style="max-height: 480px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
@@ -235,29 +234,6 @@
                         </thead>
                         <tbody id="dirTableBody"></tbody>
                     </table>
-                </div>
-            </div>
-
-            <!-- Mode 5 Commands Section -->
-            <div id="commandsSection" style="display:none; margin-top:16px;">
-                <div class="explanation-box" style="margin-top:0;">
-                    <div class="explanation-title">Verified IBM i CL Diagnostic & Verification Commands</div>
-                    <div class="explanation-text" style="font-family:var(--font-mono); font-size:0.85rem; line-height:1.7;">
-                        <strong>1. Check System Certificate Store & Stash Existence:</strong><br>
-                        <code>WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')</code><br><br>
-                        <strong>2. Check and Grant IFS Authorities to HTTP Profile (QTMHHTTP):</strong><br>
-                        <code>WRKAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB')</code><br>
-                        <code>CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX) OBJAUT(*ALL)</code><br>
-                        <code>CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH') USER(QTMHHTTP) DTAAUT(*RWX) OBJAUT(*ALL)</code><br><br>
-                        <strong>3. Inspect Registered Application IDs:</strong><br>
-                        <code>WRKREGINF</code><br><br>
-                        <strong>4. Check Subsystem QHTTPSVR and ADMIN Jobs:</strong><br>
-                        <code>WRKACTJOB SBS(QHTTPSVR)</code><br><br>
-                        <strong>5. Start Administration Server Instance (*ADMIN):</strong><br>
-                        <code>STRTCPSVR SERVER(*HTTP) HTTPSVR(*ADMIN)</code><br><br>
-                        <strong>6. View GSKSSL C Header Source Member on IBM i:</strong><br>
-                        <code>DSPF STMF('/QIBM/include/gskssl.h')</code>
-                    </div>
                 </div>
             </div>
         </div>
@@ -496,7 +472,13 @@
             const decodedLines = lines.map(line => {
                 let escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 
-                // Decode EBCDIC CP037 Hex inputs/outputs with red highlight
+                // 1. Wrap return code occurrences with hoverable red badges
+                escaped = escaped.replace(/(?:(\/\s*)?(rc|RC|return\s+code)\s*[:=]?\s*(-?\d+))/gi, (match, slash, label, num) => {
+                    const prefix = slash || '';
+                    return `${prefix}<span class="rc-hover-badge" data-rc="${num}">${label}: ${num}</span>`;
+                });
+
+                // 2. Decode EBCDIC CP037 Hex inputs with red highlight
                 escaped = escaped.replace(/(input:\s*)([0-9A-Fa-f]{2,})/gi, (match, prefix, hex) => {
                     const decoded = decodeEbcdicHex(hex);
                     if (decoded && decoded.length > 0) {
@@ -505,25 +487,17 @@
                     return match;
                 });
 
+                // 3. Decode outputs: check if 4-byte return code in hex (e.g. 00000006 -> RC 6) or EBCDIC text
                 escaped = escaped.replace(/(output:\s*)([0-9A-Fa-f]{2,})/gi, (match, prefix, hex) => {
-                    // Check if 4-byte return code in hex (e.g. 00000010 -> RC 16)
                     if (hex.length === 8 && hex.startsWith('000000')) {
                         const num = parseInt(hex.substring(6), 16);
-                        const info = getReturnCodeInfo(num);
-                        return `${prefix}<span class="rc-hover-badge" data-rc="${num}" title="Decoded RC ${num}: ${info.constant} - ${info.cause}">${hex} (RC ${num}) ℹ️</span>`;
+                        return `${prefix}<span class="rc-hover-badge" data-rc="${num}">${hex} (RC ${num})</span>`;
                     }
                     const decoded = decodeEbcdicHex(hex);
                     if (decoded && decoded.length > 0) {
                         return `${prefix}<span class="decoded-highlight-red">${decoded}</span>`;
                     }
                     return match;
-                });
-
-                // Wrap all return code occurrences with interactive hover tooltips
-                escaped = escaped.replace(/(?:(\/\s*)?(rc|RC|return\s+code)\s*[:=]?\s*(-?\d+))/gi, (match, slash, label, num) => {
-                    const info = getReturnCodeInfo(num);
-                    const prefix = slash || '';
-                    return `${prefix}<span class="rc-hover-badge" data-rc="${num}" title="RC ${num}: ${info.constant}&#10;${info.cause}">${label}: ${num} ℹ️</span>`;
                 });
 
                 return escaped;
