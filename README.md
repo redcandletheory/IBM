@@ -3,6 +3,7 @@
 ### Target Runtime: **Integrated Application Server (IAS) / WebSphere Liberty Profile on IBM i (V7R3, V7R4, V7R5, V7R6)**
 * **Context Root**: `/dcm-service`
 * **Artifact Package**: `dcm-service.war`
+* **Comprehensive Architecture Deep Dive**: See [`ARCHITECTURE_AND_DIAGNOSTICS.md`](ARCHITECTURE_AND_DIAGNOSTICS.md)
 * **Detailed Technical Guide**: See [`USER_GUIDE.md`](USER_GUIDE.md)
 
 ---
