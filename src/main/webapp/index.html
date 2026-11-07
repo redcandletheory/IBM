@@ -904,38 +904,50 @@
         }
 
         // Global Floating Tooltip Controller (Bypasses container overflow clipping)
+        function positionTooltip(badge, tooltip) {
+            const rc = badge.getAttribute('data-rc');
+            const info = getReturnCodeInfo(rc);
+            tooltip.innerHTML = `
+                <div style="font-size:0.95rem; font-weight:700; color:#38bdf8; margin-bottom:4px;">
+                    RC ${info.code} &bull; ${info.constant}
+                </div>
+                <div style="font-size:0.78rem; color:#94a3b8; margin-bottom:8px; line-height:1.4;">
+                    <strong>Routine:</strong> ${info.func}<br>
+                    <strong>Target:</strong> <span style="color:#e2e8f0;">${info.target}</span> &bull; <strong>Domain:</strong> ${info.domain}
+                </div>
+                <div style="color:#f8fafc; font-size:0.83rem; line-height:1.45; border-top:1px solid #334155; padding-top:6px;">
+                    ${info.cause}
+                </div>
+            `;
+            tooltip.style.display = 'block';
+            
+            const rect = badge.getBoundingClientRect();
+            const tipHeight = tooltip.offsetHeight || 120;
+            let top = rect.top - tipHeight - 10;
+            if (top < 10) {
+                top = rect.bottom + 10;
+            }
+            let left = rect.left + (rect.width / 2) - 180;
+            if (left < 10) left = 10;
+            if (left + 400 > window.innerWidth) left = window.innerWidth - 410;
+            
+            tooltip.style.top = top + 'px';
+            tooltip.style.left = left + 'px';
+        }
+
         document.addEventListener('mouseover', function(e) {
             const badge = e.target.closest('.rc-hover-badge');
             const tooltip = document.getElementById('globalTooltip');
             if (badge && tooltip) {
-                const rc = badge.getAttribute('data-rc');
-                const info = getReturnCodeInfo(rc);
-                tooltip.innerHTML = `
-                    <div style="font-size:0.95rem; font-weight:700; color:#38bdf8; margin-bottom:4px;">
-                        RC ${info.code} &bull; ${info.constant}
-                    </div>
-                    <div style="font-size:0.78rem; color:#94a3b8; margin-bottom:8px; line-height:1.4;">
-                        <strong>Routine:</strong> ${info.func}<br>
-                        <strong>Target:</strong> <span style="color:#e2e8f0;">${info.target}</span> &bull; <strong>Domain:</strong> ${info.domain}
-                    </div>
-                    <div style="color:#f8fafc; font-size:0.83rem; line-height:1.45; border-top:1px solid #334155; padding-top:6px;">
-                        ${info.cause}
-                    </div>
-                `;
-                tooltip.style.display = 'block';
-                
-                const rect = badge.getBoundingClientRect();
-                const tipHeight = tooltip.offsetHeight || 120;
-                let top = rect.top - tipHeight - 10;
-                if (top < 10) {
-                    top = rect.bottom + 10;
-                }
-                let left = rect.left + (rect.width / 2) - 180;
-                if (left < 10) left = 10;
-                if (left + 400 > window.innerWidth) left = window.innerWidth - 410;
-                
-                tooltip.style.top = top + 'px';
-                tooltip.style.left = left + 'px';
+                positionTooltip(badge, tooltip);
+            }
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            const badge = e.target.closest('.rc-hover-badge');
+            const tooltip = document.getElementById('globalTooltip');
+            if (badge && tooltip && tooltip.style.display !== 'block') {
+                positionTooltip(badge, tooltip);
             }
         });
 
