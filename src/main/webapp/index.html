@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IBM i DCM Return Code, GSKit & ADMIN3 Log Diagnostic Analyzer</title>
+    <title>IBM i GSKit SSL/TLS & ADMIN3 Log Diagnostic Analyzer</title>
     <style>
         :root {
             --primary: #0f62fe;
@@ -14,24 +14,18 @@
             --text-main: #161616;
             --text-secondary: #525252;
             --border: #e0e0e0;
-            --border-subtle: #f0f0f0;
             --success-bg: #defbe6;
             --success-text: #0e6027;
             --warning-bg: #fff8e1;
-            --warning-border: #f1c21b;
-            --warning-text: #8a6d00;
-            --alert-bg: #fff1f1;
-            --alert-border: #da1e28;
-            --alert-text: #750e13;
             --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background: var(--bg); color: var(--text-main); padding: 28px 16px; line-height: 1.5; }
+        body { background: var(--bg); color: var(--text-main); padding: 24px 16px; line-height: 1.5; }
         .container { max-width: 1080px; margin: 0 auto; }
         
         .header { margin-bottom: 20px; }
-        .header h1 { font-size: 1.85rem; font-weight: 700; color: #121619; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .header h1 { font-size: 1.75rem; font-weight: 700; color: #121619; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .header .badge { font-size: 0.75rem; background: var(--primary); color: white; padding: 3px 8px; border-radius: 12px; font-weight: 600; }
         .header p { color: var(--text-secondary); margin-top: 4px; font-size: 0.95rem; }
 
@@ -40,6 +34,9 @@
         .search-mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; flex-wrap: wrap; }
         .tab-btn { background: transparent; border: none; padding: 7px 14px; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-radius: 4px; transition: all 0.2s; }
         .tab-btn.active { background: var(--primary-light); color: var(--primary); }
+
+        .mode-guidance { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--primary); border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.88rem; color: #334155; }
+        .mode-guidance-title { font-weight: 700; color: #0f172a; margin-bottom: 2px; }
 
         .input-group { margin-bottom: 14px; }
         label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: var(--text-main); }
@@ -59,19 +56,10 @@
 
         .results-container { display: flex; flex-direction: column; gap: 18px; margin-bottom: 24px; }
         .result-card { background: var(--card-bg); border-radius: 8px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 5px solid var(--primary); border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .result-card.closest-match { border-left-color: #f1c21b; }
-        .result-card.gsk-card { border-left-color: #8a3ffc; }
-        .result-card.admin3-card { border-left-color: #1192e8; }
-        
         .result-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; gap: 8px; }
-        .result-title { font-size: 1.2rem; font-weight: 700; color: #0f172a; }
+        .result-title { font-size: 1.15rem; font-weight: 700; color: #0f172a; }
         .result-sub { font-size: 0.85rem; color: var(--text-secondary); margin-top: 3px; font-family: var(--font-mono); }
-        .result-badge { background: #e0e0e0; padding: 3px 9px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .badge-exact { background: #defbe6; color: #0e6027; }
-        .badge-closest { background: #fff8e1; color: #8a6d00; }
-        .badge-gsk { background: #f3e8ff; color: #6929c4; }
-        .badge-admin3 { background: #e0f2fe; color: #0369a1; }
-        .badge-keyword { background: #edf5ff; color: #0043ce; }
+        .result-badge { background: #e0f2fe; color: #0369a1; padding: 3px 9px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
 
         .decomp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
         .decomp-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; }
@@ -79,1003 +67,321 @@
         .decomp-val { font-size: 0.95rem; font-weight: 700; margin-top: 3px; color: #0f62fe; font-family: var(--font-mono); }
         .decomp-sub { font-size: 0.82rem; color: #4b5563; margin-top: 2px; }
 
-        .param-table-container { width: 100%; overflow-x: auto; margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 6px; }
-        .param-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.85rem; font-family: var(--font-mono); }
-        .param-table th, .param-table td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; vertical-align: top; }
-        .param-table th { background: #f1f5f9; font-weight: 600; color: #334155; position: sticky; top: 0; }
-        .param-table th:nth-child(1), .param-table td:nth-child(1) { width: 50px; text-align: center; }
-        .param-table th:nth-child(2), .param-table td:nth-child(2) { width: 48%; }
-        .param-table th:nth-child(3), .param-table td:nth-child(3) { width: 48%; }
-        .hex-scroll-box { max-height: 85px; overflow-x: auto; overflow-y: auto; font-size: 0.75rem; color: #475569; word-break: break-all; white-space: pre-wrap; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 8px; margin-bottom: 4px; }
-        .param-decoded { color: #0f62fe; font-weight: 600; margin-top: 2px; word-break: break-word; }
-
         .decoded-log-box { background: #0f172a; color: #e2e8f0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; padding: 14px 16px; border-radius: 6px; border: 1px solid #1e293b; min-height: 160px; height: 360px; resize: vertical; overflow-y: auto; overflow-x: auto; white-space: pre-wrap; word-break: break-word; margin-top: 10px; user-select: text; -webkit-user-select: text; box-sizing: border-box; }
         .decoded-highlight-red { color: #ff4d4f; font-weight: 700; background: rgba(255, 77, 79, 0.18); padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(255, 77, 79, 0.4); user-select: text; -webkit-user-select: text; }
 
+        /* Floating Unclipped Return Code Tooltip */
+        .global-floating-tooltip {
+            position: fixed;
+            z-index: 99999999;
+            display: none;
+            max-width: 400px;
+            background: #0f172a;
+            color: #f8fafc;
+            border-radius: 8px;
+            padding: 14px 18px;
+            font-size: 0.84rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.5;
+            box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 8px 16px -2px rgba(0, 0, 0, 0.5);
+            border: 1.5px solid #38bdf8;
+            pointer-events: none;
+        }
+        .global-floating-tooltip strong {
+            color: #38bdf8;
+            font-size: 0.94rem;
+        }
+
+        /* Interactive Return Code Hover Badges */
+        .rc-hover-badge {
+            display: inline-block;
+            background: #fef08a;
+            color: #713f12;
+            font-weight: 700;
+            padding: 1px 7px;
+            border-radius: 4px;
+            cursor: help;
+            border: 1px solid #eab308;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+            transition: all 0.15s ease;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        .rc-hover-badge:hover, .rc-hover-badge:focus {
+            background: #facc15;
+            color: #422006;
+            box-shadow: 0 0 0 2px #38bdf8;
+        }
+
+        .sequence-box {
+            background: #fefce8;
+            border: 1px solid #fde047;
+            border-left: 5px solid #ca8a04;
+            border-radius: 6px;
+            padding: 16px 18px;
+            margin-top: 14px;
+        }
+        .sequence-title {
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: #854d0e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sequence-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            counter-reset: seq-counter;
+        }
+        .sequence-step {
+            position: relative;
+            padding-left: 28px;
+            font-size: 0.92rem;
+            color: #1e293b;
+            line-height: 1.5;
+        }
+        .sequence-step::before {
+            counter-increment: seq-counter;
+            content: counter(seq-counter);
+            position: absolute;
+            left: 0;
+            top: 1px;
+            background: #ca8a04;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .explanation-box { background: var(--success-bg); border: 1px solid #a7f3d0; border-radius: 6px; padding: 14px 18px; margin-top: 14px; }
-        .explanation-box.warning-tone { background: var(--warning-bg); border-color: #fde68a; }
         .explanation-title { font-weight: 700; font-size: 0.82rem; color: var(--success-text); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
-        .explanation-box.warning-tone .explanation-title { color: var(--warning-text); }
         .explanation-text { font-size: 0.95rem; color: #1e293b; }
 
-        .closest-suggestions { margin-top: 14px; background: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px 18px; }
-        .closest-title { font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 8px; }
-        .suggestion-item { padding: 6px 0; border-bottom: 1px dashed #e0e0e0; font-size: 0.88rem; display: flex; justify-content: space-between; flex-wrap: wrap; }
-        .suggestion-item:last-child { border-bottom: none; }
-        .suggestion-name { font-weight: 600; color: #0f62fe; font-family: var(--font-mono); }
-        .suggestion-delta { color: var(--text-secondary); font-size: 0.8rem; }
-
-        .csp-banner { background: var(--alert-bg); border: 1px solid #fecaca; border-left: 4px solid var(--alert-border); border-radius: 6px; padding: 14px 18px; margin-top: 14px; }
-        .csp-title { font-weight: 700; color: var(--alert-text); font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-        .csp-text { font-size: 0.9rem; color: #393939; }
-
-        .reference-table-view { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 24px; }
-        .ref-filter { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; margin-bottom: 14px; }
-        table.ref-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-        table.ref-table th, table.ref-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-        table.ref-table th { background: #f8fafc; font-weight: 700; color: #374151; font-size: 0.78rem; text-transform: uppercase; }
-        table.ref-table tr:hover { background: #f0f7ff; }
-
-        .mode-guidance-card { background: #f0f7ff; border: 1px solid #bae0ff; border-left: 4px solid #0f62fe; border-radius: 6px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.88rem; color: #1e293b; }
-        .mode-guidance-title { font-weight: 700; color: #0043ce; font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-        
-        .fuzzy-hint-card { background: #fff8e1; border: 1px solid #ffb74d; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.88rem; color: #92400e; font-weight: 500; }
-        .fuzzy-hint-card a { color: #d97706; font-weight: 700; text-decoration: underline; cursor: pointer; }
-        
-        .api-status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; font-size: 0.78rem; font-weight: 700; margin-top: 6px; }
-        .api-status-pill.failed { background: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
-        .api-status-pill.success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .api-status-pill.failed .status-dot { background: #dc2626; }
-        .api-status-pill.success .status-dot { background: #16a34a; }
+        .ref-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-family: var(--font-mono); }
+        .ref-table th, .ref-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+        .ref-table th { background: #f1f5f9; font-weight: 600; color: #334155; }
+        .ref-filter { width: 100%; padding: 8px 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem; font-family: var(--font-mono); }
     </style>
 </head>
 <body>
+    <div id="globalTooltip" class="global-floating-tooltip"></div>
     <div class="container">
         <div class="header">
-            <h1>IBM i DCM, GSKit & ADMIN3 Log Analyzer <span class="badge">V7R5 / V7R6 Ready</span></h1>
-            <p>Directly parses, deconstructs, decodes EBCDIC parameters, and intensifies fuzzy matching for DCM symptom strings, WRKPRB logs, GSKit errors, and ADMIN3 SystemOut traces.</p>
+            <h1>
+                IBM i GSKit SSL/TLS & ADMIN3 Log Diagnostic Analyzer
+                <span class="badge">IBM i V7R3 - V7R6</span>
+                <span class="badge">QSYSINC/H(GSKSSL)</span>
+            </h1>
+            <p>Official IBM i GSKit Return Code Diagnostic Lookup & Liberty ADMIN3 EBCDIC CP037 Hex Decoder</p>
         </div>
 
         <div class="search-card">
             <div class="search-mode-tabs">
-                <button class="tab-btn active" id="tabSymptom" onclick="setMode('symptom')">Symptom String / WRKPRB</button>
-                <button class="tab-btn" id="tabAdmin3" onclick="setMode('admin3')">ADMIN3 / Liberty SystemOut Log</button>
-                <button class="tab-btn" id="tabGsk" onclick="setMode('gsk')">GSKit / API Return Codes</button>
-                <button class="tab-btn" id="tabKeyword" onclick="setMode('keyword')">Keyword / Regex Search</button>
-                <button class="tab-btn" id="tabDirectory" onclick="setMode('directory')">Complete Matrix Directory (500+)</button>
+                <button id="tabAdmin3" class="tab-btn active" onclick="setMode('admin3')">📋 1. ADMIN3 Log Analyzer</button>
+                <button id="tabGsk" class="tab-btn" onclick="setMode('gsk')">⚙️ 2. GSKit Return Codes</button>
+                <button id="tabKeyword" class="tab-btn" onclick="setMode('keyword')">🔎 3. Keyword Search</button>
+                <button id="tabDirectory" class="tab-btn" onclick="setMode('directory')">📊 4. Official GSKSSL Code Matrix</button>
+                <button id="tabCommands" class="tab-btn" onclick="setMode('commands')">🛠️ 5. Verified IBM i Commands</button>
+            </div>
+
+            <div id="modeGuidance" class="mode-guidance">
+                <div class="mode-guidance-title"><span>📋</span> Mode 1: ADMIN3 / Liberty SystemOut Log Analyzer & EBCDIC CP037 Hex Decoder</div>
+                <div>Paste multi-line trace log blocks or single-line JNI API failures from <code>SystemOut.log</code>. Automatically decodes all hexadecimal EBCDIC CP037 parameters (IFS paths, certificate flags) in-place and correlates <code>rc:</code> failure codes to official GSKSSL constants.</div>
             </div>
 
             <div id="searchControls">
-                <div id="modeGuidance" class="mode-guidance-card">
-                    <div class="mode-guidance-title"><span>📌</span> Mode 1: WRKPRB / IBM Symptom String Deconstructor</div>
-                    <div>Paste standard problem symptom strings (e.g. <code>5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500</code>) or raw reason codes. Deconstructs the <code>xxxyyyyzz</code> formula into Entry Point, Utility Function, and Local Failure offsets.</div>
-                </div>
-
-                <div id="fuzzyHintBox" style="display:none;" class="fuzzy-hint-card"></div>
-
                 <div class="input-group">
-                    <label id="inputLabel" for="symptomInput">Enter Symptom String(s), Return Code(s), or Service Program (one per line):</label>
-                    <textarea id="symptomInput" rows="5" placeholder="e.g. 5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500&#10;or: QYCUAPPMGR 5003000&#10;or: 7027500&#10;or: 6 (GSKKM Database Open Error)" oninput="checkFuzzyFormat(this.value)"></textarea>
+                    <label id="inputLabel" for="symptomInput">Paste ADMIN3 / Liberty SystemOut.log Lines (extracts user, function, rc, job, & decodes EBCDIC hex parameters):</label>
+                    <textarea id="symptomInput" rows="6" placeholder="Paste log trace snippet, e.g.:&#10;[11/4/26, 12:19:34:617 CET] 00000032 SystemOut O user: QSECOFR / function: qycu_listCertificatesJ / rc: 6000&#10;0 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )&#10;1 : ProgramParameter ( input: C1D3D36DD2C5E8E200 / output length: 0 / output:  )&#10;job: 123456/QTMHHTTP/ADMIN3"></textarea>
                 </div>
 
                 <div class="samples" id="sampleRow">
-                    <span>Quick Presets:</span>
-                    <button class="sample-btn" onclick="setSample('5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500')">RC7027500 (Local CA)</button>
-                    <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000')">RC5003000 (App Mgr + Util)</button>
-                    <button class="sample-btn" onclick="setSample('6')">RC 6 (GSKKM DB Open)</button>
-                    <button class="sample-btn" onclick="setSample('16')">RC 16 (GSKKM Bad Password)</button>
-                    <button class="sample-btn" onclick="setSample('24')">RC 24 (GSKKM Crypto Err)</button>
+                    <span>Sample Presets:</span>
+                    <button class="sample-btn" onclick="setSampleAdmin3_RC24()">RC 24 / CPDB702 (.STH Password Mismatch)</button>
+                    <button class="sample-btn" onclick="setSampleAdmin3_RC16()">RC 16 (Keystore Password Invalid)</button>
+                    <button class="sample-btn" onclick="setSampleAdmin3_RC6000()">RC 6000 (CA Not Trusted)</button>
+                    <button class="sample-btn" onclick="setSampleAdmin3_RC6019()">RC 6019 (No Default Cert)</button>
+                    <button class="sample-btn" onclick="setSampleAdmin3_RC406()">RC 406 (Socket I/O Error)</button>
                 </div>
 
                 <div class="btn-row">
-                    <button class="btn-primary" onclick="performSearch()">Search & Deconstruct</button>
+                    <button class="btn-primary" onclick="performSearch()">Analyze & Decode</button>
                     <button class="btn-secondary" onclick="clearResults()">Clear</button>
+                </div>
+            </div>
+
+            <!-- Mode 4 Directory Section -->
+            <div id="directorySection" style="display:none; margin-top:16px;">
+                <input type="text" id="dirFilterInput" class="ref-filter" placeholder="Filter by return code number or constant name..." oninput="filterDirectory()">
+                <div style="max-height: 480px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
+                    <table class="ref-table">
+                        <thead>
+                            <tr>
+                                <th style="width:120px;">Return Code</th>
+                                <th>Symbolic Constant</th>
+                                <th>Header Member</th>
+                                <th>Implementing Service Program</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dirTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mode 5 Commands Section -->
+            <div id="commandsSection" style="display:none; margin-top:16px;">
+                <div class="explanation-box" style="margin-top:0;">
+                    <div class="explanation-title">Verified IBM i CL Diagnostic & Verification Commands</div>
+                    <div class="explanation-text" style="font-family:var(--font-mono); font-size:0.85rem; line-height:1.7;">
+                        <strong>1. Check System Certificate Store & Stash Existence:</strong><br>
+                        <code>WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')</code><br><br>
+                        <strong>2. Check and Grant IFS Authorities to HTTP Profile (QTMHHTTP):</strong><br>
+                        <code>WRKAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB')</code><br>
+                        <code>CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX) OBJAUT(*ALL)</code><br>
+                        <code>CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH') USER(QTMHHTTP) DTAAUT(*RWX) OBJAUT(*ALL)</code><br><br>
+                        <strong>3. Inspect Registered Application IDs:</strong><br>
+                        <code>WRKREGINF</code><br><br>
+                        <strong>4. Check Subsystem QHTTPSVR and ADMIN Jobs:</strong><br>
+                        <code>WRKACTJOB SBS(QHTTPSVR)</code><br><br>
+                        <strong>5. Start Administration Server Instance (*ADMIN):</strong><br>
+                        <code>STRTCPSVR SERVER(*HTTP) HTTPSVR(*ADMIN)</code><br><br>
+                        <strong>6. View GSKSSL C Header Source Member on IBM i:</strong><br>
+                        <code>DSPF STMF('/QIBM/include/gskssl.h')</code>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="results" class="results-container"></div>
-
-        <div id="directorySection" class="reference-table-view" style="display:none;">
-            <h3 style="margin-bottom:8px;">Complete DCM & GSKit Code Reference Matrix (500+ Codes)</h3>
-            <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:12px;">Unified real-time matrix covering all 9 Manager Service Programs, 95+ Utility Functions, 107 QYCU API Return Codes, and 187 GSKKM/GSKit Return Codes.</p>
-            
-            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;" id="domainFilterChips">
-                <button class="sample-btn" style="background:#0f62fe; color:#fff; border-color:#0f62fe;" onclick="filterByDomainChip('ALL', this)">All Codes (500+)</button>
-                <button class="sample-btn" onclick="filterByDomainChip('GSKKM', this)">GSKit Key Management (gskkmerr.h)</button>
-                <button class="sample-btn" onclick="filterByDomainChip('GSK_', this)">GSKit SSL / TLS (gskssl.h)</button>
-                <button class="sample-btn" onclick="filterByDomainChip('qycuretcodes', this)">QYCU API Return Codes</button>
-                <button class="sample-btn" onclick="filterByDomainChip('Application', this)">Application Manager</button>
-                <button class="sample-btn" onclick="filterByDomainChip('Store', this)">Store & Passwords</button>
-                <button class="sample-btn" onclick="filterByDomainChip('Certificate', this)">Certificate Lifecycle</button>
-                <button class="sample-btn" onclick="filterByDomainChip('Local Certificate', this)">Local CA</button>
-                <button class="sample-btn" onclick="filterByDomainChip('Hardware', this)">Hardware Crypto</button>
-                <button class="sample-btn" onclick="filterByDomainChip('Revocation', this)">Revocation & CRL</button>
-            </div>
-
-            <input type="text" id="dirFilterInput" class="ref-filter" placeholder="Filter by program name, constant, value, or description..." oninput="filterDirectory()">
-            
-            <div style="max-height: 520px; overflow-y: auto;">
-                <table class="ref-table" id="directoryTable">
-                    <thead>
-                        <tr>
-                            <th onclick="sortDirectoryTable(0)" style="cursor:pointer;" title="Click to sort">Type / Category &#8597;</th>
-                            <th onclick="sortDirectoryTable(1)" style="cursor:pointer;" title="Click to sort">Service Program / Source &#8597;</th>
-                            <th onclick="sortDirectoryTable(2)" style="cursor:pointer;" title="Click to sort">Code / Value &#8597;</th>
-                            <th onclick="sortDirectoryTable(3)" style="cursor:pointer;" title="Click to sort">Symbolic Name / Constant &#8597;</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dirTableBody"></tbody>
-                </table>
-            </div>
-        </div>
     </div>
 
     <script>
-const DCM_DB = {
-    "programs":  {
-                     "QYCUHDWMGR":  {
-                                        "name":  "Hardware Device Manager",
-                                        "localFailures":  {
+        // Comprehensive IBM i GSKSSL, GSKKM, and DCM Return Codes
+        const GSK_CODES = {
+            "0": "GSK_OK",
+            "1": "GSK_INVALID_HANDLE",
+            "2": "GSK_API_NOT_AVAILABLE",
+            "3": "GSK_INTERNAL_ERROR",
+            "4": "GSK_INSUFFICIENT_STORAGE",
+            "5": "GSK_NO_KEYFILE_PASSWORD",
+            "6": "GSK_KEYFILE_CERT_EXPIRED",
+            "7": "GSK_ERROR_LOAD_GSK",
+            "8": "GSK_ERROR_CERT_VALIDATION",
+            "15": "GSKKM_ERR_DATABASE_INVALID_VERSION",
+            "16": "GSKKM_ERR_DATABASE_INVALID_PASSWORD",
+            "17": "GSKKM_ERR_DATABASE_INVALID_FILE_TYPE",
+            "19": "GSKKM_ERR_DATABASE_PASSWORD_CORRUPTION",
+            "20": "GSKKM_ERR_DATABASE_KEY_INTEGRITY",
+            "21": "GSKKM_ERR_DATABASE_DUPLICATE_KEY",
+            "24": "GSKKM_ERR_CRYPTO",
+            "78": "GSKKM_ERR_FILE_OPEN",
+            "81": "GSKKM_ERR_FILE_OPEN_NOT_EXIST",
+            "82": "GSKKM_ERR_FILE_OPEN_NOT_ALLOWED",
+            "201": "GSK_KEYFILE_INVALID_FORMAT",
+            "202": "GSK_KEYFILE_INVALID_PASSWORD",
+            "308": "GSKKM_ERR_StashKdbPwd",
+            "309": "GSKKM_ERR_RecoverKdbPwd",
+            "329": "GSKKM_ERR_RENAME_STASH_FILE",
+            "406": "GSK_ERROR_IO",
+            "407": "GSK_ERROR_BAD_KEYFILE_LABEL",
+            "408": "GSK_ERROR_BAD_KEYFILE_PASSWORD",
+            "409": "GSK_ERROR_BAD_KEY_LEN",
+            "410": "GSK_ERROR_BAD_CERTIFICATE",
+            "411": "GSK_ERROR_BAD_CERT_SIG",
+            "412": "GSK_ERROR_UNSUPPORTED_CERTIFICATE_TYPE",
+            "414": "GSK_ERROR_NO_CIPHERS",
+            "415": "GSK_ERROR_NO_CERTIFICATE",
+            "417": "GSK_ERROR_BAD_PEER",
+            "420": "GSK_ERROR_SOCKET_CLOSED",
+            "429": "GSK_ERROR_NOT_SUPPORTED",
+            "501": "GSK_CONFLICTING_VALIDATION_TYPES",
+            "702": "CPDB702_PASSWORD_OR_STASH_INVALID",
+            "7027500": "QYCU_RC_KDB_INVALID_PASSWORD",
+            "6000": "GSK_AS400_ERROR_NOT_TRUSTED",
+            "6001": "GSK_AS400_ERROR_BAD_CERTIFICATE",
+            "6002": "GSK_AS400_ERROR_NO_TEMPORARY_STORAGE",
+            "6003": "GSK_AS400_ERROR_EXPIRED_CERTIFICATE",
+            "6004": "GSK_AS400_ERROR_NO_CERTIFICATE",
+            "6005": "GSK_AS400_ERROR_CERTIFICATE_REVOKED",
+            "6006": "GSK_AS400_ERROR_NO_REVOCATION_STATUS",
+            "6007": "GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED",
+            "6008": "GSK_AS400_ERROR_NO_KEYRING",
+            "6009": "GSK_AS400_ERROR_INVALID_USAGE",
+            "6010": "GSK_AS400_ERROR_INVALID_USAGE_FOR_ENCRYPTED_SESSION",
+            "6011": "GSK_AS400_ERROR_BAD_CIPHER_SUITE",
+            "6012": "GSK_AS400_ERROR_TIMED_OUT",
+            "6013": "GSK_AS400_ERROR_RENEGOTIATION_NOT_ALLOWED",
+            "6014": "GSK_AS400_ERROR_INVALID_ATTR",
+            "6015": "GSK_AS400_ERROR_INVALID_ATTR_VALUE",
+            "6016": "GSK_AS400_ERROR_NOT_SUPPORTED_FOR_SESSION",
+            "6017": "GSK_AS400_ERROR_ALPN_NO_MATCH",
+            "6018": "GSK_AS400_ERROR_CERT_VALIDATE",
+            "6019": "GSK_AS400_ERROR_NO_DEFAULT_CERT",
+            "6020": "GSK_AS400_ERROR_SESSION_TICKETS_NOT_SUPPORTED",
+            "6021": "GSK_AS400_ERROR_EXTENDED_MASTER_SECRET_NOT_SUPPORTED"
+        };
 
-                                                          },
-                                        "entryPoints":  {
-                                                            "4000000":  "QYCU_CHANGECRYPTODEVICEASSIGNMENT",
-                                                            "6000000":  "QYCU_GETCRYPTODEVICESFORCERT",
-                                                            "1000000":  "QYCU_GETCRYPTODEVICELIST",
-                                                            "3000000":  "QYCU_ADDCRYPTODEVICEASSIGNMENT",
-                                                            "5000000":  "QYCU_GETALLCRYPTODEVICESBYCERT",
-                                                            "7000000":  "QYCU_REMOVECRYPTODEVICEASSIGNMENT",
-                                                            "2000000":  "QYCU_GETOTHERCRYPTODEVICES"
-                                                        }
-                                    },
-                     "QYCUCTMGR":  {
-                                       "name":  "Certificate Manager",
-                                       "localFailures":  {
+        const GSK_DETAILS = {
+            "0": { func: "gsk_secure_soc_init()", domain: "Normal Execution", target: "Session Active", cause: "Operation completed successfully." },
+            "15": { func: "gsk_environment_init()", domain: "Key Database", target: "DEFAULT.KDB", cause: "Key database version is not supported or header is incompatible." },
+            "16": { func: "gsk_environment_init() / qycu_open_key_db()", domain: "Key Database / Password Stash", target: "DEFAULT.STH / DEFAULT.KDB", cause: "The certificate store password or password stash file (.STH) is invalid, corrupted, or out of sync with the key database (Triggers IBM i message CPDB702)." },
+            "17": { func: "gsk_environment_init()", domain: "Key Database", target: "DEFAULT.KDB", cause: "Key database file format is invalid (not a recognized CMS/KDB store)." },
+            "19": { func: "gsk_environment_init()", domain: "Password Verification", target: "DEFAULT.STH", cause: "Password structure in the key database or stash file is corrupted (Triggers CPDB702)." },
+            "20": { func: "gsk_environment_init()", domain: "Key Database Integrity", target: "DEFAULT.KDB", cause: "Key database integrity check failed. Keystore may be corrupted." },
+            "24": { func: "gsk_environment_init() / QFLAGSK", domain: "Crypto Engine / Key Decryption", target: "DEFAULT.KDB / DEFAULT.STH", cause: "Cryptographic engine failure: Decryption of the key database header failed due to invalid stash password or cipher mismatch (Triggers IBM i message CPDB702)." },
+            "78": { func: "gsk_environment_init()", domain: "File I/O", target: "IFS Keystore File", cause: "Unable to open key database file. Check IFS path and file existence." },
+            "81": { func: "gsk_environment_init()", domain: "File I/O", target: "IFS Keystore File", cause: "Key database file does not exist on IFS." },
+            "82": { func: "gsk_environment_init()", domain: "IFS Permissions", target: "DEFAULT.KDB / DEFAULT.STH", cause: "Access denied. Target user profile lacks *RWX authority to keystore files." },
+            "202": { func: "gsk_environment_init()", domain: "Keystore Access", target: "DEFAULT.KDB", cause: "Password provided for key database is invalid." },
+            "308": { func: "QYCULCAMGR", domain: "Stash Management", target: "DEFAULT.STH", cause: "Failed to stash the password into the .STH file." },
+            "309": { func: "QYCULCAMGR", domain: "Stash Management", target: "DEFAULT.STH", cause: "Failed to recover password from the .STH stash file." },
+            "329": { func: "QYCULCAMGR", domain: "Stash Management", target: "DEFAULT.STH", cause: "Error renaming or replacing password stash file." },
+            "406": { func: "gsk_secure_soc_read()", domain: "Socket I/O", target: "TCP/IP Socket", cause: "Low-level socket communication failure or abrupt TCP connection reset." },
+            "702": { func: "QYCULCAMGR (CPDB702)", domain: "Certificate Store Password", target: "DEFAULT.STH / DEFAULT.KDB", cause: "Diagnostic Root Cause: The certificate store password or password stash file (.STH) is invalid, corrupted, or out of sync with the key database." },
+            "7027500": { func: "QYCULCAMGR Entry 702", domain: "DCM Password Validation", target: "DEFAULT.STH / DEFAULT.KDB", cause: "DCM Symptom Code for CPDB702: Password stash (.STH) cannot decrypt the key database." },
+            "6000": { func: "gsk_secure_soc_init()", domain: "Trust Chain Verification", target: "DEFAULT.KDB", cause: "Certificate Authority (CA) that signed the peer certificate is not trusted." },
+            "6007": { func: "gsk_environment_init()", domain: "Registration Facility", target: "WRKREGINF", cause: "Application ID specified is not registered in Registration Facility (WRKREGINF)." },
+            "6011": { func: "gsk_secure_soc_init()", domain: "Cipher Negotiation", target: "System Value QSSLCSL", cause: "No mutual cipher suite negotiated between client and server." },
+            "6019": { func: "gsk_environment_init()", domain: "Certificate Assignment", target: "WRKREGINF / *SYSTEM", cause: "Application ID has no certificate assigned in Digital Certificate Manager." }
+        };
 
-                                                         },
-                                       "entryPoints":  {
-                                                           "6000000":  "QYCU_DELETECERTIFICATEREQUEST",
-                                                           "32000000":  "QYCU_LISTCAFILES",
-                                                           "10000000":  "QYCU_LISTCERTIFICATEREQUESTS",
-                                                           "24000000":  "QYCU_LISTCERTIFICATESWITHKEYINHARDWARE",
-                                                           "18000000":  "QYCU_CHECKFORBASE64CERTIFICATE",
-                                                           "15000000":  "QYCU_EXPORTCERTIFICATETOSTORE",
-                                                           "30000000":  "QYCU_CHECKCERTIFICATEEXPIRATION",
-                                                           "27000000":  "QYCU_RENEWCERTIFICATE",
-                                                           "31000000":  "QYCU_IMPORTCERTIFICATEWITHLABEL",
-                                                           "5000000":  "QYCU_DELETECERTIFICATE",
-                                                           "28000000":  "QYCU_CHECKFORX509CERTIFICATE",
-                                                           "8000000":  "QYCU_IMPORTCERTIFICATE",
-                                                           "5":  "QYCU_OKAYTODELETEORREMOVETRUST",
-                                                           "17000000":  "QYCU_EXPORTCERTIFICATEWITHOUTKEYTOSTORE",
-                                                           "12000000":  "QYCU_RETRIEVECERTIFICATEINFORMATION",
-                                                           "22000000":  "QYCU_CREATESTOREANDCERTIFICATEREQUEST",
-                                                           "25000000":  "QYCU_VALIDATECERTIFICATE",
-                                                           "2000000":  "QYCU_CREATELOCALCERTIFICATE",
-                                                           "33000000":  "QYCU_LISTCACERTIFICATEFORPOPULATE",
-                                                           "34000000":  "QYCU_POPULATETRUSTCACERTIFICATE",
-                                                           "7000000":  "QYCU_EXPORTCERTIFICATE",
-                                                           "35000000":  "QYCU_RETRIEVEPOPULATECERTIFICATEINFORMATION",
-                                                           "1000000":  "QYCU_ADDCERTIFICATETRUST",
-                                                           "19000000":  "QYCU_RETRIEVECACERTIFICATEINFORMATION",
-                                                           "20000000":  "QYCU_ADDCRLASSOCIATIONTOCA",
-                                                           "11000000":  "QYCU_REMOVECERTIFICATETRUST",
-                                                           "16000000":  "QYCU_EXPORTCERTIFICATEWITHOUTKEY",
-                                                           "14000000":  "QYCU_REMOVECERTIFICATEREQUESTFILE",
-                                                           "23000000":  "QYCU_EXPORTALLCERTIFICATESWITHOUTKEYTOSTORE",
-                                                           "26000000":  "QYCU_VALIDATECACERTIFICATE",
-                                                           "4000000":  "QYCU_CREATESTOREANDCERTIFICATE",
-                                                           "3000000":  "QYCU_CREATENONLOCALCERTIFICATE",
-                                                           "29000000":  "QYCU_PREVIEWCERTIFICATEINFORMATION",
-                                                           "13000000":  "QYCU_RETRIEVECERTIFICATEREQUESTINFORMATION",
-                                                           "9000000":  "QYCU_LISTCERTIFICATES",
-                                                           "21000000":  "QYCU_REMOVECRLASSOCIATIONFROMCA"
-                                                       }
-                                   },
-                     "QYCUUCMGR":  {
-                                       "name":  "User Certificate Manager",
-                                       "localFailures":  {
+        function getReturnCodeInfo(codeStr) {
+            const clean = String(codeStr).trim().replace(/^RC:?\s*/i, '');
+            const constant = GSK_CODES[clean] || (GSK_CODES[String(parseInt(clean, 10))] || `RC_${clean}`);
+            const detail = GSK_DETAILS[clean] || GSK_DETAILS[String(parseInt(clean, 10))] || {
+                func: "GSKit / DCM Native Routine",
+                domain: "Security / TLS Subsystem",
+                target: "Key Database / Certificate Store",
+                cause: `IBM i Return Code ${clean} (${constant}).`
+            };
+            return {
+                code: clean,
+                constant: constant,
+                func: detail.func,
+                domain: detail.domain,
+                target: detail.target,
+                cause: detail.cause
+            };
+        }
 
-                                                         },
-                                       "entryPoints":  {
-                                                           "18000000":  "QYCU_SETDIGITALIDCONFIGINFO",
-                                                           "1000000":  "QYCU_USERCERTCREATEFROMOTHERBROWSER",
-                                                           "9000000":  "QYCU_USERCERTRETRIEVEFORCURRENT",
-                                                           "95":  "YCU_PARSEUSERCERT",
-                                                           "12000000":  "QYCU_USERGENANDSIGNCERTREQUEST",
-                                                           "90":  "YCU_FINDCERTUSER",
-                                                           "4000000":  "QYCU_USERCERTASSIGN_2",
-                                                           "6000000":  "QYCU_USERCERTGETVALIDITYPERIOD",
-                                                           "14000000":  "QYCU_USERCERTEXPLIST",
-                                                           "5000000":  "QYCU_USERCERTREMOVE",
-                                                           "80":  "YCU_ADDUSERCERT",
-                                                           "2000000":  "QYCU_USERCERTCREATEFROMMSIEBROWSER",
-                                                           "8000000":  "QYCU_USERCERTRETRIEVE",
-                                                           "13000000":  "QYCU_USERSIGNCERTREQUEST",
-                                                           "10":  "YCU_CREATEUSRSPCOBJECT",
-                                                           "17000000":  "QYCU_RETRIEVEDIGITALIDCONFIGINFO",
-                                                           "40":  "YCU_CONVERTBROWSERINFO",
-                                                           "3000000":  "QYCU_USERCERTASSIGN",
-                                                           "10000000":  "QYCU_USERCERTLIST",
-                                                           "70":  "YCU_REMOVEUSERCERT",
-                                                           "50":  "YCU_CONVERTTOPKCS7",
-                                                           "16000000":  "QYCU_REMOVEDIGITALIDCONFIGINFO",
-                                                           "11000000":  "QYCU_USERCERTLISTFORCURRENT",
-                                                           "60":  "YCU_GETUSERCERTLIST",
-                                                           "7000000":  "QYCU_USERCERTREMOVEFORCURRENT",
-                                                           "15000000":  "QYCU_USERCERTEXPLISTFORCURRENT"
-                                                       }
-                                   },
-                     "QYCUGENMGR":  {
-                                        "name":  "General DCM/PKIX Manager",
-                                        "localFailures":  {
-
-                                                          },
-                                        "entryPoints":  {
-                                                            "4000000":  "QYCU_UPDATEPKIXCAURL",
-                                                            "20":  "YCU_REMOVEURLENTRY",
-                                                            "1000000":  "QYCU_DCMSTARTUP",
-                                                            "3000000":  "QYCU_RETRIEVEPKIXCAURL",
-                                                            "30":  "YCU_RETRIEVEURLENTRY",
-                                                            "2000000":  "QYCU_REMOVEPKIXCAURL",
-                                                            "10":  "YCU_INSERTURLENTRY"
-                                                        }
-                                    },
-                     "QYCULCAMGR":  {
-                                        "name":  "Local Certificate Authority Manager",
-                                        "localFailures":  {
-
-                                                          },
-                                        "entryPoints":  {
-                                                            "1000000":  "QYCU_CREATELOCALCA",
-                                                            "9000000":  "QYCU_GETCACERTIFICATE",
-                                                            "12000000":  "QYCU_RETRIEVELOCALCACERTIFICATEINFORMATION",
-                                                            "2":  "YCU_CERT_OPEN",
-                                                            "4000000":  "QYCU_UPDATELOCALCA",
-                                                            "6000000":  "QYCU_RECEIVECACERT",
-                                                            "5000000":  "QYCU_GETLOCALCAPOLICY",
-                                                            "2000000":  "QYCU_DELETELOCALCA",
-                                                            "8000000":  "QYCU_SETLOCALCAPOLICY",
-                                                            "1":  "YCU_NO_CERT_FILE",
-                                                            "3":  "YCU_CERT_READ",
-                                                            "3000000":  "QYCU_EXPORTLOCALCA",
-                                                            "10000000":  "QYCU_GETISSUECLIENTPOLICY",
-                                                            "4":  "YCU_CONVERT_CERT",
-                                                            "11000000":  "QYCU_EXPORTLOCALCATOSTORE",
-                                                            "7000000":  "QYCU_RECEIVESERVERCERT"
-                                                        }
-                                    },
-                     "QYCUCRLMGR":  {
-                                        "name":  "Certificate Revocation List Manager",
-                                        "localFailures":  {
-
-                                                          },
-                                        "entryPoints":  {
-                                                            "4000000":  "QYCU_REMOVECRLLOCATION",
-                                                            "1000000":  "QYCU_ADDCRLLOCATION",
-                                                            "3000000":  "QYCU_LISTCRLLOCATION",
-                                                            "5000000":  "QYCU_UPDATECRLLOCATION",
-                                                            "2000000":  "QYCU_GETCRLLOCATION",
-                                                            "2":  "ADD_UPDATE_CRL_LOCATION"
-                                                        }
-                                    },
-                     "QYCUAPPMGR":  {
-                                        "name":  "Application Manager",
-                                        "localFailures":  {
-
-                                                          },
-                                        "entryPoints":  {
-                                                            "1000000":  "QYCU_APPLIST",
-                                                            "9000000":  "QYCU_APPLISTUSINGSYSTEMSTORE",
-                                                            "12000000":  "QYCU_APPREMOVE",
-                                                            "4000000":  "QYCU_APPREMOVECERT",
-                                                            "6000000":  "QYCU_APPSETCATRUST",
-                                                            "14000000":  "QYCU_APPUPDATEDEFINITION",
-                                                            "5000000":  "QYCU_APPASSIGNCERT",
-                                                            "2000000":  "QYCU_APPLISTFORCATRUST",
-                                                            "8000000":  "QYCU_APPLISTTRUSTINGCA",
-                                                            "13000000":  "QYCU_APPREGISTER",
-                                                            "3000000":  "QYCU_APPLISTCAS",
-                                                            "10000000":  "QYCU_APPLISTUSINGOBJECTSIGNSTORE",
-                                                            "16000000":  "QYCU_APPVALIDATE",
-                                                            "11000000":  "QYCU_APPGETSELECTEDINFO",
-                                                            "7000000":  "QYCU_APPLISTASSIGNEDCERT",
-                                                            "15000000":  "QYCU_APPLISTFORSIGNING"
-                                                        }
-                                    },
-                     "QYCUYDOMGR":  {
-                                        "name":  "Object Signing Manager",
-                                        "localFailures":  {
-
-                                                          },
-                                        "entryPoints":  {
-                                                            "4000000":  "QYCU_VERIFYSIGNATUREBATCH",
-                                                            "8000000":  "QYCU_VERIFYSIGNATUREINBATCH",
-                                                            "6000000":  "QYCU_BROWSEDIRECTORY",
-                                                            "1000000":  "QYCU_SIGNOBJECT",
-                                                            "3000000":  "QYCU_SIGNOBJECTBATCH",
-                                                            "5000000":  "QYCU_RETRIEVESIGNATURE",
-                                                            "7000000":  "QYCU_SIGNOBJECTINBATCH",
-                                                            "2000000":  "QYCU_VERIFYSIGNATURE"
-                                                        }
-                                    },
-                     "QYCUCSMGR":  {
-                                       "name":  "Certificate Store Manager",
-                                       "localFailures":  {
-
-                                                         },
-                                       "entryPoints":  {
-                                                           "4000000":  "QYCU_SETCERTIFICATESTOREDEFAULTCERTIFICATE",
-                                                           "6000000":  "QYCU_STOREVERIFYFILE",
-                                                           "1000000":  "QYCU_CHANGECERTIFICATESTOREPASSWORD",
-                                                           "3000000":  "QYCU_DELETECERTIFICATESTORE",
-                                                           "5000000":  "QYCU_STOREVERIFY",
-                                                           "7000000":  "QYCU_RESETCERTIFICATESTOREPASSWORD",
-                                                           "2000000":  "QYCU_CREATECERTIFICATESTORE"
-                                                       }
-                                   }
-                 },
-    "qycuretcodes":  {
-                         "4080":  "YCU_RC_VALIDATE_SELF_SIGNED",
-                         "-961":  "YCU_RENAME_CERT_FILE",
-                         "4021":  "YCU_RC_SEC_APP_REMOVE_APP",
-                         "4096":  "YCU_RC_YDO_OBJECT_NOT_FOUND",
-                         "4013":  "YCU_RC_SEC_APP_RMV_CERT_USAGE",
-                         "4000":  "YCU_RC_BAD_INPUT_PARAMETER",
-                         "3952":  "YCU_RC_RENAME_NEW_ERROR",
-                         "4057":  "YCU_RC_CRL_PORT_NUM_REQUIRED",
-                         "3912":  "YCU_RC_SOURCE_FILE_NO_EXIST",
-                         "3857":  "YCU_RC_ORGNAME_REQUIRED",
-                         "4066":  "YCU_RC_CRYPTO_RTV_RESOURCES",
-                         "3974":  "YCU_RC_ENVVAR_REQUIRED",
-                         "3947":  "YCU_RC_POLFILE_CREATE_ERROR",
-                         "3976":  "YCU_RC_EXPIREDATE_REQUIRED",
-                         "3850":  "YCU_RC_RESETPW_NOT_ALLOWED",
-                         "3944":  "YCU_RC_VALID_EXCEEDS_CA_EXPIRATION",
-                         "4009":  "YCU_RC_APPLICATION_ID_REQUIRED",
-                         "4056":  "YCU_RC_CRL_CONNECT_TYPE_REQUIRED",
-                         "4007":  "YCU_RC_FUNC_NOT_AT_THIS_TIME",
-                         "4055":  "YCU_RC_CRL_LDAP_SERVER_REQUIRED",
-                         "4022":  "YCU_RC_SEC_APP_UPDATE_APP",
-                         "-99":  "YCU_RC_UNEXPECTED_ERROR",
-                         "4020":  "YCU_RC_SEC_APP_ADD_APP",
-                         "3936":  "YCU_RC_POLFILE_READ_ERROR",
-                         "3973":  "YCU_RC_NEWPASSWORD_REQUIRED",
-                         "-951":  "YCU_RENAME_CAREQ_FILE",
-                         "3939":  "YCU_RC_LISTKEYS_ZERO_KEYS",
-                         "3969":  "YCU_RC_KEYRING_FILE_REQ",
-                         "4049":  "YCU_RC_CRL_UPDATE_LOCATION",
-                         "3968":  "YCU_RC_IMPORT_FILE_REQ",
-                         "4101":  "YCU_RC_YDO_NO_OBJECTS",
-                         "4064":  "YCU_RC_CRYPTO_NO_DEVICES",
-                         "4082":  "YCU_RC_VALIDATE_NO_TRUSTED_CAS",
-                         "3946":  "YCU_RC_FILENAME_CONFLICT_ERROR2",
-                         "4027":  "YCU_RC_SEC_NO_LIST_CAS",
-                         "4053":  "YCU_RC_CRL_LIST_LOCATIONS",
-                         "4050":  "YCU_RC_CRL_REMOVE_LOCATION",
-                         "3858":  "YCU_RC_VALID_TOO_LONG",
-                         "3865":  "YCU_RC_NULL_CERT_REQ",
-                         "3970":  "YCU_RC_KEYLABEL_REQ",
-                         "4098":  "YCU_RC_YDO_VERIFY_SIGNATURE",
-                         "3940":  "YCU_RC_CHECKEXPIRE_ZERO_KEYS",
-                         "3925":  "YCU_RC_POLFILE_OPEN_ERROR",
-                         "3933":  "YCU_RC_FILE_ALREADY_EXIST",
-                         "3926":  "YCU_RC_POLFILE_WRITE_ERROR",
-                         "4081":  "YCU_RC_VALIDATE_NOT_TRUSTED",
-                         "4051":  "YCU_RC_CRL_GET_LOCATION",
-                         "3864":  "YCU_RC_COMMNAME_SRV_REQUIRED",
-                         "4024":  "YCU_RC_SEC_APP_EXISTS",
-                         "4004":  "YCU_RC_PREV_REG",
-                         "4065":  "YCU_RC_CRYPTO_LIST_DEVICES",
-                         "4001":  "YCU_RC_INSUF_INPUT_PARAMETERS",
-                         "-3":  "YCU_RC_USER_CERT_NOT_FOUND",
-                         "4002":  "YCU_RC_BAD_FUNCTION_REQUEST",
-                         "4008":  "YCU_RC_NO_APPS",
-                         "3972":  "YCU_RC_ARMOR_PASSWORD_REQ",
-                         "4017":  "YCU_RC_SEC_APP_LST_APP_BYCERT",
-                         "4048":  "YCU_RC_CRL_ADD_LOCATION",
-                         "4067":  "YCU_RC_CRYPTO_DEVICE_LIST_REQUIRED",
-                         "4003":  "YCU_RC_NO_VAL_CERT",
-                         "3948":  "YCU_RC_POLFILE_CONVERSION_ERROR",
-                         "4015":  "YCU_RC_SEC_APP_RMV_CA_TRUST",
-                         "4010":  "YCU_RC_TRUST_REQ",
-                         "-902":  "YCU_RENAME_CA_FILE",
-                         "3843":  "YCU_RC_SHORT_STATE",
-                         "4018":  "YCU_RC_SEC_APP_UPD_CERT_USAGE",
-                         "-1":  "YCU_RC_USRPRF_NOT_FOUND",
-                         "3891":  "YCU_RC_EXISTS_EXPORTFILE",
-                         "3860":  "YCU_RC_PASSWORD_REQUIRED",
-                         "3975":  "YCU_RC_CERTREQ_FILE_REQ",
-                         "3892":  "YCU_RC_EXISTS_IMPORTFILE",
-                         "4014":  "YCU_RC_SEC_APP_ADD_CA_TRUST",
-                         "3859":  "YCU_RC_COUNTRY_REQUIRED",
-                         "3945":  "YCU_RC_KEYDB_FILENAME_ERROR",
-                         "3856":  "YCU_RC_COMMNAME_CA_REQUIRED",
-                         "4097":  "YCU_RC_YDO_SIGN_OBJECT",
-                         "4058":  "YCU_RC_CRL_LOGIN_PWD_TOO_LONG",
-                         "3846":  "YCU_RC_BAD_KEYRING_FILENAME",
-                         "4052":  "YCU_RC_CRL_NO_LOCATIONS",
-                         "3984":  "YCU_RC_CERT_NOT_FOUND3",
-                         "3845":  "YCU_RC_AUTH_PROB",
-                         "3956":  "YCU_RC_CA_NO_CREATE_CLIENT",
-                         "3943":  "YCU_RC_FILENAME_CONFLICT_ERROR",
-                         "-992":  "YCU_SWAP_USER",
-                         "3861":  "YCU_RC_MISSING_INPUT",
-                         "3913":  "YCU_RC_DEST_FILE_ALREADY_EXIST",
-                         "4100":  "YCU_RC_YDO_BROWSE_DIRECTORY",
-                         "4011":  "YCU_RC_SEC_APP_RTV_CERT_USAGE",
-                         "4099":  "YCU_RC_YDO_RETRIEVE_SIGNATURE",
-                         "4023":  "YCU_RC_CA_IN_USE",
-                         "4012":  "YCU_RC_SEC_APP_LABEL_TOO_BIG",
-                         "3953":  "YCU_RC_RENAME_EXISTING_ERROR",
-                         "4016":  "YCU_RC_SEC_APP_LST_APP_BYCA",
-                         "-2":  "YCU_RC_NOT_AUTH_USRPRF",
-                         "4068":  "YCU_RC_CRYPTO_DEVICE_NAME_REQUIRED",
-                         "3949":  "YCU_RC_POLFILE_LOCK_ERROR",
-                         "-999":  "YCU_RC_LAST_ENTRY",
-                         "3932":  "YCU_RC_KDB_FILE_ALREADY_EXIST2",
-                         "0":  "YCU_RC_SUCCESS",
-                         "4083":  "YCU_RC_VALIDATE_NO_CERT_ASSIGNED",
-                         "4059":  "YCU_RC_CRL_SERVER_LOGIN_DN_TOO_LONG",
-                         "3849":  "YCU_RC_PASSWORD_NOTEQUAL",
-                         "3985":  "YCU_RC_LDAP_MAPPING_NOT_DEFINED",
-                         "3844":  "YCU_RC_BAD_VALIDITY",
-                         "4054":  "YCU_RC_CRL_LOCATION_REQUIRED",
-                         "3971":  "YCU_RC_EXPORT_FILE_REQ",
-                         "3941":  "YCU_RC_COUNTRYNAME_REQUIRED"
-                     },
-    "gskkmerr":  {
-                     "313":  "GSKKM_WEBDB_PK_chgpw_and_armor",
-                     "384":  "#define GSKKM_ERR_INDEX_NOT_FOUND",
-                     "31":  "GSKKM_ERR_CRYPTO_UNSUPPORTED_ALGORITHM",
-                     "117":  "GSKKM_ERR_ISSUING_CERTIFICATE",
-                     "59":  "GSKKM_ERR_NUMBER_SIZE",
-                     "363":  "#define GSKKM_PKCS12_CERTTYPE_UNSUP",
-                     "5":  "GSKKM_ERR_DATABASE",
-                     "53":  "GSKKM_ERR_VALIDATION_KEY_UNKNOWN_CRITICAL_EXTENSION",
-                     "47":  "GSKKM_ERR_VALIDATION_KEY_IS_REVOKED",
-                     "100":  "GSKKM_ERR_REQKEY_FOR_CERT_NULL",
-                     "329":  "GSKKM_ERR_RENAME_STASH_FILE",
-                     "78":  "GSKKM_ERR_FILE_OPEN",
-                     "308":  "GSKKM_ERR_StashKdbPwd",
-                     "89":  "GSKKM_ERR_DN_TAG_NULL",
-                     "108":  "GSKKM_ERR_INVALID_DN_INPUT",
-                     "310":  "GSKKM_ERR_NoTrustedDNs",
-                     "39":  "GSKKM_ERR_VALIDATION_KEY_VALIDITY",
-                     "110":  "GSKKM_ERR_LABEL_LIST_CORRUPT",
-                     "325":  "GSKKM_ERR_CPY_OBJ",
-                     "51":  "GSKKM_ERR_VALIDATION_ISSUER_ALTERNATIVE_NAME",
-                     "344":  "GSKKM_ERR_CCA_KEYID",
-                     "13":  "GSKKM_ERR_DATABASE_WRITE",
-                     "23":  "GSKKM_ERR_DATABASE_LDAP",
-                     "72":  "GSKKM_ERR_UNSUPPORTED_OPTION",
-                     "45":  "GSKKM_ERR_VALIDATION_KEY_SIGNATURE",
-                     "14":  "GSKKM_ERR_DATABASE_VALIDATION",
-                     "103":  "GSKKM_ERR_KEYREC_PRIVATE_KEY_NULL",
-                     "87":  "GSKKM_ERR_BASE64_ENCODING",
-                     "49":  "GSKKM_ERR_VALIDATION_KEY_PRIVATE_KEY_USAGE_PERIOD",
-                     "116":  "GSKKM_ERR_KDB2KYR",
-                     "81":  "GSKKM_ERR_FILE_OPEN_NOT_EXIST",
-                     "125":  "GSKKM_ERR_NO_HDW_ALG",
-                     "3":  "GSKKM_ERR_ASN_INITIALIZATION",
-                     "75":  "GSKKM_ERR_CMDCAT_OPEN",
-                     "351":  "GSKKM_ERR_HARDWARE_KEYSIZE_2_LARGE",
-                     "301":  "GSKKM_WEBDB_InvalidVersion",
-                     "94":  "GSKKM_ERR_KEYPAIRDB_NOT_EXIST",
-                     "101":  "GSKKM_ERR_KEYDB_PRIVATE_KEY_NULL",
-                     "85":  "GSKKM_ERR_BASE64_INVALID_DATA",
-                     "314":  "GSKKM_WEBDB_webdb_findarmorstring",
-                     "114":  "GSKKM_ERR_PBE_ALG_UNSUPPORT",
-                     "21":  "GSKKM_ERR_DATABASE_DUPLICATE_KEY",
-                     "362":  "#define GSKKM_PKCS12_CONTENT_TYPE_UNSUP",
-                     "24":  "GSKKM_ERR_CRYPTO",
-                     "370":  "#define GSKKM_MULTDN_SLOT_OVERFLOW",
-                     "52":  "GSKKM_ERR_VALIDATION_KEY_USAGE",
-                     "345":  "GSKKM_ERR_CCA_DESIGNATE",
-                     "43":  "GSKKM_ERR_VALIDATION_KEY_MISSING_REQUIRED_EXTENSIONS",
-                     "383":  "#define GSKKM_ERR_INDEX_EXISTS",
-                     "340":  "GSKKM_ERR_CCA",
-                     "309":  "GSKKM_ERR_RecoverKdbPwd",
-                     "331":  "GSKKM_ERR_RENEW_CERT_ISSUER",
-                     "32":  "GSKKM_ERR_CRYPTO_INPUT_GREATER_THAN_MODULUS",
-                     "20":  "GSKKM_ERR_DATABASE_KEY_INTEGRITY",
-                     "73":  "GSKKM_ERR_GET_TIME",
-                     "361":  "#define GSKKM_PKCS12_MULTIPLE_AUTHSAFES_UNSUP",
-                     "8":  "GSKKM_ERR_DATABASE_CREATE",
-                     "29":  "GSKKM_ERR_CRYPTO_DIGEST",
-                     "347":  "GSKKM_ERR_CCA_CIPHER_OUTPUTTOOLARGE",
-                     "2":  "GSKKM_ERR_ASN",
-                     "62":  "GSKKM_ERR_PASSWORD_EXPIRATION_TIME",
-                     "33":  "GSKKM_ERR_CRYPTO_UNSUPPORTED_MODULUS_SIZE",
-                     "84":  "GSKKM_ERR_FILE_REMOVE",
-                     "107":  "GSKKM_ERR_UNDEFINED_KEY_TYPE",
-                     "58":  "GSKKM_ERR_NULL_PARAMETER",
-                     "112":  "GSKKM_ERR_PKCS12_PWD_CORRUPTION",
-                     "48":  "GSKKM_ERR_VALIDATION_KEY_AUTHORITY_KEY_IDENTIFIER",
-                     "390":  "#define GSKKM_ERR_DIR_INDEX_ERROR",
-                     "326":  "GSKKM_ERR_SWAP_USER",
-                     "42":  "GSKKM_ERR_VALIDATION_KEY_ISSUER_NOT_FOUND",
-                     "65":  "GSKKM_ERR_THREAD_WAIT_FOR_EXIT",
-                     "302":  "GSKKM_WEBDB_WrongAlgorithmID1",
-                     "395":  "#define GSKKM_ERR_NO_ACX_INSTALLED",
-                     "35":  "GSKKM_ERR_VALIDATION_KEY",
-                     "60":  "GSKKM_ERR_OLD_PASSWORD",
-                     "315":  "GSKKM_WEBDB_PK_chgpw_and_dearmor",
-                     "115":  "GSKKM_ERR_KYR2KDB",
-                     "34":  "GSKKM_ERR_VALIDATION",
-                     "126":  "GSKKM_ERR_VALIDATION_DUP_COMMON_NAME",
-                     "104":  "GSKKM_ERR_KEYREC_CERTIFICATE_NULL",
-                     "28":  "GSKKM_ERR_CRYPTO_VERIFY",
-                     "76":  "GSKKM_ERR_ERRCAT_OPEN",
-                     "382":  "#define GSKKM_ERR_INDEX_DAMAGED",
-                     "50":  "GSKKM_ERR_VALIDATION_SUBJECT_ALTERNATIVE_NAME",
-                     "317":  "GSKKM_ERR_FileRead",
-                     "330":  "GSKKM_ERR_RENEW_CERT_NOT_FOUND",
-                     "106":  "GSKKM_ERR_INVALID_KEYDB_NAME",
-                     "80":  "GSKKM_ERR_FILE_OPEN_TO_WRITE",
-                     "19":  "GSKKM_ERR_DATABASE_PASSWORD_CORRUPTION",
-                     "10":  "GSKKM_ERR_DATABASE_DELETE",
-                     "9":  "GSKKM_ERR_DATABASE_ALREADY_EXISTS",
-                     "346":  "GSKKM_ERR_CCA_INVALIDKEYSTORE",
-                     "57":  "GSKKM_ERR_PARAMETER",
-                     "321":  "GSKKM_ERR_NotEnoughSpace",
-                     "64":  "GSKKM_ERR_THREAD_CREATE",
-                     "327":  "GSKKM_ERR_SWAP_BACK",
-                     "319":  "GSKKM_ERR_GetDNInCharacterFormat",
-                     "12":  "GSKKM_ERR_DATABASE_READ",
-                     "119":  "GSKKM_ERR_WEBDB_DATA_BAD_FORMAT",
-                     "99":  "GSKKM_ERR_KEYDB_TRUSTCA_NULL",
-                     "113":  "GSKKM_ERR_EXPORT_TYPE",
-                     "93":  "GSKKM_ERR_KEYDB_NOT_EXIST",
-                     "367":  "#define GSKKM_PKCS7_CONTENT_TYPE_UNSUP",
-                     "1":  "GSKKM_ERR_UNKNOWN",
-                     "66":  "GSKKM_ERR_IO",
-                     "303":  "GSKKM_WEBDB_ProbablyWrongPassword",
-                     "82":  "GSKKM_ERR_FILE_OPEN_NOT_ALLOWED",
-                     "306":  "GSKKM_ERR_GET_CERTIFICATE_BY_DN",
-                     "41":  "GSKKM_ERR_VALIDATION_KEY_VALIDITY_PRIVATE_KEY_USAGE",
-                     "311":  "GSKKM_ERR_NoMatchingKeyRecord",
-                     "37":  "GSKKM_ERR_VALIDATION_KEY_WRONG_VERSION",
-                     "111":  "GSKKM_ERR_INVALID_PKCS12_DATA",
-                     "91":  "GSKKM_ERR_DN_C_NULL",
-                     "365":  "#define GSKKM_PKCS12_DIGEST_ERROR",
-                     "79":  "GSKKM_ERR_FILE_OPEN_TO_READ",
-                     "68":  "GSKKM_ERR_PKCS11",
-                     "360":  "#define GSKKM_PKCS12_VERSION_UNSUP",
-                     "318":  "GSKKM_ERR_NotSystemState",
-                     "118":  "GSKKM_ERR_FIND_ISSUER_CHAIN",
-                     "18":  "GSKKM_ERR_DATABASE_CORRUPTION",
-                     "90":  "GSKKM_ERR_DN_CN_NULL",
-                     "366":  "#define GSKKM_PKCS12_PRIVATE_KEYPAIR_MISMATCH",
-                     "121":  "GSKKM_ERR_EXPIRE_DAYS_TOO_LARGE",
-                     "56":  "GSKKM_ERR_MUTEX",
-                     "341":  "GSKKM_ERR_CCA_RESOLVE",
-                     "83":  "GSKKM_ERR_FILE_WRITE",
-                     "92":  "GSKKM_ERR_INVALID_DB_HANDLE",
-                     "71":  "GSKKM_ERR_MEMORY_ALLOCATE",
-                     "0":  "GSKKM_OK",
-                     "305":  "GSKKM_WEBDB_WrongAlgorithmID2",
-                     "11":  "GSKKM_ERR_DATABASE_NOT_OPENED",
-                     "105":  "GSKKM_ERR_CRLS_NULL",
-                     "16":  "GSKKM_ERR_DATABASE_INVALID_PASSWORD",
-                     "77":  "GSKKM_ERR_FILENAME_NULL",
-                     "25":  "GSKKM_ERR_CRYPTO_ENGINE",
-                     "123":  "GSKKM_ERR_PWD_NO_NUMBER",
-                     "54":  "GSKKM_ERR_VALIDATION_KEY_PAIR",
-                     "343":  "GSKKM_ERR_CCA_ALLOC",
-                     "6":  "GSKKM_ERR_DATABASE_OPEN",
-                     "67":  "GSKKM_ERR_LOAD",
-                     "324":  "GSKKM_ERR_Bsafe_Call",
-                     "40":  "GSKKM_ERR_VALIDATION_KEY_VALIDITY_PERIOD",
-                     "307":  "GSKKM_ERR_Base64Conversion",
-                     "353":  "GSKKM_ERR_CERT_WITH_HDWPRIVKEY_FOUND",
-                     "27":  "GSKKM_ERR_CRYPTO_SIGN",
-                     "30":  "GSKKM_ERR_CRYPTO_PARAMETER",
-                     "96":  "GSKKM_ERR_PASSWORD_CHANGE_MATCH",
-                     "312":  "GSKKM_WEBDB_ConversionError",
-                     "97":  "GSKKM_ERR_KEYDB_NULL",
-                     "364":  "#define GSKKM_PKCS12_BAG_TYPE_UNKNOWN",
-                     "380":  "#define GSKKM_ERR_INDEX_NOT_AUTH",
-                     "352":  "GSKKM_ERR_CCA_CARD_NO_MEMORY",
-                     "4":  "GSKKM_ERR_ASN_PARAMETER",
-                     "46":  "GSKKM_ERR_VALIDATION_KEY_ROOT_KEY_NOT_TRUSTED",
-                     "120":  "GSKKM_ERR_WEBDB_NOTHING_TO_WRITE",
-                     "74":  "GSKKM_ERR_CREATE_MUTEX",
-                     "98":  "GSKKM_ERR_REQKEYDB_NULL",
-                     "70":  "GSKKM_ERR_DB_TABLE_CORRUPTED",
-                     "381":  "#define GSKKM_ERR_INDEX_LOCKED",
-                     "17":  "GSKKM_ERR_DATABASE_INVALID_FILE_TYPE",
-                     "69":  "GSKKM_ERR_NOT_INITIALIZED",
-                     "88":  "GSKKM_ERR_BASE64_DECODING",
-                     "385":  "#define GSKKM_ERR_INDEX_NO_ENTRY",
-                     "349":  "GSKKM_ERR_CCA_DEV_VOFF",
-                     "55":  "GSKKM_ERR_VALIDATION_CRL",
-                     "22":  "GSKKM_ERR_DATABASE_PASSWORD_ENCRYPTION",
-                     "44":  "GSKKM_ERR_VALIDATION_KEY_BASIC_CONSTRAINTS",
-                     "328":  "GSKKM_ERR_CHGOWN_OBJ",
-                     "323":  "GSKKM_ERR_Parsing_Certificate_Chain",
-                     "109":  "GSKKM_ERR_KEY_GET_BY_LABEL",
-                     "61":  "GSKKM_ERR_NEW_PASSWORD",
-                     "322":  "GSKKM_ERR_NotEnoughSpaceForChain",
-                     "342":  "GSKKM_ERR_CCA_MATDEV",
-                     "15":  "GSKKM_ERR_DATABASE_INVALID_VERSION",
-                     "102":  "GSKKM_ERR_KEYDB_DEFAULT_KEY_NULL",
-                     "86":  "GSKKM_ERR_BASE64_INVALID_MSGTYPE",
-                     "350":  "GSKKM_ERR_CCA_DUPLABEL",
-                     "26":  "GSKKM_ERR_CRYPTO_ALGORITHM",
-                     "122":  "GSKKM_ERR_PWD_TOO_SHORT",
-                     "36":  "GSKKM_ERR_VALIDATION_DUPLICATE_EXTENSIONS",
-                     "38":  "GSKKM_ERR_VALIDATION_KEY_EXTENSIONS_REQUIRED",
-                     "316":  "GSKKM_ERR_ChangeObjectAuthority",
-                     "7":  "GSKKM_ERR_DATABASE_RE_OPEN",
-                     "348":  "GSKKM_ERR_CCA_DEV_UNAVAIL",
-                     "63":  "GSKKM_ERR_THREAD",
-                     "124":  "GSKKM_ERR_PWD_NO_CONTROL_KEY",
-                     "95":  "GSKKM_ERR_PWDFILE_NOT_EXIST"
-                 },
-    "utilityFunctions":  {
-                             "25500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_GETREQUESTCERTIFICATEITEM_2"
-                                       },
-                             "10500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_BASE64DECODEBUFTOBUF"
-                                       },
-                             "101000":  {
-                                            "category":  "Hardware Device Utility",
-                                            "name":  "QYCU_LIST_CRYPTO_DEVICES"
-                                        },
-                             "28000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_REMOVECRLASSOCIATION"
-                                       },
-                             "27000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_ISSUECERT"
-                                       },
-                             "57000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_GETSTASHFILENAME"
-                                       },
-                             "3000":  {
-                                          "category":  "Application Utility",
-                                          "name":  "QYCU_ASSIGNCERTTOAPP"
-                                      },
-                             "92000":  {
-                                           "category":  "Certificate Revocation List Utility",
-                                           "name":  "QYCU_LOCK_CRL_VLDL"
-                                       },
-                             "14500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_CREATESELFSIGNED"
-                                       },
-                             "74500":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_CONVERT_DATA_TO_ASCII"
-                                       },
-                             "22500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_GETCERTIFICATESTATUS"
-                                       },
-                             "20500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_EXTRACTFILETOBUF3"
-                                       },
-                             "72000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_TOD_ERROR2"
-                                       },
-                             "17500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_EXPORTCERT"
-                                       },
-                             "31500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_VALIDATECERT"
-                                       },
-                             "19000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_EXTRACTCERTDATA"
-                                       },
-                             "55000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_OPENCERTIFICATESTORE2"
-                                       },
-                             "50000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_SETDEFAULTCERT"
-                                       },
-                             "10000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_ADDCRLASSOCIATION"
-                                       },
-                             "90000":  {
-                                           "category":  "Certificate Revocation List Utility",
-                                           "name":  "QYCU_CREATE_CRL_VLDL"
-                                       },
-                             "81000":  {
-                                           "category":  "Local Certificate Authority Utility",
-                                           "name":  "QYCU_READ_POLICY2"
-                                       },
-                             "82000":  {
-                                           "category":  "Local Certificate Authority Utility",
-                                           "name":  "QYCU_READ_POLICY3"
-                                       },
-                             "56000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_CONVETRKDBTOKYR"
-                                       },
-                             "73000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_ALLOCATE_IOVEC2"
-                                       },
-                             "26700":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_IMPORTCERTWITHLABEL"
-                                       },
-                             "75000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_CONVERT_DATA_TO_JOB_CCSID"
-                                       },
-                             "60000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_STASHPASSWORD"
-                                       },
-                             "26500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_IMPORTCERT"
-                                       },
-                             "100000":  {
-                                            "category":  "Hardware Device Utility",
-                                            "name":  "QYCU_RTV_CRYPTO_RESOURCES"
-                                        },
-                             "13000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_CHECKIFTHEREANDSTORE"
-                                       },
-                             "21000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_GETCERTIFICATEITEM"
-                                       },
-                             "22000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_GETCERTIFICATELABELLIST"
-                                       },
-                             "71500":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_TOD_ERROR"
-                                       },
-                             "54000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_OPENCERTIFICATESTORE"
-                                       },
-                             "84000":  {
-                                           "category":  "Local Certificate Authority Utility",
-                                           "name":  "QYCU_FLUSH_POLICY"
-                                       },
-                             "91000":  {
-                                           "category":  "Certificate Revocation List Utility",
-                                           "name":  "QYCU_FIND_CRL_VLDL"
-                                       },
-                             "73500":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_MALLOC_STORAGE"
-                                       },
-                             "59000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_CREATECERTSTORE"
-                                       },
-                             "16000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_DELETEREQUESTCERT"
-                                       },
-                             "11500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_CHANGECRYPTODEVICELIST"
-                                       },
-                             "11000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_BASE64ENCODEBUFTOBUF"
-                                       },
-                             "23000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_GETCERTSIGNERS"
-                                       },
-                             "30500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_SETCERTIFICATETRUSTSTATUS"
-                                       },
-                             "85000":  {
-                                           "category":  "Local Certificate Authority Utility",
-                                           "name":  "QYCU_FLUSH_POLICY2"
-                                       },
-                             "86000":  {
-                                           "category":  "Local Certificate Authority Utility",
-                                           "name":  "QYCU_FLUSH_POLICY3"
-                                       },
-                             "28500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_REMOVECRLASSOCIATION2"
-                                       },
-                             "74000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_CREATE_USRSPC_OBJECT"
-                                       },
-                             "93000":  {
-                                           "category":  "Certificate Revocation List Utility",
-                                           "name":  "QYCU_RTV_VLDL_ENTRY"
-                                       },
-                             "62000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_OPENCERTIFICATESTORE4"
-                                       },
-                             "12000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_CHECKFORBASE64FILE"
-                                       },
-                             "13500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_CHECKIFTHEREANDSTORE2"
-                                       },
-                             "29000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_REMOVEPRIVATEKEYINFO"
-                                       },
-                             "21500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_GETCERTIFICATEITEM_2"
-                                       },
-                             "14000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_CREATECERTREQ"
-                                       },
-                             "53000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_CHANGESTASHFILEPASSWORD"
-                                       },
-                             "19500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_EXTRACTFILETOBUF"
-                                       },
-                             "23500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_GETCERTSIGNERS2"
-                                       },
-                             "80000":  {
-                                           "category":  "Local Certificate Authority Utility",
-                                           "name":  "QYCU_READ_POLICY"
-                                       },
-                             "72500":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_ALLOCATE_IOVEC1"
-                                       },
-                             "58000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_GETREQUESTFILENAME"
-                                       },
-                             "17000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_ENCRYPTWITHPUBLICKEY"
-                                       },
-                             "70000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_RENAME"
-                                       },
-                             "70500":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_CHGOWN"
-                                       },
-                             "24000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_GETCRLASSOCIATION"
-                                       },
-                             "30000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_RETRIEVECERTITEM"
-                                       },
-                             "87000":  {
-                                           "category":  "Local Certificate Authority Utility",
-                                           "name":  "QYCU_CHGOWN_POLICY"
-                                       },
-                             "18000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_EXPORTCERTDATA"
-                                       },
-                             "29500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_RENEWCERT"
-                                       },
-                             "51000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_OPENCERTIFICATESTORE3"
-                                       },
-                             "63000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_GETCERTSTOREPASSWORD"
-                                       },
-                             "12500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_CHECKFORX509CERT"
-                                       },
-                             "1000":  {
-                                          "category":  "Application Utility",
-                                          "name":  "QYCU_UPDATEAPPCATRUST"
-                                      },
-                             "24500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_GET1STCERTWITHPRIVATEKEY"
-                                       },
-                             "15000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_CREATESIGNEDCERT"
-                                       },
-                             "83000":  {
-                                           "category":  "Local Certificate Authority Utility",
-                                           "name":  "QYCU_CREATE_POLICY"
-                                       },
-                             "26000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_GETREQUESTCERTIFICATELABELLIST"
-                                       },
-                             "18500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_EXPORTCERT_2"
-                                       },
-                             "71000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_CPYOBJ"
-                                       },
-                             "27500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_RECEIVECERT"
-                                       },
-                             "2000":  {
-                                          "category":  "Application Utility",
-                                          "name":  "QYCU_REMOVEAPPSASSIGNEDCERT"
-                                      },
-                             "15500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_DELETECERT"
-                                       },
-                             "25000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_GETREQUESTCERTIFICATEITEM"
-                                       },
-                             "52000":  {
-                                           "category":  "Certificate Store Utility",
-                                           "name":  "QYCU_CERTSTOREPASSWORD"
-                                       },
-                             "31000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_STORECACERTIFICATE"
-                                       },
-                             "20000":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_EXTRACTFILETOBUF2"
-                                       },
-                             "16500":  {
-                                           "category":  "Certificate Utility",
-                                           "name":  "QYCU_ENCRYPTWITHPRIVATEKEY"
-                                       },
-                             "100":  {
-                                         "category":  "Application Utility",
-                                         "name":  "QYCU_RTVAPPS"
-                                     }
-                         }
-}
-;
-
-        // EBCDIC CP037 Lookup Table for automatic hex parameter decoding
+        // Standard IBM EBCDIC Code Page 037 Table
         const EBCDIC_CP037 = [
-            0,0,0,0,0,9,0,127,0,0,0,11,12,13,14,15,
-            16,17,18,19,0,0,8,0,24,25,0,0,28,29,30,31,
-            0,0,28,0,0,10,23,27,0,0,0,0,0,5,6,7,
-            0,0,22,0,0,30,0,4,0,0,0,0,20,21,0,26,
-            32,0,0,0,0,0,0,0,0,0,91,46,60,40,43,33,
-            38,0,0,0,0,0,0,0,0,0,93,36,42,41,59,94,
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+            32,0,0,0,0,0,0,0,0,0,0,46,60,40,43,124,
+            38,0,0,0,0,0,0,0,0,0,33,36,42,41,59,94,
             45,47,0,0,0,0,0,0,0,0,124,44,37,95,62,63,
             0,0,0,0,0,0,0,0,0,96,58,35,64,39,61,34,
             0,97,98,99,100,101,102,103,104,105,0,0,0,0,0,0,
@@ -1093,620 +399,174 @@ const DCM_DB = {
             const clean = hexStr.replace(/\s+/g, '');
             if (clean.length < 2 || clean.length % 2 !== 0) return '';
             let result = '';
-            let printableCount = 0;
+            let printable = 0;
             for (let i = 0; i < clean.length; i += 2) {
                 const byteVal = parseInt(clean.substr(i, 2), 16);
-                if (byteVal === 0) continue; // skip null terminators
-                const asciiCode = EBCDIC_CP037[byteVal];
-                if (asciiCode && asciiCode >= 32 && asciiCode <= 126) {
-                    result += String.fromCharCode(asciiCode);
-                    printableCount++;
+                if (byteVal === 0) continue;
+                const ascii = EBCDIC_CP037[byteVal];
+                if (ascii && ascii >= 32 && ascii <= 126) {
+                    result += String.fromCharCode(ascii);
+                    printable++;
                 } else if (byteVal >= 32 && byteVal <= 126) {
-                    // Fallback ASCII interpretation
                     result += String.fromCharCode(byteVal);
-                    printableCount++;
+                    printable++;
                 }
             }
-            if (printableCount === 0) return '';
+            if (printable === 0) return '';
             return result.trim();
         }
 
-        // Inject GSK SSL / TLS Handshake codes into DCM_DB.gskkmerr if not present
-        const GSK_SSL_EXTRAS = {
-            "406": "GSK_ERROR_IO",
-            "407": "GSK_ERROR_BAD_KEYFILE_LABEL",
-            "408": "GSK_ERROR_BAD_KEYFILE_PASSWORD",
-            "6000": "GSK_AS400_ERROR_NOT_TRUSTED",
-            "6001": "GSK_AS400_ERROR_NO_TEMPORARY_STORAGE",
-            "6002": "GSK_AS400_ERROR_TIMED_OUT",
-            "6003": "GSK_AS400_ERROR_PASSWORD_EXPIRED",
-            "6004": "GSK_AS400_ERROR_ALREADY_INITIALIZED",
-            "6005": "GSK_AS400_ERROR_NOT_INITIALIZED",
-            "6006": "GSK_AS400_ERROR_NO_APPLICATION_ID",
-            "6007": "GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED",
-            "6008": "GSK_AS400_ERROR_INVALID_CERTIFICATE_NAME",
-            "6009": "GSK_AS400_ERROR_CERT_EXPIRED",
-            "6010": "GSK_AS400_ERROR_CLOSED",
-            "6011": "GSK_AS400_ERROR_BAD_CIPHER_SUITE",
-            "6012": "GSK_AS400_ERROR_INVALID_STATE",
-            "6013": "GSK_AS400_ERROR_UNSUPPORTED_PROTOCOL",
-            "6014": "GSK_AS400_ERROR_CRYPTO_HARDWARE_FAILED",
-            "6015": "GSK_AS400_ERROR_BAD_CERT_STORE_PASSWORD",
-            "6016": "GSK_AS400_ERROR_NO_CERT_STORE_PASSWORD",
-            "6017": "GSK_AS400_ERROR_KEYRING_NOT_FOUND",
-            "6018": "GSK_AS400_ERROR_APPLICATION_ALREADY_DEFINED",
-            "6019": "GSK_AS400_ERROR_NO_DEFAULT_CERT",
-            "6020": "GSK_AS400_ERROR_NO_KEYRING_PASSWORD"
-        };
-        for (const [k, v] of Object.entries(GSK_SSL_EXTRAS)) {
-            if (!DCM_DB.gskkmerr[k]) DCM_DB.gskkmerr[k] = v;
-        }
-
-        const GSK_DETAIL_MAP = {
-            "6": {
-                code: 6,
-                constant: "GSKKM_ERR_DATABASE_OPEN",
-                originFunction: "gskkm_open_database() / gskkm_open_key_database()",
-                serviceProgram: "QYCUCSMGR / QYCUCTMGR",
-                entryPoint: "QYCU_OPENSTORE / QYCU_LISTCERTIFICATES",
-                jniFunction: "qycu_listCertificatesJ / qycu_openStoreJ",
-                targetObject: "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB",
-                failureDomain: "Key Database Open & IFS Authority",
-                msgId: "CPDB701",
-                rootCause: "Cannot open certificate store. The .KDB file does not exist, or user profile QTMHHTTP lacks *RWX data authority to the IFS path.",
-                recoveryCommands: [
-                    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')",
-                    "CHGAUT OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') USER(QTMHHTTP) DTAAUT(*RWX)"
-                ]
-            },
-            "16": {
-                code: 16,
-                constant: "GSKKM_ERR_DATABASE_INVALID_PASSWORD",
-                originFunction: "gskkm_verify_password() / gskkm_check_stash()",
-                serviceProgram: "QYCUCSMGR",
-                entryPoint: "QYCU_VALIDATEPASSWORD / QYCU_CHANGESTOREPASSWORD",
-                jniFunction: "qycu_listCertificatesJ / qycu_listCACertificatesJ / qycu_changePasswordJ",
-                targetObject: "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH",
-                failureDomain: "Password Stash & Decryption",
-                msgId: "CPDB702",
-                rootCause: "The certificate store password or password stash file (.STH) is invalid, corrupted, or out of sync with the key database.",
-                recoveryCommands: [
-                    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH')",
-                    "DCM Web UI -> Manage Certificate Store -> Select Store -> Change/Reset Password & Stash",
-                    "WRKOBJ OBJ(QUSRSYS/*ALL) OBJTYPE(*VLDL)"
-                ]
-            },
-            "18": {
-                code: 18,
-                constant: "GSKKM_ERR_DATABASE_CORRUPTION",
-                originFunction: "gskkm_read_record() / gskkm_parse_kdb_header()",
-                serviceProgram: "QYCUCSMGR / QYCUCTMGR",
-                entryPoint: "QYCU_READSTORE / QYCU_LISTCERTIFICATES",
-                jniFunction: "qycu_listCertificatesJ / qycu_getCertificateListJ",
-                targetObject: "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB",
-                failureDomain: "CMS Database Integrity",
-                msgId: "CPDB703",
-                rootCause: "Key database file header or record blocks are corrupted. Frequently caused by binary file transfer truncation or disk faults.",
-                recoveryCommands: [
-                    "RST OBJ('/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB') from backup",
-                    "WRKOBJ OBJ(QUSRSYS/QYCU*)"
-                ]
-            },
-            "24": {
-                code: 24,
-                constant: "GSKKM_ERR_CRYPTO",
-                originFunction: "gskkm_crypto() / gskkm_rsa_operation()",
-                serviceProgram: "QYCUCSMGR / QYCUCTMGR",
-                entryPoint: "QYCU_GENERATEKEYPAIR / QYCU_CRYPTOOP",
-                jniFunction: "qycu_createCertificateJ / qycu_importCertificateJ",
-                targetObject: "Cryptographic Subsystem / Key Store",
-                failureDomain: "Cryptographic Algorithm Operation",
-                msgId: "CPDBC15",
-                rootCause: "Low-level cryptographic algorithm failure occurred during key generation, decryption, or digital signature computation.",
-                recoveryCommands: [
-                    "WRKHDWRSC TYPE(*CRP) (Inspect Cryptographic Resources)",
-                    "WRKACTJOB SBS(QSEC) (Verify Crypto Server Jobs)",
-                    "DSPLOG MSGID(CPF* CPD*)"
-                ]
-            },
-            "42": {
-                code: 42,
-                constant: "GSKKM_ERR_VALIDATION_KEY_ISSUER_NOT_FOUND",
-                originFunction: "gskkm_validate_certificate() / gskkm_build_certificate_chain()",
-                serviceProgram: "QYCUCTMGR / QYCUAPPMGR",
-                entryPoint: "QYCU_VALIDATECERTIFICATE / QYCU_APPASSIGNCERT",
-                jniFunction: "qycu_validateCertificateJ / qycu_validateCertificateTrustJ",
-                targetObject: "Trust Store (DEFAULT.KDB)",
-                failureDomain: "X.509 Chain Building & Trust",
-                msgId: "CPDB704",
-                rootCause: "The Certificate Authority (CA) that signed the certificate could not be found in the current certificate store.",
-                recoveryCommands: [
-                    "DCM -> Manage Certificate Store -> Populate / Import CA Certificate",
-                    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/*')"
-                ]
-            },
-            "46": {
-                code: 46,
-                constant: "GSKKM_ERR_VALIDATION_KEY_ROOT_KEY_NOT_TRUSTED",
-                originFunction: "gskkm_check_root_trust()",
-                serviceProgram: "QYCUCTMGR / QYCUAPPMGR",
-                entryPoint: "QYCU_VALIDATECERTIFICATE / QYCU_ADDCERTIFICATETRUST",
-                jniFunction: "qycu_addCertificateTrustJ / qycu_validateCertificateJ",
-                targetObject: "Trust Store Root CA",
-                failureDomain: "Root CA Trust Setting",
-                msgId: "CPDB705",
-                rootCause: "The Root CA is present in the database, but is marked as Untrusted in DCM.",
-                recoveryCommands: [
-                    "DCM -> Manage Certificate Store -> Work with CA Certificates -> Trust Status -> Mark Trusted"
-                ]
-            },
-            "47": {
-                code: 47,
-                constant: "GSKKM_ERR_VALIDATION_KEY_IS_REVOKED",
-                originFunction: "gskkm_check_crl() / gskkm_query_ocsp()",
-                serviceProgram: "QYCUCRLMGR / QYCUCTMGR",
-                entryPoint: "QYCU_CHECKREVOCATION / QYCU_VALIDATECERTIFICATE",
-                jniFunction: "qycu_validateCertificateJ",
-                targetObject: "CRL / OCSP Responder",
-                failureDomain: "Certificate Revocation",
-                msgId: "CPDB706",
-                rootCause: "Certificate has been revoked by the issuing Certificate Authority on the CRL or OCSP server.",
-                recoveryCommands: [
-                    "PING <CRL_SERVER_IP>",
-                    "WRKOBJ OBJ(QUSRSYS/QYCU*) OBJTYPE(*VLDL)"
-                ]
-            },
-            "78": {
-                code: 78,
-                constant: "GSKKM_ERR_FILE_OPEN",
-                originFunction: "gskkm_file_open() / gskkm_open_stream()",
-                serviceProgram: "QYCUCSMGR / qycuutl.H",
-                entryPoint: "QYCU_OPENFILE",
-                jniFunction: "qycu_importCertificateJ / qycu_exportCertificateJ",
-                targetObject: "IFS File Stream",
-                failureDomain: "File I/O Subsystem",
-                msgId: "CPDBC05",
-                rootCause: "Generic file open error occurred on the IFS path.",
-                recoveryCommands: [
-                    "WRKLNK OBJ('<FILE_PATH>')",
-                    "DSPLOG MSGID(CPFA*)"
-                ]
-            },
-            "81": {
-                code: 81,
-                constant: "GSKKM_ERR_FILE_OPEN_NOT_EXIST",
-                originFunction: "gskkm_file_open()",
-                serviceProgram: "QYCUCSMGR / qycuutl.H",
-                entryPoint: "QYCU_OPENFILE",
-                jniFunction: "qycu_importCertificateJ",
-                targetObject: "Import/Export IFS Path",
-                failureDomain: "IFS File Existence",
-                msgId: "CPFA0A9",
-                rootCause: "The target certificate file or directory specified does not exist.",
-                recoveryCommands: [
-                    "WRKLNK OBJ('<IFS_PATH>')"
-                ]
-            },
-            "82": {
-                code: 82,
-                constant: "GSKKM_ERR_FILE_OPEN_NOT_ALLOWED",
-                originFunction: "gskkm_file_open()",
-                serviceProgram: "QYCUCSMGR / qycuutl.H",
-                entryPoint: "QYCU_OPENFILE",
-                jniFunction: "qycu_importCertificateJ",
-                targetObject: "Target IFS File",
-                failureDomain: "IFS Authority & Permissions",
-                msgId: "CPFA09C",
-                rootCause: "Permission denied accessing IFS file.",
-                recoveryCommands: [
-                    "CHGAUT OBJ('<IFS_PATH>') USER(QTMHHTTP) DTAAUT(*RWX)"
-                ]
-            },
-            "93": {
-                code: 93,
-                constant: "GSKKM_ERR_KEYDB_NOT_EXIST",
-                originFunction: "gskkm_locate_database()",
-                serviceProgram: "QYCUCSMGR / QYCULCAMGR",
-                entryPoint: "QYCU_OPENSTORE / QYCU_OPENLOCALCA",
-                jniFunction: "qycu_openStoreJ / qycu_listCertificatesJ",
-                targetObject: "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB",
-                failureDomain: "Certificate Store Location",
-                msgId: "CPDB707",
-                rootCause: "Key database does not exist at specified IFS path.",
-                recoveryCommands: [
-                    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')"
-                ]
-            },
-            "95": {
-                code: 95,
-                constant: "GSKKM_ERR_PWDFILE_NOT_EXIST",
-                originFunction: "gskkm_read_stash()",
-                serviceProgram: "QYCUCSMGR",
-                entryPoint: "QYCU_GETPASSWORDSTASH",
-                jniFunction: "qycu_listCertificatesJ",
-                targetObject: "/QIBM/UserData/ICSS/Cert/Server/DEFAULT.STH",
-                failureDomain: "Stash File Location",
-                msgId: "CPDB708",
-                rootCause: "Password stash file (.STH) does not exist.",
-                recoveryCommands: [
-                    "DCM -> Manage Certificate Store -> Re-stash Password"
-                ]
-            },
-            "109": {
-                code: 109,
-                constant: "GSKKM_ERR_KEY_GET_BY_LABEL",
-                originFunction: "gskkm_find_record_by_label()",
-                serviceProgram: "QYCUCTMGR",
-                entryPoint: "QYCU_RETRIEVECERTIFICATEINFORMATION",
-                jniFunction: "qycu_retrieveCertificateInformationJ / qycu_assignCertToAppJ",
-                targetObject: "Certificate Label in .KDB",
-                failureDomain: "Key Record Lookup",
-                msgId: "CPDB709",
-                rootCause: "Certificate label was not found inside the key database.",
-                recoveryCommands: [
-                    "DCM -> Manage Certificate Store -> Work with Certificates -> Verify Label"
-                ]
-            },
-            "112": {
-                code: 112,
-                constant: "GSKKM_ERR_PKCS12_PWD_CORRUPTION",
-                originFunction: "gskkm_pkcs12_decrypt() / gskkm_parse_pfx()",
-                serviceProgram: "QYCUCTMGR",
-                entryPoint: "QYCU_IMPORTCERTIFICATE",
-                jniFunction: "qycu_importCertificateJ",
-                targetObject: ".P12 / .PFX Archive",
-                failureDomain: "PKCS#12 Archive Password",
-                msgId: "CPDB710",
-                rootCause: "Password provided to decrypt PKCS#12 / PFX certificate file was incorrect or corrupted.",
-                recoveryCommands: [
-                    "Verify PKCS#12 password on export workstation"
-                ]
-            },
-            "340": {
-                code: 340,
-                constant: "GSKKM_ERR_CCA",
-                originFunction: "gskkm_cca_call() / gskkm_crypt_hw()",
-                serviceProgram: "QYCUHDWMGR",
-                entryPoint: "QYCU_GETCRYPTODEVICELIST",
-                jniFunction: "qycu_getCryptoDeviceListJ",
-                targetObject: "PCIe Crypto Coprocessor (4767/4769)",
-                failureDomain: "Hardware Cryptography",
-                msgId: "CPDBC14",
-                rootCause: "Cryptographic Coprocessor CCA subsystem error.",
-                recoveryCommands: [
-                    "WRKHDWRSC TYPE(*CRP)",
-                    "WRKACTJOB SBS(QSEC)"
-                ]
-            },
-            "6000": {
-                code: 6000,
-                constant: "GSK_AS400_ERROR_NOT_TRUSTED",
-                originFunction: "gsk_secure_soc_init()",
-                serviceProgram: "QSYS/QFLAGSK",
-                entryPoint: "gsk_secure_soc_init",
-                jniFunction: "Native TLS Handshake",
-                targetObject: "Peer Certificate / Trust Store",
-                failureDomain: "TLS Handshake Trust",
-                msgId: "CPDBC01",
-                rootCause: "Peer certificate is not trusted. The issuing CA is missing from the *SYSTEM certificate store.",
-                recoveryCommands: [
-                    "Import Issuing CA into /QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB",
-                    "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*')"
-                ]
-            },
-            "6007": {
-                code: 6007,
-                constant: "GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED",
-                originFunction: "gsk_environment_init()",
-                serviceProgram: "QSYS/QFLAGSK / QWTSECA",
-                entryPoint: "gsk_environment_init",
-                jniFunction: "Application ID Lookup",
-                targetObject: "Registration Facility",
-                failureDomain: "Application Registration",
-                msgId: "CPDBC07",
-                rootCause: "Application ID not registered in IBM i Registration Facility.",
-                recoveryCommands: [
-                    "WRKREGINF (Work with Registration Information)",
-                    "DCM -> Manage Applications -> Add Application"
-                ]
-            },
-            "6011": {
-                code: 6011,
-                constant: "GSK_AS400_ERROR_BAD_CIPHER_SUITE",
-                originFunction: "gsk_secure_soc_init()",
-                serviceProgram: "QSYS/QFLAGSK",
-                entryPoint: "gsk_secure_soc_init",
-                jniFunction: "TLS Handshake Negotiation",
-                targetObject: "System Value QSSLCSL",
-                failureDomain: "Cipher Suite Negotiation",
-                msgId: "CPDBC0B",
-                rootCause: "No overlapping cipher suite found between client and server.",
-                recoveryCommands: [
-                    "DSPSYSVAL SYSVAL(QSSLCSL)",
-                    "DSPSYSVAL SYSVAL(QSSLPCL)"
-                ]
-            },
-            "6019": {
-                code: 6019,
-                constant: "GSK_AS400_ERROR_NO_DEFAULT_CERT",
-                originFunction: "gsk_environment_init()",
-                serviceProgram: "QSYS/QFLAGSK",
-                entryPoint: "gsk_environment_init",
-                jniFunction: "DCM Certificate Assignment",
-                targetObject: "Application ID Binding",
-                failureDomain: "Application Certificate Assignment",
-                msgId: "CPDBC13",
-                rootCause: "Application ID has no certificate assigned in DCM.",
-                recoveryCommands: [
-                    "DCM -> Manage Certificate Store -> Select *SYSTEM -> Update Application Assignment"
-                ]
-            },
-            "406": {
-                code: 406,
-                constant: "GSK_ERROR_IO",
-                originFunction: "gsk_secure_soc_read() / gsk_secure_soc_write()",
-                serviceProgram: "QSYS/QFLAGSK",
-                entryPoint: "gsk_secure_soc_read",
-                jniFunction: "Secure Socket I/O",
-                targetObject: "TCP/IP Socket",
-                failureDomain: "Socket Communication Failure",
-                msgId: "CPDBC06",
-                rootCause: "Secure socket I/O error or abrupt TCP connection reset.",
-                recoveryCommands: [
-                    "NETSTAT *CNN (Check socket state)",
-                    "WRKJOB JOB(*)"
-                ]
-            }
-        };
-
-        function getGskDetail(rc) {
-            if (rc === null || rc === undefined) return null;
-            const rcStr = rc.toString();
-            if (GSK_DETAIL_MAP[rcStr]) {
-                return GSK_DETAIL_MAP[rcStr];
-            }
-            const sym = DCM_DB.gskkmerr[rcStr] || DCM_DB.qycuretcodes[rcStr];
-            if (sym) {
-                const origin = sym.toLowerCase().startsWith("gskkm_") ? "gskkm_" + sym.substring(6).toLowerCase() + "()" : (sym.toLowerCase().startsWith("gsk_") ? "gsk_secure_soc_*()" : "QYCU Entry Point");
-                const sp = sym.includes("DATABASE") || sym.includes("DB") || sym.includes("PWD") ? "QYCUCSMGR" : (sym.includes("VALIDATION") || sym.includes("CERT") ? "QYCUCTMGR" : "QYCUCSMGR");
-                const jni = sym.includes("CERT") ? "qycu_listCertificatesJ" : "qycu_openStoreJ";
-                const target = sym.includes("STH") || sym.includes("PWD") ? "DEFAULT.STH" : (sym.includes("KDB") || sym.includes("DATABASE") ? "DEFAULT.KDB" : "/QIBM/UserData/ICSS/Cert/*");
-                return {
-                    code: rc,
-                    constant: sym,
-                    originFunction: origin,
-                    serviceProgram: sp,
-                    entryPoint: "DCM Routine",
-                    jniFunction: jni,
-                    targetObject: target,
-                    failureDomain: "Cryptographic Key Management",
-                    msgId: "CPDBCxx",
-                    rootCause: `GSKit / DCM return code ${rc} (${sym}).`,
-                    recoveryCommands: [
-                        "WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/*')",
-                        "WRKJOB JOB(*)"
-                    ]
-                };
-            }
-            return null;
-        }
-
-        let currentMode = 'symptom';
-        let fuzzyDebounceTimer = null;
-
-        function checkFuzzyFormat(val) {
-            if (fuzzyDebounceTimer) clearTimeout(fuzzyDebounceTimer);
-            fuzzyDebounceTimer = setTimeout(() => {
-                const hintBox = document.getElementById("fuzzyHintBox");
-                if (!hintBox) return;
-                const trimmed = val ? val.trim() : "";
-                if (!trimmed) {
-                    hintBox.style.display = "none";
-                    return;
-                }
-
-                let detected = null;
-                let targetMode = null;
-                let modeLabel = "";
-
-                if (trimmed.includes("SystemOut") || trimmed.includes("ProgramParameter") || (trimmed.toLowerCase().includes("function:") && trimmed.toLowerCase().includes("rc:")) || trimmed.toLowerCase().includes("certificateaction") || /qycu_[a-zA-Z0-9_]+\s*\/\s*rc:\s*-?\d+/i.test(trimmed)) {
-                    detected = "ADMIN3 / Liberty SystemOut Log Trace";
-                    targetMode = "admin3";
-                    modeLabel = "ADMIN3 / Liberty SystemOut Log";
-                } else if (/(?:5770|5722)\s+SP\/[A-Z0-9_]+/i.test(trimmed) || /SP\/[A-Z0-9_]+\s+MOD\/[A-Z0-9_]+/i.test(trimmed) || /RC\d{6,}/i.test(trimmed) || /QYCU[A-Z0-9_]+\s+\d{6,}/i.test(trimmed)) {
-                    detected = "WRKPRB / IBM Symptom String";
-                    targetMode = "symptom";
-                    modeLabel = "Symptom String / WRKPRB";
-                } else if (/^(?:RC\s*)?-?\d{1,5}$/i.test(trimmed) || /^rc:\s*-?\d+$/i.test(trimmed)) {
-                    detected = "Pure Return Code (GSKit / QYCU)";
-                    targetMode = "gsk";
-                    modeLabel = "GSKit / API Return Codes";
-                }
-
-                if (detected && targetMode && targetMode !== currentMode && currentMode !== "directory") {
-                    hintBox.innerHTML = `💡 <strong>Format Notice:</strong> The input you entered looks like a <strong>${detected}</strong> format. The analyzer will automatically decode it with the appropriate engine. <a href="javascript:void(0)" onclick="setMode('${targetMode}')">Click here to switch to the ${modeLabel} tab</a>.`;
-                    hintBox.style.display = "block";
-                } else {
-                    hintBox.style.display = "none";
-                }
-            }, 120);
-        }
+        let currentMode = 'admin3';
 
         function setMode(mode) {
             currentMode = mode;
             clearResults();
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            const sampleRow = document.getElementById('sampleRow');
-            const inputLabel = document.getElementById('inputLabel');
-            const symptomInput = document.getElementById('symptomInput');
             const searchControls = document.getElementById('searchControls');
             const dirSection = document.getElementById('directorySection');
+            const cmdSection = document.getElementById('commandsSection');
             const modeGuidance = document.getElementById('modeGuidance');
-            const fuzzyHint = document.getElementById('fuzzyHintBox');
-            if (fuzzyHint) fuzzyHint.style.display = 'none';
+            const inputLabel = document.getElementById('inputLabel');
+            const symptomInput = document.getElementById('symptomInput');
+            const sampleRow = document.getElementById('sampleRow');
 
             searchControls.style.display = 'block';
             dirSection.style.display = 'none';
+            cmdSection.style.display = 'none';
 
-            if (mode === 'symptom') {
-                document.getElementById('tabSymptom').classList.add('active');
-                modeGuidance.innerHTML = `
-                    <div class="mode-guidance-title"><span>📌</span> Mode 1: WRKPRB / IBM Symptom String Deconstructor</div>
-                    <div>Paste standard problem symptom strings (e.g. <code>5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500</code>) or raw reason codes. Deconstructs the <code>xxxyyyyzz</code> formula into Entry Point, Utility Function, and Local Failure offsets with CL recovery steps.</div>
-                `;
-                inputLabel.textContent = "Enter Symptom String(s), WRKPRB Block, or Reason Code(s) (one per line):";
-                symptomInput.placeholder = "e.g. 5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500\nor: QYCUAPPMGR 5003000\nor: RC7027500\nor: 6031000";
-                sampleRow.innerHTML = `
-                    <span>Quick Presets:</span>
-                    <button class="sample-btn" onclick="setSample('5770 SP/QYCULCAMGR MOD/QYCULCAMGR RC7027500')">RC7027500 (Local CA)</button>
-                    <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC5003000')">RC5003000 (App Mgr + Util)</button>
-                    <button class="sample-btn" onclick="setSample('5722 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC14000000')">RC14000000 (App Mgr)</button>
-                    <button class="sample-btn" onclick="setSample('5770 SP/QYCUAPPMGR MOD/QYCUAPPMGR RC7000100')">RC7000100 (App Mgr + Rtv)</button>
-                `;
-            } else if (mode === 'admin3') {
+            if (mode === 'admin3') {
                 document.getElementById('tabAdmin3').classList.add('active');
                 modeGuidance.innerHTML = `
-                    <div class="mode-guidance-title"><span>🔍</span> Mode 2: ADMIN3 / Liberty SystemOut Log Analyzer & EBCDIC CP037 Hex Decoder</div>
-                    <div>Paste multi-line trace log blocks or single-line JNI API failures from <code>SystemOut.log</code>. Automatically decodes all hexadecimal EBCDIC CP037 parameters (IFS paths, certificate flags) and correlates <code>rc:</code> failure codes to underlying C routines and service programs.</div>
+                    <div class="mode-guidance-title"><span>📋</span> Mode 1: ADMIN3 / Liberty SystemOut Log Analyzer & EBCDIC CP037 Hex Decoder</div>
+                    <div>Paste multi-line trace log blocks from <code>SystemOut.log</code>. Automatically decodes all hexadecimal EBCDIC CP037 parameters (IFS paths, certificate flags) in-place and correlates <code>rc:</code> failure codes to official GSKSSL constants.</div>
                 `;
                 inputLabel.textContent = "Paste ADMIN3 / Liberty SystemOut.log Lines (extracts user, function, rc, job, & decodes EBCDIC hex parameters):";
-                symptomInput.placeholder = `Paste log trace snippet, e.g.:\n[11/4/26, 12:19:34:617 CET] 00000032 SystemOut O user: QSECOFR / function: qycu_listCertificatesJ / rc: 6\n0 : ProgramParameter ( input: F1F5F900 ... )\n6 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 )\njob: 123456/QTMHHTTP/ADMIN3\nCertificateAction.listCertificates: API failed\n\nor single line: qycu_listCertificatesJ / rc: 6`;
+                symptomInput.placeholder = "Paste log trace snippet...";
                 sampleRow.innerHTML = `
-                    <span>Synthetic Log Presets:</span>
-                    <button class="sample-btn" onclick="setSampleAdmin3_RC6()">RC 6 (Store Open Failure)</button>
-                    <button class="sample-btn" onclick="setSampleAdmin3_RC16()">RC 16 (Bad Stash / Password)</button>
-                    <button class="sample-btn" onclick="setSampleAdmin3_RC24()">RC 24 (Crypto Algorithm Err)</button>
-                    <button class="sample-btn" onclick="setSampleAdmin3_SingleLine()">Single Line (RC 6)</button>
+                    <span>Sample Presets:</span>
+                    <button class="sample-btn" onclick="setSampleAdmin3_RC6000()">RC 6000 (CA Not Trusted)</button>
+                    <button class="sample-btn" onclick="setSampleAdmin3_RC6019()">RC 6019 (No Default Cert)</button>
+                    <button class="sample-btn" onclick="setSampleAdmin3_RC406()">RC 406 (Socket I/O Error)</button>
+                    <button class="sample-btn" onclick="setSampleAdmin3_SingleLine()">Single Line (RC 6000)</button>
                 `;
             } else if (mode === 'gsk') {
                 document.getElementById('tabGsk').classList.add('active');
                 modeGuidance.innerHTML = `
-                    <div class="mode-guidance-title"><span>⚡</span> Mode 3: Direct GSKit & QYCU Return Code Lookup</div>
-                    <div>Lookup standalone GSKKM key management return codes (0-408), IBM i extended TLS protocol codes (6000-6024), and QYCU API return codes. Provides C symbolic constants, origin API functions, and targeted CL remediation.</div>
+                    <div class="mode-guidance-title"><span>⚙️</span> Mode 2: Official IBM i GSKit Return Code Diagnostic Lookup</div>
+                    <div>Direct lookup of official return codes defined in <code>QSYSINC/H(GSKSSL)</code> and <code>/QIBM/include/gskssl.h</code>.</div>
                 `;
-                inputLabel.textContent = "Enter GSKit / GSKKM Return Code or QYCU API Return Code (e.g. 6, 16, 24, 6000, 3941, -992):";
-                symptomInput.placeholder = "e.g. 6 (GSKKM_ERR_DATABASE_OPEN)\nor: 16 (GSKKM_ERR_DATABASE_INVALID_PASSWORD)\nor: 24 (GSKKM_ERR_CRYPTO)\nor: 6000 (GSK_AS400_ERROR_NOT_TRUSTED)\nor: 6007 (GSK_AS400_ERROR_APPLICATION_NOT_REGISTERED)\nor: 3941 (YCU_RC_COUNTRYNAME_REQUIRED)";
+                inputLabel.textContent = "Enter numeric return code(s) (one per line):";
+                symptomInput.placeholder = "e.g. 6000\nor: 6019\nor: 406\nor: 0";
                 sampleRow.innerHTML = `
-                    <span>GSK Presets:</span>
-                    <button class="sample-btn" onclick="setSample('6')">Code 6 (DB Open)</button>
-                    <button class="sample-btn" onclick="setSample('16')">Code 16 (Bad Password)</button>
-                    <button class="sample-btn" onclick="setSample('24')">Code 24 (Crypto Err)</button>
-                    <button class="sample-btn" onclick="setSample('6000')">Code 6000 (Not Trusted)</button>
-                    <button class="sample-btn" onclick="setSample('6007')">Code 6007 (Not Registered)</button>
-                    <button class="sample-btn" onclick="setSample('6011')">Code 6011 (Bad Cipher)</button>
-                    <button class="sample-btn" onclick="setSample('6019')">Code 6019 (No Default Cert)</button>
+                    <span>Quick Codes:</span>
+                    <button class="sample-btn" onclick="setSample('6000')">RC 6000 (Not Trusted)</button>
+                    <button class="sample-btn" onclick="setSample('6019')">RC 6019 (No Default Cert)</button>
+                    <button class="sample-btn" onclick="setSample('6007')">RC 6007 (Not Registered)</button>
+                    <button class="sample-btn" onclick="setSample('406')">RC 406 (Socket I/O)</button>
                 `;
             } else if (mode === 'keyword') {
                 document.getElementById('tabKeyword').classList.add('active');
                 modeGuidance.innerHTML = `
-                    <div class="mode-guidance-title"><span>🔎</span> Mode 4: Global Keyword & Regex Search Engine</div>
-                    <div>Full-text search across all 500+ Symbolic Constants, C API function names, Service Programs, and utility categories. Supports regular expressions such as <code>^GSKKM_ERR_.*</code> or <code>.*PASSWORD.*</code>.</div>
+                    <div class="mode-guidance-title"><span>🔎</span> Mode 3: GSKit Constant & Keyword Search</div>
+                    <div>Full-text search across official GSKSSL symbolic constants (e.g., <code>GSK_AS400_ERROR_NOT_TRUSTED</code>).</div>
                 `;
-                inputLabel.textContent = "Search across all 500+ Constants, Functions, or Regex:";
-                symptomInput.placeholder = "e.g. DATABASE_OPEN\nor: qycu_listCertificatesJ\nor: RECEIVECERT\nor: ^GSKKM_ERR_.*\nor: QYCU_APP.*";
+                inputLabel.textContent = "Search across GSKit constants or keywords:";
+                symptomInput.placeholder = "e.g. NOT_TRUSTED\nor: CIPHER\nor: CERTIFICATE\nor: APPLICATION";
                 sampleRow.innerHTML = `
                     <span>Keyword Presets:</span>
-                    <button class="sample-btn" onclick="setSample('GSKKM_ERR_DATABASE')">GSKKM Database</button>
-                    <button class="sample-btn" onclick="setSample('YCU_RC_')">YCU Return Codes</button>
-                    <button class="sample-btn" onclick="setSample('QYCU_')">QYCU Entry Points</button>
-                    <button class="sample-btn" onclick="setSample('GSK_AS400')">GSK AS400 Protocol</button>
+                    <button class="sample-btn" onclick="setSample('NOT_TRUSTED')">NOT_TRUSTED</button>
+                    <button class="sample-btn" onclick="setSample('CIPHER')">CIPHER</button>
+                    <button class="sample-btn" onclick="setSample('DEFAULT_CERT')">DEFAULT_CERT</button>
                 `;
             } else if (mode === 'directory') {
                 document.getElementById('tabDirectory').classList.add('active');
                 searchControls.style.display = 'none';
                 dirSection.style.display = 'block';
                 populateDirectoryTable();
+            } else if (mode === 'commands') {
+                document.getElementById('tabCommands').classList.add('active');
+                searchControls.style.display = 'none';
+                cmdSection.style.display = 'block';
             }
         }
 
-        function setSampleAdmin3_RC6() {
-            setMode('admin3');
-            document.getElementById('symptomInput').value =
-`[11/4/26, 12:19:34:617 CET] 00000032 SystemOut                                                    O user: QSECOFR / function: qycu_listCertificatesJ / rc: 6
-[11/4/26, 12:19:34:618 CET] 00000032 SystemOut                                                    O 0 : ProgramParameter ( input: F1F5F900 / output length: 0 / output:  )
-[11/4/26, 12:19:34:618 CET] 00000032 SystemOut                                                    O 1 : ProgramParameter ( input: 8396944B8982944B8483944B998300 / output length: 0 / output:  )
-[11/4/26, 12:19:34:618 CET] 00000032 SystemOut                                                    O 2 : ProgramParameter ( input:  / output length: 4 / output: 00000006 )
-[11/4/26, 12:19:34:619 CET] 00000032 SystemOut                                                    O 6 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )
-[11/4/26, 12:19:34:620 CET] 00000032 SystemOut                                                    O 8 : ProgramParameter ( input: C1D3D36DD2C5E8E200 / output length: 0 / output:  )
-[11/4/26, 12:19:34:620 CET] 00000032 SystemOut                                                    O job: 123456/QTMHHTTP/ADMIN3
-[11/4/26, 12:19:34:621 CET] 00000032 SystemOut                                                    O CertificateAction.listCertificates: API failed`;
-            performSearch();
+        function formatDecodedLogBlock(rawLog) {
+            if (!rawLog) return '';
+            const lines = rawLog.split(/\r?\n/);
+            const decodedLines = lines.map(line => {
+                let escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                // Decode EBCDIC CP037 Hex inputs/outputs with red highlight
+                escaped = escaped.replace(/(input:\s*)([0-9A-Fa-f]{2,})/gi, (match, prefix, hex) => {
+                    const decoded = decodeEbcdicHex(hex);
+                    if (decoded && decoded.length > 0) {
+                        return `${prefix}<span class="decoded-highlight-red">${decoded}</span>`;
+                    }
+                    return match;
+                });
+
+                escaped = escaped.replace(/(output:\s*)([0-9A-Fa-f]{2,})/gi, (match, prefix, hex) => {
+                    // Check if 4-byte return code in hex (e.g. 00000010 -> RC 16)
+                    if (hex.length === 8 && hex.startsWith('000000')) {
+                        const num = parseInt(hex.substring(6), 16);
+                        const info = getReturnCodeInfo(num);
+                        return `${prefix}<span class="rc-hover-badge" data-rc="${num}" title="Decoded RC ${num}: ${info.constant} - ${info.cause}">${hex} (RC ${num}) ℹ️</span>`;
+                    }
+                    const decoded = decodeEbcdicHex(hex);
+                    if (decoded && decoded.length > 0) {
+                        return `${prefix}<span class="decoded-highlight-red">${decoded}</span>`;
+                    }
+                    return match;
+                });
+
+                // Wrap all return code occurrences with interactive hover tooltips
+                escaped = escaped.replace(/(?:(\/\s*)?(rc|RC|return\s+code)\s*[:=]?\s*(-?\d+))/gi, (match, slash, label, num) => {
+                    const info = getReturnCodeInfo(num);
+                    const prefix = slash || '';
+                    return `${prefix}<span class="rc-hover-badge" data-rc="${num}" title="RC ${num}: ${info.constant}&#10;${info.cause}">${label}: ${num} ℹ️</span>`;
+                });
+
+                return escaped;
+            });
+
+            return decodedLines.join('\n');
         }
 
-        function setSampleAdmin3_RC16() {
-            setMode('admin3');
-            document.getElementById('symptomInput').value =
-`[11/4/26, 12:20:21:205 CET] 00000053 SystemOut                                                    O user: QSECOFR / function: qycu_listCertificatesJ / rc: 16
-[11/4/26, 12:20:21:206 CET] 00000053 SystemOut                                                    O 0 : ProgramParameter ( input: F1F5F900 / output length: 0 / output:  )
-[11/4/26, 12:20:21:206 CET] 00000053 SystemOut                                                    O 1 : ProgramParameter ( input: 8396944B8982944B8483944B998300 / output length: 0 / output:  )
-[11/4/26, 12:20:21:206 CET] 00000053 SystemOut                                                    O 2 : ProgramParameter ( input:  / output length: 4 / output: 00000010 )
-[11/4/26, 12:20:21:208 CET] 00000053 SystemOut                                                    O 6 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361C3C5D9E3C1E4E3C861C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )
-[11/4/26, 12:20:21:209 CET] 00000053 SystemOut                                                    O 8 : ProgramParameter ( input: C8C1E2D7D9C9E5C1E3C5D2C5E800 / output length: 0 / output:  )
-[11/4/26, 12:20:21:209 CET] 00000053 SystemOut                                                    O job: 123457/QTMHHTTP/ADMIN3
-[11/4/26, 12:20:21:209 CET] 00000053 SystemOut                                                    O CertificateAction.listCACertificates: API failed`;
-            performSearch();
+        function getSequenceHtml(rcVal, rawText) {
+            const text = (rawText || "") + " " + (rcVal !== null ? rcVal : "");
+            const isStashPwdFailure = (
+                rcVal === 16 || rcVal === 24 || rcVal === 19 || rcVal === 20 || rcVal === 702 || rcVal === 7027500 ||
+                text.includes("CPDB702") || text.includes("7027500") || text.includes("GSKKM_ERR_CRYPTO") || text.includes("GSKKM_ERR_DATABASE_INVALID_PASSWORD")
+            );
+
+            if (!isStashPwdFailure) return '';
+
+            return `
+                <div class="sequence-box">
+                    <div class="sequence-title">
+                        <span>🔍</span> Root Cause Deduction Sequence: Why CPDB702 / RC 16 / RC 24 Means .STH Stash Password Mismatch
+                    </div>
+                    <div class="sequence-steps">
+                        <div class="sequence-step">
+                            <strong>1. Keystore Decryption Invocation (Native C Layer):</strong> When the DCM application or WebSphere/Liberty ADMIN3 server initializes TLS, it executes <code>qycu_open_key_db()</code> or <code>gsk_environment_init()</code> in service program <code>QSYS/QFLAGSK</code> to open <code>/QIBM/UserData/ICSS/Cert/Server/DEFAULT.KDB</code>.
+                        </div>
+                        <div class="sequence-step">
+                            <strong>2. Password Stash Extraction (.STH):</strong> To open the CMS keystore non-interactively without user prompts, the runtime reads the password obfuscation stream stored in <code>DEFAULT.STH</code>.
+                        </div>
+                        <div class="sequence-step">
+                            <strong>3. Cryptographic Validation Failure (RC 16 / RC 24):</strong> If the password on <code>DEFAULT.KDB</code> was changed, expired, regenerated, or the <code>.STH</code> file was copied from another system, the stash hash fails to decrypt the keystore master key. The low-level cryptographic engine returns <code>RC 16 (GSKKM_ERR_DATABASE_INVALID_PASSWORD)</code> or <code>RC 24 (GSKKM_ERR_CRYPTO)</code>.
+                        </div>
+                        <div class="sequence-step">
+                            <strong>4. Symptom Code Translation (RC 7027500):</strong> The IBM i Certificate Management service program <code>QYCULCAMGR</code> catches the failure at Entry Point <strong>702</strong> (Password Verification) and yields symptom code <code>RC 7027500</code>.
+                        </div>
+                        <div class="sequence-step">
+                            <strong>5. Operating System Diagnostic Message (CPDB702):</strong> IBM i wraps the entire failure sequence into system message <strong>CPDB702</strong>: <em>"The certificate store password or password stash file (.STH) is invalid, corrupted, or out of sync with the key database."</em>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
-        function setSampleAdmin3_RC24() {
-            setMode('admin3');
-            document.getElementById('symptomInput').value =
-`[11/4/26, 12:22:15:102 CET] 00000078 SystemOut                                                    O user: QSECOFR / function: qycu_createCertificateJ / rc: 24
-[11/4/26, 12:22:15:103 CET] 00000078 SystemOut                                                    O 0 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )
-[11/4/26, 12:22:15:104 CET] 00000078 SystemOut                                                    O 1 : ProgramParameter ( input: D8C9C2D46DD6E2F4F0F06DC4C5C6C1E4D3E300 / output length: 0 / output:  )
-[11/4/26, 12:22:15:105 CET] 00000078 SystemOut                                                    O job: 123458/QTMHHTTP/ADMIN3
-[11/4/26, 12:22:15:106 CET] 00000078 SystemOut                                                    O CertificateAction.createCertificate: API failed`;
-            performSearch();
-        }
-
-        function setSampleAdmin3_SingleLine() {
-            setMode('admin3');
-            document.getElementById('symptomInput').value = `user: QSECOFR / function: qycu_listCertificatesJ / rc: 6`;
-            performSearch();
-        }
-
-        // Intensified Multi-Tier Diagnostic Engine
-        function searchDcmEngine(rawInput) {
-            const trimmed = rawInput.trim();
-            if (!trimmed) return null;
-
-            // 1. Check if input is an ADMIN3 / Liberty SystemOut trace log block
-            if (trimmed.includes("SystemOut") || trimmed.includes("ProgramParameter") || trimmed.includes("qycu_") || trimmed.includes("CertificateAction") || (trimmed.toLowerCase().includes("function:") && trimmed.toLowerCase().includes("rc:"))) {
-                return parseAdmin3Log(trimmed);
-            }
-
-            // 2. Check Standard IBM Symptom String
-            const symptomRegex = /(?:(\d{4})\s+)?(?:SP\/)?([A-Z0-9_]+)\s+(?:MOD\/)?([A-Z0-9_]+)\s+(?:RC)?(-?\d+)/i;
-            const symptomMatch = trimmed.match(symptomRegex);
-            if (symptomMatch) {
-                const release = symptomMatch[1] || "N/A";
-                const sp = symptomMatch[2].toUpperCase();
-                const mod = symptomMatch[3].toUpperCase();
-                const rc = parseInt(symptomMatch[4], 10);
-                return deconstructSymptom(trimmed, release, sp, mod, rc);
-            }
-
-            // 3. Check Service Program + RC (e.g. "QYCUAPPMGR 5003000")
-            const spRcRegex = /^([A-Z0-9_]+)\s+(?:RC)?(-?\d+)$/i;
-            const spRcMatch = trimmed.match(spRcRegex);
-            if (spRcMatch && DCM_DB.programs[spRcMatch[1].toUpperCase()]) {
-                const sp = spRcMatch[1].toUpperCase();
-                const rc = parseInt(spRcMatch[2], 10);
-                return deconstructSymptom(trimmed, "N/A", sp, sp, rc);
-            }
-
-            // 4. Pure Numerical Return Code (could be GSKKM, QYCU Ret Code, or DCM Reason Code)
-            const pureRcRegex = /^(?:RC\s*)?(-?\d+)$/i;
-            const pureRcMatch = trimmed.match(pureRcRegex);
-            if (pureRcMatch) {
-                const rc = parseInt(pureRcMatch[1], 10);
-                return resolveNumericCode(trimmed, rc);
-            }
-
-            // 5. Keyword or Regex search across all tables
-            return searchByKeywordOrRegex(trimmed);
-        }
-
-        // Parse ADMIN3 SystemOut log trace blocks
         function parseAdmin3Log(logText) {
             const lines = logText.split(/\r?\n/);
             let user = "N/A";
@@ -1717,96 +577,60 @@ const DCM_DB = {
             const parameters = [];
 
             for (const line of lines) {
-                // Match user if present
                 const uMatch = line.match(/(?:^|\s|\/)user:\s*([^\s/]+)/i);
                 if (uMatch) user = uMatch[1];
 
-                // Match function if present
                 const fMatch = line.match(/(?:^|\s|\/)function:\s*([^\s/]+)/i);
                 if (fMatch) funcName = fMatch[1];
 
-                // Match rc if present
                 const rMatch = line.match(/(?:^|\s|\/)rc:\s*(-?\d+)/i);
                 if (rMatch) rcVal = parseInt(rMatch[1], 10);
 
-                // Fallback for compact format e.g. "qycu_listCertificatesJ / rc: 6"
                 if (funcName === "N/A") {
-                    const compactMatch = line.match(/([a-zA-Z0-9_]+)\s*\/\s*rc:\s*(-?\d+)/i);
-                    if (compactMatch) {
-                        funcName = compactMatch[1];
-                        if (rcVal === null) rcVal = parseInt(compactMatch[2], 10);
+                    const compMatch = line.match(/([a-zA-Z0-9_]+)\s*\/\s*rc:\s*(-?\d+)/i);
+                    if (compMatch) {
+                        funcName = compMatch[1];
+                        if (rcVal === null) rcVal = parseInt(compMatch[2], 10);
                     }
                 }
 
-                // Job line
-                const jobMatch = line.match(/job:\s*([^\s\r\n]+)/i);
-                if (jobMatch) {
-                    job = jobMatch[1];
-                }
+                const jMatch = line.match(/job:\s*([^\s\r\n]+)/i);
+                if (jMatch) job = jMatch[1];
 
-                // Action failed line
                 const actMatch = line.match(/(CertificateAction\.[^\s:]+:\s*API failed)/i);
-                if (actMatch) {
-                    actionFailure = actMatch[1];
-                }
+                if (actMatch) actionFailure = actMatch[1];
 
-                // ProgramParameter lines (safe non-backtracking)
                 if (line.includes("ProgramParameter") || line.includes("input:") || line.includes("output:")) {
-                    let idx = null;
-                    const idxMatch = line.match(/(\d+)\s*:\s*ProgramParameter/i);
-                    if (idxMatch) idx = idxMatch[1];
+                    let idx = String(parameters.length);
+                    const idxM = line.match(/(\d+)\s*:\s*ProgramParameter/i);
+                    if (idxM) idx = idxM[1];
 
                     let inputHex = "";
-                    const inMatch = line.match(/input:\s*([0-9A-Fa-f]+)/i);
-                    if (inMatch) inputHex = inMatch[1];
+                    const inM = line.match(/input:\s*([0-9A-Fa-f]+)/i);
+                    if (inM) inputHex = inM[1];
 
                     let outLen = "0";
-                    const lenMatch = line.match(/output length:\s*(\d+)/i);
-                    if (lenMatch) outLen = lenMatch[1];
+                    const lenM = line.match(/output length:\s*(\d+)/i);
+                    if (lenM) outLen = lenM[1];
 
                     let outHex = "";
-                    const outMatch = line.match(/output:\s*([0-9A-Fa-f]+)/i);
-                    if (outMatch) outHex = outMatch[1];
+                    const outM = line.match(/output:\s*([0-9A-Fa-f]+)/i);
+                    if (outM) outHex = outM[1];
 
-                    if (idx !== null || inputHex || outHex) {
-                        if (idx === null) idx = String(parameters.length);
-                        const decodedInput = decodeEbcdicHex(inputHex);
-                        const decodedOutput = decodeEbcdicHex(outHex);
-
-                        parameters.push({
-                            index: idx,
-                            inputHex,
-                            outLen,
-                            outHex,
-                            decodedInput,
-                            decodedOutput
-                        });
-                    }
+                    parameters.push({
+                        index: idx,
+                        inputHex,
+                        outLen,
+                        outHex,
+                        decodedInput: decodeEbcdicHex(inputHex),
+                        decodedOutput: decodeEbcdicHex(outHex)
+                    });
                 }
             }
 
-            // Look up RC in GSKKM and QYCU tables
-            let gskkmName = null;
-            let qycuName = null;
-            let detail = null;
-
-            if (rcVal !== null) {
-                const rcStr = rcVal.toString();
-                if (DCM_DB.gskkmerr[rcStr]) {
-                    gskkmName = DCM_DB.gskkmerr[rcStr];
-                }
-                if (DCM_DB.qycuretcodes[rcStr]) {
-                    qycuName = DCM_DB.qycuretcodes[rcStr];
-                }
-                detail = getGskDetail(rcVal);
-            }
-
-            const explanation = detail ? detail.rootCause : `API executed function ${funcName} under user ${user} on host job ${job} and returned code ${rcVal} (${gskkmName || qycuName || 'Unknown GSK/QYCU Code'}).`;
-            const recoveryCommands = detail ? [...detail.recoveryCommands, `WRKJOB JOB(${job.split('/')[0] || '*'}) - View host server job log`] : [
-                `WRKLNK OBJ('/QIBM/UserData/ICSS/Cert/Server/*') - Verify file existence`,
-                `WRKJOB JOB(${job.split('/')[0] || '*'}) - View host server job log`,
-                `DSPLOG MSGID(CPF* CPD*) - Inspect security history log`
-            ];
+            const rcStr = rcVal !== null ? rcVal.toString() : null;
+            const constant = rcStr && GSK_CODES[rcStr] ? GSK_CODES[rcStr] : (rcVal !== null ? `Return Code ${rcVal}` : null);
+            const detail = rcStr && GSK_DETAILS[rcStr] ? GSK_DETAILS[rcStr] : null;
 
             return {
                 isAdmin3Log: true,
@@ -1814,274 +638,13 @@ const DCM_DB = {
                 user,
                 funcName,
                 rc: rcVal,
-                gskkmName,
-                qycuName,
+                constant,
+                detail,
                 job,
                 actionFailure,
                 parameters,
-                detail,
-                explanation,
-                recoveryCommands
+                explanation: detail ? detail.cause : `Trace parsed. Function: ${funcName}, RC: ${rcVal}`
             };
-        }
-
-        function resolveNumericCode(raw, rc) {
-            const rcStr = rc.toString();
-            // Check 1: GSKKM error
-            if (DCM_DB.gskkmerr[rcStr]) {
-                const gskName = DCM_DB.gskkmerr[rcStr];
-                return {
-                    isGskCode: true,
-                    raw, rc,
-                    name: gskName,
-                    source: "gskkmerr.h / c3.xpf (GSKit Error)",
-                    explanation: `GSKit / GSKKM return code ${rc} maps to symbolic constant <code>${gskName}</code>.`
-                };
-            }
-
-            // Check 2: QYCU API return code
-            if (DCM_DB.qycuretcodes[rcStr]) {
-                const ycuName = DCM_DB.qycuretcodes[rcStr];
-                return {
-                    isQycuRetCode: true,
-                    raw, rc,
-                    name: ycuName,
-                    source: "qycuretcodes.H (QYCU Return Code)",
-                    explanation: `Direct API return code ${rc} maps to symbolic constant <code>${ycuName}</code>.`
-                };
-            }
-
-            // Check 3: Check across DCM Reason Code Decomposition
-            for (const [spKey, prog] of Object.entries(DCM_DB.programs)) {
-                const dec = deconstructSymptom(raw, "N/A", spKey, spKey, rc);
-                if (dec.isExact) {
-                    return dec;
-                }
-            }
-
-            // Check 4: Direct Utility Function match
-            if (DCM_DB.utilityFunctions[rcStr]) {
-                const u = DCM_DB.utilityFunctions[rcStr];
-                return {
-                    success: true,
-                    isExact: true,
-                    raw, release: "N/A", sp: "qycuutl.H", mod: "QYCUUTL", rc,
-                    serviceProgramName: "DCM Utility Header",
-                    entryVal: 0, entryName: "N/A",
-                    utilVal: rc, utilName: u.name, utilCategory: u.category,
-                    localVal: 0, localName: null,
-                    explanation: `Direct match for Utility Function <code>${u.name}</code> (${u.category}) with reason code <code>${rc}</code>.`
-                };
-            }
-
-            // Fallback: Intensified Fuzzy & Closest match
-            return findIntensifiedClosest(raw, rc);
-        }
-
-        function deconstructSymptom(raw, release, sp, mod, rc) {
-            const prog = DCM_DB.programs[sp];
-            if (!prog) {
-                const closestSp = findClosestString(sp, Object.keys(DCM_DB.programs));
-                return {
-                    success: false,
-                    isClosest: true,
-                    raw, release, sp, mod, rc,
-                    error: `Service Program '${sp}' not cataloged in DCM tables.`,
-                    closestSuggestion: `Did you mean '${closestSp}' (${DCM_DB.programs[closestSp].name})?`,
-                    cspReminder: "Reminder for technicians: Search iAI assisted support searches in CSP."
-                };
-            }
-
-            let entryVal = Math.floor(rc / 1000000) * 1000000;
-            let remainder = rc - entryVal;
-            let entryName = prog.entryPoints[entryVal] || null;
-
-            if (!entryName && prog.entryPoints[rc]) {
-                entryVal = rc;
-                entryName = prog.entryPoints[rc];
-                remainder = 0;
-            }
-
-            let utilVal = 0;
-            let utilObj = null;
-            let localVal = 0;
-            let localName = null;
-
-            if (remainder > 0) {
-                if (DCM_DB.utilityFunctions[remainder]) {
-                    utilVal = remainder;
-                    utilObj = DCM_DB.utilityFunctions[remainder];
-                } else {
-                    const utilCodes = Object.keys(DCM_DB.utilityFunctions).map(Number).sort((a,b) => b - a);
-                    for (const u of utilCodes) {
-                        if (u <= remainder) {
-                            const diff = remainder - u;
-                            if (diff <= 99) {
-                                utilVal = u;
-                                utilObj = DCM_DB.utilityFunctions[u];
-                                localVal = diff;
-                                if (prog.localFailures[localVal]) {
-                                    localName = prog.localFailures[localVal];
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    if (!utilObj && prog.localFailures[remainder]) {
-                        localVal = remainder;
-                        localName = prog.localFailures[remainder];
-                    }
-                }
-            }
-
-            const isExact = (entryName !== null || entryVal === 0) && (remainder === 0 || utilObj !== null || localName !== null);
-            const closestCandidates = findNearestCodesInProgram(sp, rc);
-
-            let explanation = `During processing in <strong>${prog.name} (${sp})</strong>`;
-            if (entryName) {
-                explanation += `, entry point <code>${entryName}</code> was executing`;
-            } else if (entryVal > 0) {
-                explanation += `, entry point code <code>${entryVal}</code> was called`;
-            }
-            if (utilObj) {
-                explanation += `. A failure occurred in utility function <code>${utilObj.name}</code> (${utilObj.category})`;
-            }
-            if (localName) {
-                explanation += `, specifically at local point of failure <code>${localName}</code> (code ${localVal})`;
-            } else if (localVal > 0) {
-                explanation += `, with local failure offset <code>${localVal}</code>`;
-            }
-            explanation += ".";
-
-            return {
-                success: true,
-                isExact,
-                isClosest: !isExact,
-                raw, release, sp, mod, rc,
-                serviceProgramName: prog.name,
-                entryVal,
-                entryName: entryName || 'N/A',
-                utilVal,
-                utilName: utilObj ? utilObj.name : null,
-                utilCategory: utilObj ? utilObj.category : null,
-                localVal,
-                localName,
-                explanation,
-                closestCandidates: !isExact ? closestCandidates : null,
-                cspReminder: !isExact ? "Reminder for technicians: Search iAI assisted support searches in CSP." : null
-            };
-        }
-
-        function findIntensifiedClosest(raw, rc) {
-            const candidates = [];
-            // Check GSKKM
-            for (const [codeStr, name] of Object.entries(DCM_DB.gskkmerr)) {
-                const c = parseInt(codeStr, 10);
-                candidates.push({ code: c, name: `${name} (GSKit Error)`, diff: Math.abs(c - rc), type: 'GSKit' });
-            }
-            // Check QYCU Ret Codes
-            for (const [codeStr, name] of Object.entries(DCM_DB.qycuretcodes)) {
-                const c = parseInt(codeStr, 10);
-                candidates.push({ code: c, name: `${name} (QYCU RetCode)`, diff: Math.abs(c - rc), type: 'QYCU API' });
-            }
-            // Check Utilities
-            for (const [codeStr, u] of Object.entries(DCM_DB.utilityFunctions)) {
-                const c = parseInt(codeStr, 10);
-                candidates.push({ code: c, name: `${u.name} (${u.category})`, diff: Math.abs(c - rc), type: 'Utility' });
-            }
-            candidates.sort((a,b) => a.diff - b.diff);
-
-            return {
-                success: false,
-                isClosest: true,
-                raw, rc,
-                error: `Code ${rc} was not an exact match. Ranked by closest numerical proximity:`,
-                closestCandidates: candidates.slice(0, 5),
-                cspReminder: "Reminder for technicians: Search iAI assisted support searches in CSP."
-            };
-        }
-
-        function searchByKeywordOrRegex(query) {
-            let regex;
-            try {
-                regex = new RegExp(query, 'i');
-            } catch (e) {
-                regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-            }
-
-            const matches = [];
-
-            // 1. Search GSKKM
-            for (const [code, name] of Object.entries(DCM_DB.gskkmerr)) {
-                if (regex.test(name) || regex.test(code)) {
-                    matches.push({ type: "GSKit / GSKKM Error", sp: "gskkmerr.h", name, code: code });
-                }
-            }
-
-            // 2. Search QYCU API Return codes
-            for (const [code, name] of Object.entries(DCM_DB.qycuretcodes)) {
-                if (regex.test(name) || regex.test(code)) {
-                    matches.push({ type: "QYCU Return Code", sp: "qycuretcodes.H", name, code: code });
-                }
-            }
-
-            // 3. Search Service Programs & Entry points
-            for (const [spKey, prog] of Object.entries(DCM_DB.programs)) {
-                if (regex.test(spKey) || regex.test(prog.name)) {
-                    matches.push({ type: "Service Program", sp: spKey, name: prog.name, code: "N/A" });
-                }
-                for (const [code, epName] of Object.entries(prog.entryPoints)) {
-                    if (regex.test(epName) || regex.test(code)) {
-                        matches.push({ type: "Entry Point", sp: spKey, name: epName, code: "+" + code });
-                    }
-                }
-                for (const [code, lfName] of Object.entries(prog.localFailures)) {
-                    if (regex.test(lfName) || regex.test(code)) {
-                        matches.push({ type: "Local Failure", sp: spKey, name: lfName, code: "+" + code });
-                    }
-                }
-            }
-
-            // 4. Search Utilities
-            for (const [code, u] of Object.entries(DCM_DB.utilityFunctions)) {
-                if (regex.test(u.name) || regex.test(u.category) || regex.test(code)) {
-                    matches.push({ type: "Utility Routine", sp: "qycuutl.H", name: u.name, code: "+" + code, category: u.category });
-                }
-            }
-
-            return {
-                success: matches.length > 0,
-                isKeywordSearch: true,
-                query: query,
-                matches: matches,
-                cspReminder: matches.length === 0 ? "Reminder for technicians: Search iAI assisted support searches in CSP." : null
-            };
-        }
-
-        function findNearestCodesInProgram(sp, targetRc) {
-            const prog = DCM_DB.programs[sp];
-            const list = [];
-            for (const [code, name] of Object.entries(prog.entryPoints)) {
-                list.push({ code: Number(code), name, diff: Math.abs(Number(code) - targetRc), type: "Entry Point" });
-            }
-            list.sort((a,b) => a.diff - b.diff);
-            return list.slice(0, 3);
-        }
-
-        function findClosestString(str, list) {
-            let best = list[0];
-            let bestScore = -1;
-            list.forEach(item => {
-                let score = 0;
-                for (let i = 0; i < Math.min(str.length, item.length); i++) {
-                    if (str[i] === item[i]) score++;
-                }
-                if (score > bestScore) {
-                    bestScore = score;
-                    best = item;
-                }
-            });
-            return best;
         }
 
         function performSearch() {
@@ -2090,461 +653,248 @@ const DCM_DB = {
             resultsContainer.innerHTML = "";
 
             if (!input || !input.trim()) {
-                resultsContainer.innerHTML = `<div class="result-card"><div class="result-title">No Input Provided</div><p>Please enter a symptom string, ADMIN3 log trace, or return code in the box above.</p></div>`;
+                resultsContainer.innerHTML = `<div class="result-card"><div class="result-title">No Input Provided</div><p>Please enter a log snippet, return code, or keyword above.</p></div>`;
                 return;
             }
 
-            // Check if full ADMIN3 log snippet
-            if (input.includes("SystemOut") || input.includes("ProgramParameter")) {
-                const res = parseAdmin3Log(input);
+            const trimmed = input.trim();
+
+            if (trimmed.includes("SystemOut") || trimmed.includes("ProgramParameter") || trimmed.includes("qycu_") || (trimmed.toLowerCase().includes("function:") && trimmed.toLowerCase().includes("rc:"))) {
+                const res = parseAdmin3Log(trimmed);
                 renderAdmin3Result(res);
                 return;
             }
 
-            // Line by line processing
-            const lines = input.split(/\r?\n/).filter(l => l.trim().length > 0);
-            lines.forEach((line) => {
-                const res = searchDcmEngine(line);
-                if (!res) return;
-
-                if (res.isAdmin3Log) {
-                    renderAdmin3Result(res);
-                } else if (res.isGskCode || res.isQycuRetCode) {
-                    renderGskOrQycuResult(res);
-                } else if (res.isKeywordSearch) {
-                    renderKeywordResults(res);
-                } else if (res.success) {
-                    renderDeconstructedResult(res);
+            const lines = trimmed.split(/\r?\n/).filter(l => l.trim().length > 0);
+            lines.forEach(line => {
+                const clean = line.trim().replace(/^RC:?\s*/i, '');
+                if (GS_CODE_LOOKUP(clean)) {
+                    renderGskResult(clean);
                 } else {
-                    renderNotFoundOrClosest(res);
+                    renderKeywordSearch(clean);
                 }
             });
         }
 
-        function formatDecodedLogBlock(rawLog) {
-            if (!rawLog) return '';
-            const lines = rawLog.split(/\r?\n/);
-            const decodedLines = lines.map(line => {
-                let escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                
-                // Replace input hex
-                escaped = escaped.replace(/(input:\s*)([0-9A-Fa-f]{2,})/gi, (match, prefix, hex) => {
-                    const decoded = decodeEbcdicHex(hex);
-                    if (decoded && decoded.length > 0) {
-                        return `${prefix}<span class="decoded-highlight-red">${decoded}</span>`;
-                    }
-                    return match;
-                });
-
-                // Replace output hex
-                escaped = escaped.replace(/(output:\s*)([0-9A-Fa-f]{2,})/gi, (match, prefix, hex) => {
-                    const decoded = decodeEbcdicHex(hex);
-                    if (decoded && decoded.length > 0) {
-                        return `${prefix}<span class="decoded-highlight-red">${decoded}</span>`;
-                    }
-                    return match;
-                });
-
-                // Replace standalone ProgramParameter hex
-                escaped = escaped.replace(/(ProgramParameter:\s*)([0-9A-Fa-f]{2,})/gi, (match, prefix, hex) => {
-                    const decoded = decodeEbcdicHex(hex);
-                    if (decoded && decoded.length > 0) {
-                        return `${prefix}<span class="decoded-highlight-red">${decoded}</span>`;
-                    }
-                    return match;
-                });
-
-                return escaped;
-            });
-
-            return decodedLines.join('\n');
+        function GS_CODE_LOOKUP(val) {
+            return GSK_CODES[val] !== undefined;
         }
 
         function renderAdmin3Result(res) {
             const resultsContainer = document.getElementById("results");
             const card = document.createElement("div");
-            card.className = "result-card admin3-card";
+            card.className = "result-card";
 
-            let paramsHtml = "";
-            const logContent = res.raw || (res.funcName ? `user: ${res.user} / function: ${res.funcName} / rc: ${res.rc}${res.job ? ` / job: ${res.job}` : ''}` : '');
-            if (logContent && logContent.trim().length > 0) {
-                const formattedLog = formatDecodedLogBlock(logContent);
-                paramsHtml = `
-                    <div style="margin-top:14px;">
-                        <strong style="font-size:0.85rem; color:#0369a1;">Decoded SystemOut Log Stream (In-Place EBCDIC CP037 Hex Decoded):</strong>
-                        <div class="decoded-log-box">${formattedLog}</div>
-                    </div>
-                `;
-            }
-
+            const logContent = res.raw || "";
+            const formattedLog = formatDecodedLogBlock(logContent);
             const d = res.detail;
-            const isFailed = (res.rc !== null && res.rc !== 0) || (res.actionFailure && res.actionFailure.length > 0);
-            const statusHtml = isFailed ? `
-                <div class="api-status-pill failed"><span class="status-dot"></span> API Execution: Attempted & Failed &bull; ${res.actionFailure ? res.actionFailure : `rc: ${res.rc} (${res.gskkmName || res.qycuName || 'Failure'})`}</div>
-            ` : `
-                <div class="api-status-pill success"><span class="status-dot"></span> API Execution: Succeeded (rc: 0)</div>
-            `;
 
             card.innerHTML = `
                 <div class="result-header">
                     <div>
-                        <div class="result-title">ADMIN3 / Liberty Trace Diagnostic &bull; RC ${res.rc} &bull; ${res.gskkmName || res.qycuName || 'Diagnostic Failure'}</div>
+                        <div class="result-title">ADMIN3 / Liberty Trace Diagnostic &bull; RC ${res.rc !== null ? res.rc : 'N/A'} &bull; ${res.constant || 'GSKit API'}</div>
                         <div class="result-sub">User: <strong>${res.user}</strong> &bull; Function: <code>${res.funcName}</code> &bull; Job: <code>${res.job}</code></div>
-                        ${statusHtml}
                     </div>
-                    <span class="result-badge badge-admin3">ADMIN3 Log Trace</span>
+                    <span class="result-badge">ADMIN3 Log Trace</span>
                 </div>
                 <div class="decomp-grid">
                     <div class="decomp-item">
-                        <div class="decomp-label">GSKit C API Function</div>
-                        <div class="decomp-val" style="font-size:0.85rem;">${d ? d.originFunction : 'gskkm_*() / gsk_*()'}</div>
-                        <div class="decomp-sub">Origin API Routine</div>
+                        <div class="decomp-label">GSKit C Routine</div>
+                        <div class="decomp-val">${d ? d.func : 'gsk_*()'}</div>
+                        <div class="decomp-sub">Runtime API</div>
                     </div>
                     <div class="decomp-item">
-                        <div class="decomp-label">DCM Service Program Module</div>
-                        <div class="decomp-val">${d ? d.serviceProgram : 'QYCUCSMGR / QYCUCTMGR'}</div>
-                        <div class="decomp-sub">${d ? d.entryPoint : 'Service Program Entry Point'}</div>
+                        <div class="decomp-label">Service Program</div>
+                        <div class="decomp-val">QSYS/QFLAGSK</div>
+                        <div class="decomp-sub">IBM i System Module</div>
                     </div>
                     <div class="decomp-item">
-                        <div class="decomp-label">Java / JNI Method Trace</div>
-                        <div class="decomp-val" style="font-size:0.85rem;">${res.funcName}</div>
-                        <div class="decomp-sub">${d ? d.jniFunction : 'ADMIN3 Native SPI Bridge'}</div>
-                    </div>
-                    <div class="decomp-item">
-                        <div class="decomp-label">Target IFS Object / Subsystem</div>
-                        <div class="decomp-val" style="font-size:0.82rem; color:#0e6027;">${d ? d.targetObject : '/QIBM/UserData/ICSS/Cert/*'}</div>
-                        <div class="decomp-sub">${d ? d.failureDomain : 'Certificate Subsystem'}</div>
-                    </div>
-                </div>
-                <div class="explanation-box warning-tone">
-                    <div class="explanation-title">Diagnostic Root Cause Analysis &bull; ${d ? d.msgId : 'CPDB7xx'}</div>
-                    <div class="explanation-text">${res.explanation}</div>
-                </div>
-                ${paramsHtml}
-            `;
-            resultsContainer.appendChild(card);
-        }
-
-        function renderGskOrQycuResult(res) {
-            const resultsContainer = document.getElementById("results");
-            const card = document.createElement("div");
-            card.className = "result-card gsk-card";
-            const d = getGskDetail(res.rc);
-
-            card.innerHTML = `
-                <div class="result-header">
-                    <div>
-                        <div class="result-title">${res.name} &bull; Return Code ${res.rc}</div>
-                        <div class="result-sub">${res.source} &bull; ${d ? d.msgId : 'Diagnostic Code'}</div>
-                    </div>
-                    <span class="result-badge badge-gsk">${res.rc >= 6000 ? 'GSKit SSL (TLS)' : (res.isGskCode ? 'GSKit Key Management' : 'QYCU RetCode')}</span>
-                </div>
-                <div class="decomp-grid">
-                    <div class="decomp-item">
-                        <div class="decomp-label">Origin C API Function</div>
-                        <div class="decomp-val" style="font-size:0.85rem;">${d ? d.originFunction : 'gskkm_*() / gsk_*()'}</div>
-                        <div class="decomp-sub">GSKit Core Function</div>
-                    </div>
-                    <div class="decomp-item">
-                        <div class="decomp-label">Associated Module / Service Program</div>
-                        <div class="decomp-val">${d ? d.serviceProgram : 'QYCUCSMGR / QYCUCTMGR'}</div>
-                        <div class="decomp-sub">${d ? d.entryPoint : 'Manager Module Entry'}</div>
-                    </div>
-                    <div class="decomp-item">
-                        <div class="decomp-label">Associated JNI / ADMIN3 Function</div>
-                        <div class="decomp-val" style="font-size:0.85rem;">${d ? d.jniFunction : 'qycu_*'}</div>
-                        <div class="decomp-sub">Web Admin Wrapper</div>
-                    </div>
-                    <div class="decomp-item">
-                        <div class="decomp-label">Target Object / Subsystem</div>
-                        <div class="decomp-val" style="font-size:0.82rem; color:#0e6027;">${d ? d.targetObject : '/QIBM/UserData/ICSS/Cert/*'}</div>
-                        <div class="decomp-sub">${d ? d.failureDomain : 'Key Management'}</div>
+                        <div class="decomp-label">Target Subsystem</div>
+                        <div class="decomp-val">${d ? d.target : 'Digital Certificate Manager'}</div>
+                        <div class="decomp-sub">${d ? d.domain : 'TLS Subsystem'}</div>
                     </div>
                 </div>
                 <div class="explanation-box">
-                    <div class="explanation-title">Technical Root Cause & Explanation</div>
-                    <div class="explanation-text">${d ? d.rootCause : res.explanation}</div>
-                </div>
-                ${commandsHtml}
-            `;
-            resultsContainer.appendChild(card);
-        }
-
-        function renderDeconstructedResult(res) {
-            const resultsContainer = document.getElementById("results");
-            const card = document.createElement("div");
-            card.className = "result-card" + (res.isClosest ? " closest-match" : "");
-
-            let closestHtml = "";
-            if (res.closestCandidates && res.closestCandidates.length > 0) {
-                closestHtml = `
-                    <div class="closest-suggestions">
-                        <div class="closest-title">Closest Documented Return Codes & Functions:</div>
-                        ${res.closestCandidates.map(c => `
-                            <div class="suggestion-item">
-                                <span class="suggestion-name">${c.name} (${c.type || 'Code'})</span>
-                                <span class="suggestion-delta">Value: +${c.code} (Diff: &Delta;${c.diff})</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-
-            let cspHtml = "";
-            if (res.cspReminder) {
-                cspHtml = `
-                    <div class="csp-banner">
-                        <div class="csp-title">&#9888; Technician Support Reminder</div>
-                        <div class="csp-text">${res.cspReminder}</div>
-                    </div>
-                `;
-            }
-
-            card.innerHTML = `
-                <div class="result-header">
-                    <div>
-                        <div class="result-title">${res.sp} &bull; RC ${res.rc}</div>
-                        <div class="result-sub">${res.raw}</div>
-                    </div>
-                    <span class="result-badge ${res.isExact ? 'badge-exact' : 'badge-closest'}">
-                        ${res.isExact ? 'Exact Match' : 'Closest Decomposition'}
-                    </span>
-                </div>
-                <div class="decomp-grid">
-                    <div class="decomp-item">
-                        <div class="decomp-label">Service Program</div>
-                        <div class="decomp-val">${res.sp}</div>
-                        <div class="decomp-sub">${res.serviceProgramName}</div>
-                    </div>
-                    <div class="decomp-item">
-                        <div class="decomp-label">Major Entry Point (xxx)</div>
-                        <div class="decomp-val">${res.entryName}</div>
-                        <div class="decomp-sub">Value: +${res.entryVal}</div>
-                    </div>
-                    <div class="decomp-item">
-                        <div class="decomp-label">Utility Function (yyyy)</div>
-                        <div class="decomp-val">${res.utilName || 'None (Direct Module Failure)'}</div>
-                        <div class="decomp-sub">${res.utilCategory ? res.utilCategory + ' (+' + res.utilVal + ')' : 'No utility failure'}</div>
-                    </div>
-                    <div class="decomp-item">
-                        <div class="decomp-label">Local Point of Failure (zz)</div>
-                        <div class="decomp-val">${res.localName || (res.localVal > 0 ? '+' + res.localVal : '00 (Normal Entry)')}</div>
-                        <div class="decomp-sub">${res.localVal > 0 ? 'Local offset in module' : 'No local offset'}</div>
-                    </div>
-                </div>
-                <div class="explanation-box ${res.isClosest ? 'warning-tone' : ''}">
-                    <div class="explanation-title">Diagnostic Root Cause & Operational Domain</div>
+                    <div class="explanation-title">Diagnostic Summary</div>
                     <div class="explanation-text">${res.explanation}</div>
                 </div>
-                ${closestHtml}
-                ${cspHtml}
+                ${getSequenceHtml(res.rc, res.raw)}
+                <div style="margin-top:14px;">
+                    <strong style="font-size:0.85rem; color:#0369a1;">Decoded SystemOut Log Stream (In-Place EBCDIC CP037 Hex Decoded & Hoverable RC Tooltips):</strong>
+                    <div class="decoded-log-box">${formattedLog}</div>
+                </div>
             `;
             resultsContainer.appendChild(card);
         }
 
-        function renderKeywordResults(res) {
+        function renderGskResult(code) {
             const resultsContainer = document.getElementById("results");
             const card = document.createElement("div");
             card.className = "result-card";
+            const info = getReturnCodeInfo(code);
+
             card.innerHTML = `
                 <div class="result-header">
                     <div>
-                        <div class="result-title">Keyword Search Results for "${res.query}"</div>
-                        <div class="result-sub">Found ${res.matches.length} matching definitions across DCM, GSKit, and QYCU tables</div>
+                        <div class="result-title">GSKit / DCM Return Code ${code} &bull; ${info.constant}</div>
+                        <div class="result-sub">Header: <code>/QIBM/include/gskssl.h</code> &bull; Service Program: <code>QSYS/QFLAGSK</code></div>
                     </div>
-                    <span class="result-badge badge-keyword">Keyword Search</span>
+                    <span class="result-badge">Official Return Code</span>
                 </div>
-                <div style="max-height:380px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:6px;">
-                    <table class="ref-table">
+                <div class="decomp-grid">
+                    <div class="decomp-item">
+                        <div class="decomp-label">Origin C API Routine</div>
+                        <div class="decomp-val">${info.func}</div>
+                    </div>
+                    <div class="decomp-item">
+                        <div class="decomp-label">Target Domain</div>
+                        <div class="decomp-val">${info.domain}</div>
+                    </div>
+                    <div class="decomp-item">
+                        <div class="decomp-label">Target Object</div>
+                        <div class="decomp-val">${info.target}</div>
+                    </div>
+                </div>
+                <div class="explanation-box">
+                    <div class="explanation-title">Diagnostic Finding</div>
+                    <div class="explanation-text">${info.cause}</div>
+                </div>
+                ${getSequenceHtml(parseInt(code, 10), info.cause)}
+            `;
+            resultsContainer.appendChild(card);
+        }
+
+        function renderKeywordSearch(keyword) {
+            const resultsContainer = document.getElementById("results");
+            const card = document.createElement("div");
+            card.className = "result-card";
+            const lower = keyword.toLowerCase();
+            const matches = [];
+
+            for (const [code, name] of Object.entries(GSK_CODES)) {
+                if (name.toLowerCase().includes(lower) || code === lower) {
+                    matches.push({ code, name });
+                }
+            }
+
+            if (matches.length === 0) {
+                card.innerHTML = `
+                    <div class="result-title">No Matching GSKSSL Constants</div>
+                    <p style="margin-top:6px; color:#525252;">No official GSKSSL constants matched '${keyword}'.</p>
+                `;
+            } else {
+                card.innerHTML = `
+                    <div class="result-title">Matching GSKSSL Constants for '${keyword}' (${matches.length})</div>
+                    <table class="ref-table" style="margin-top:12px;">
                         <thead>
                             <tr>
-                                <th>Category / Type</th>
-                                <th>Location / Source</th>
-                                <th>Code Value</th>
-                                <th>Symbolic Constant Name</th>
+                                <th>Return Code</th>
+                                <th>Constant Name</th>
+                                <th>Header</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${res.matches.map(m => `
+                            ${matches.map(m => `
                                 <tr>
-                                    <td><span style="font-weight:600; color:#374151;">${m.type}</span></td>
-                                    <td>${m.sp}</td>
-                                    <td><strong style="color:#0f62fe; font-family:var(--font-mono);">${m.code}</strong></td>
-                                    <td><code style="font-family:var(--font-mono); font-weight:600;">${m.name}</code></td>
+                                    <td><strong>${m.code}</strong></td>
+                                    <td><code>${m.name}</code></td>
+                                    <td>/QIBM/include/gskssl.h</td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>
-                </div>
-            `;
-            resultsContainer.appendChild(card);
-        }
-
-        function renderNotFoundOrClosest(res) {
-            const resultsContainer = document.getElementById("results");
-            const card = document.createElement("div");
-            card.className = "result-card closest-match";
-
-            let closestHtml = "";
-            if (res.closestCandidates && res.closestCandidates.length > 0) {
-                closestHtml = `
-                    <div class="closest-suggestions">
-                        <div class="closest-title">Closest Documented Return Codes & Functions:</div>
-                        ${res.closestCandidates.map(c => `
-                            <div class="suggestion-item">
-                                <span class="suggestion-name">${c.name}</span>
-                                <span class="suggestion-delta">Value: +${c.code} (Diff: &Delta;${c.diff})</span>
-                            </div>
-                        `).join('')}
-                    </div>
                 `;
             }
-
-            card.innerHTML = `
-                <div class="result-header">
-                    <div>
-                        <div class="result-title">Unmatched Query: ${res.raw}</div>
-                        <div class="result-sub">${res.error}</div>
-                    </div>
-                    <span class="result-badge badge-closest">Closest Search</span>
-                </div>
-                ${res.closestSuggestion ? `<p style="font-size:0.95rem; margin-bottom:12px; color:#8a6d00;"><strong>Suggestion:</strong> ${res.closestSuggestion}</p>` : ''}
-                ${closestHtml}
-                <div class="csp-banner">
-                    <div class="csp-title">&#9888; Technician Support Action Required</div>
-                    <div class="csp-text">${res.cspReminder}</div>
-                </div>
-            `;
             resultsContainer.appendChild(card);
         }
 
-        let selectedDomainFilter = 'ALL';
         let directoryPopulated = false;
-
         function populateDirectoryTable() {
             if (directoryPopulated) return;
             const tbody = document.getElementById("dirTableBody");
             const rows = [];
 
-            // 1. GSKKM Errors
-            for (const [val, name] of Object.entries(DCM_DB.gskkmerr)) {
+            for (const [code, name] of Object.entries(GSK_CODES)) {
                 rows.push(`
                     <tr>
-                        <td>GSKit / GSKKM Error</td>
-                        <td>gskkmerr.h</td>
-                        <td data-val="${val}"><strong style="color:#6929c4; font-family:var(--font-mono);">${val}</strong></td>
-                        <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
+                        <td><strong>${code}</strong></td>
+                        <td><code>${name}</code></td>
+                        <td>/QIBM/include/gskssl.h</td>
+                        <td>QSYS/QFLAGSK</td>
                     </tr>
                 `);
             }
-
-            // 2. QYCU Return Codes
-            for (const [val, name] of Object.entries(DCM_DB.qycuretcodes)) {
-                rows.push(`
-                    <tr>
-                        <td>QYCU Return Code</td>
-                        <td>qycuretcodes.H</td>
-                        <td data-val="${val}"><strong style="color:#0043ce; font-family:var(--font-mono);">${val}</strong></td>
-                        <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
-                    </tr>
-                `);
-            }
-
-            // 3. Service programs and entry points
-            for (const [sp, prog] of Object.entries(DCM_DB.programs)) {
-                for (const [val, name] of Object.entries(prog.entryPoints)) {
-                    rows.push(`
-                        <tr>
-                            <td>Entry Point (${prog.name})</td>
-                            <td>${sp}</td>
-                            <td data-val="${val}"><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
-                            <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
-                        </tr>
-                    `);
-                }
-                for (const [val, name] of Object.entries(prog.localFailures)) {
-                    rows.push(`
-                        <tr>
-                            <td>Local Failure (${prog.name})</td>
-                            <td>${sp}</td>
-                            <td data-val="${val}"><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
-                            <td><code style="font-family:var(--font-mono); font-weight:600;">${name}</code></td>
-                        </tr>
-                    `);
-                }
-            }
-
-            // 4. Utilities
-            for (const [val, u] of Object.entries(DCM_DB.utilityFunctions)) {
-                rows.push(`
-                    <tr>
-                        <td>${u.category}</td>
-                        <td>qycuutl.H</td>
-                        <td data-val="${val}"><strong style="color:#0f62fe; font-family:var(--font-mono);">+${val}</strong></td>
-                        <td><code style="font-family:var(--font-mono); font-weight:600;">${u.name}</code></td>
-                    </tr>
-                `);
-            }
-
             tbody.innerHTML = rows.join("");
             directoryPopulated = true;
         }
 
-        function filterByDomainChip(domain, btn) {
-            selectedDomainFilter = domain;
-            document.querySelectorAll("#domainFilterChips button").forEach(b => {
-                b.style.background = "";
-                b.style.color = "";
-                b.style.borderColor = "";
-            });
-            btn.style.background = "#0f62fe";
-            btn.style.color = "#fff";
-            btn.style.borderColor = "#0f62fe";
-            filterDirectory();
-        }
-
-        let filterDebounceTimer = null;
         function filterDirectory() {
-            if (filterDebounceTimer) clearTimeout(filterDebounceTimer);
-            filterDebounceTimer = setTimeout(() => {
-                const inputElem = document.getElementById("dirFilterInput");
-                const filter = inputElem ? inputElem.value.toUpperCase() : "";
-                const rows = document.querySelectorAll("#dirTableBody tr");
-                rows.forEach(r => {
-                    const text = r.textContent.toUpperCase();
-                    const matchesText = !filter || text.includes(filter);
-                    const matchesDomain = (selectedDomainFilter === 'ALL') || text.includes(selectedDomainFilter.toUpperCase());
-                    r.style.display = (matchesText && matchesDomain) ? "" : "none";
-                });
-            }, 60);
-        }
-
-        let sortDirections = [1, 1, 1, 1];
-        function sortDirectoryTable(colIndex) {
-            const tbody = document.getElementById("dirTableBody");
-            const rows = Array.from(tbody.querySelectorAll("tr"));
-            const dir = sortDirections[colIndex] === 1 ? -1 : 1;
-            sortDirections[colIndex] = dir;
-
-            rows.sort((a, b) => {
-                const cellA = a.children[colIndex];
-                const cellB = b.children[colIndex];
-                if (colIndex === 2) {
-                    const valA = parseInt(cellA.getAttribute("data-val") || cellA.textContent.replace(/[^\d-]/g,''), 10) || 0;
-                    const valB = parseInt(cellB.getAttribute("data-val") || cellB.textContent.replace(/[^\d-]/g,''), 10) || 0;
-                    return (valA - valB) * dir;
-                }
-                const textA = cellA.textContent.trim().toUpperCase();
-                const textB = cellB.textContent.trim().toUpperCase();
-                return textA.localeCompare(textB) * dir;
+            const filter = document.getElementById("dirFilterInput").value.toUpperCase();
+            const rows = document.querySelectorAll("#dirTableBody tr");
+            rows.forEach(r => {
+                const text = r.textContent.toUpperCase();
+                r.style.display = (!filter || text.includes(filter)) ? "" : "none";
             });
-
-            rows.forEach(r => tbody.appendChild(r));
         }
 
-        function setSample(str) {
-            setMode('symptom');
-            document.getElementById("symptomInput").value = str;
+        function setSample(val) {
+            document.getElementById("symptomInput").value = val;
+            performSearch();
+        }
+
+        function setSampleAdmin3_RC24() {
+            setMode('admin3');
+            document.getElementById('symptomInput').value =
+`[11/4/26, 12:15:10:301 CET] 00000021 SystemOut O user: QSECOFR / function: qycu_open_key_db / rc: 24
+[11/4/26, 12:15:10:302 CET] 00000021 SystemOut O 0 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )
+[11/4/26, 12:15:10:303 CET] 00000021 SystemOut O 1 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BE2E3C800 / output length: 0 / output:  )
+[11/4/26, 12:15:10:304 CET] 00000021 SystemOut O job: 123456/QTMHHTTP/ADMIN3
+[11/4/26, 12:15:10:305 CET] 00000021 SystemOut O CertificateAction.openKeyDatabase: API failed with CPDB702`;
+            performSearch();
+        }
+
+        function setSampleAdmin3_RC16() {
+            setMode('admin3');
+            document.getElementById('symptomInput').value =
+`[11/4/26, 12:16:04:112 CET] 00000024 SystemOut O user: QSECOFR / function: qycu_open_key_db / rc: 16
+[11/4/26, 12:16:04:113 CET] 00000024 SystemOut O 0 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )
+[11/4/26, 12:16:04:114 CET] 00000024 SystemOut O job: 123456/QTMHHTTP/ADMIN3`;
+            performSearch();
+        }
+
+        function setSampleAdmin3_RC6000() {
+            setMode('admin3');
+            document.getElementById('symptomInput').value =
+`[11/4/26, 12:19:34:617 CET] 00000032 SystemOut O user: QSECOFR / function: qycu_listCertificatesJ / rc: 6000
+[11/4/26, 12:19:34:618 CET] 00000032 SystemOut O 0 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )
+[11/4/26, 12:19:34:618 CET] 00000032 SystemOut O 1 : ProgramParameter ( input: C1D3D36DD2C5E8E200 / output length: 0 / output:  )
+[11/4/26, 12:19:34:619 CET] 00000032 SystemOut O job: 123456/QTMHHTTP/ADMIN3
+[11/4/26, 12:19:34:620 CET] 00000032 SystemOut O CertificateAction.listCertificates: API failed`;
+            performSearch();
+        }
+
+        function setSampleAdmin3_RC6019() {
+            setMode('admin3');
+            document.getElementById('symptomInput').value =
+`[11/4/26, 12:20:21:206 CET] 00000053 SystemOut O user: QSECOFR / function: qycu_assignCertToAppJ / rc: 6019
+[11/4/26, 12:20:21:207 CET] 00000053 SystemOut O 0 : ProgramParameter ( input: D8C9C2D46DD6E2F4F0F06DC4C5C6C1E4D3E300 / output length: 0 / output:  )
+[11/4/26, 12:20:21:208 CET] 00000053 SystemOut O 1 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )
+[11/4/26, 12:20:21:209 CET] 00000053 SystemOut O job: 123456/QTMHHTTP/ADMIN3`;
+            performSearch();
+        }
+
+        function setSampleAdmin3_RC406() {
+            setMode('admin3');
+            document.getElementById('symptomInput').value =
+`[11/4/26, 12:22:10:100 CET] 00000041 SystemOut O user: QSECOFR / function: qycu_listCertificatesJ / rc: 406
+[11/4/26, 12:22:10:101 CET] 00000041 SystemOut O 0 : ProgramParameter ( input: 61D8C9C2D461E4E2C5D9C4C1E3C161C9C3E2E261C3C5D9E361E2C5D9E5C5D961C4C5C6C1E4D3E34BD2C4C200 / output length: 0 / output:  )
+[11/4/26, 12:22:10:102 CET] 00000041 SystemOut O job: 123456/QTMHHTTP/ADMIN3`;
+            performSearch();
+        }
+
+        function setSampleAdmin3_SingleLine() {
+            setMode('admin3');
+            document.getElementById('symptomInput').value = "user: QSECOFR / function: qycu_listCertificatesJ / rc: 6000";
             performSearch();
         }
 
@@ -2552,6 +902,50 @@ const DCM_DB = {
             document.getElementById("symptomInput").value = "";
             document.getElementById("results").innerHTML = "";
         }
+
+        // Global Floating Tooltip Controller (Bypasses container overflow clipping)
+        document.addEventListener('mouseover', function(e) {
+            const badge = e.target.closest('.rc-hover-badge');
+            const tooltip = document.getElementById('globalTooltip');
+            if (badge && tooltip) {
+                const rc = badge.getAttribute('data-rc');
+                const info = getReturnCodeInfo(rc);
+                tooltip.innerHTML = `
+                    <div style="font-size:0.95rem; font-weight:700; color:#38bdf8; margin-bottom:4px;">
+                        RC ${info.code} &bull; ${info.constant}
+                    </div>
+                    <div style="font-size:0.78rem; color:#94a3b8; margin-bottom:8px; line-height:1.4;">
+                        <strong>Routine:</strong> ${info.func}<br>
+                        <strong>Target:</strong> <span style="color:#e2e8f0;">${info.target}</span> &bull; <strong>Domain:</strong> ${info.domain}
+                    </div>
+                    <div style="color:#f8fafc; font-size:0.83rem; line-height:1.45; border-top:1px solid #334155; padding-top:6px;">
+                        ${info.cause}
+                    </div>
+                `;
+                tooltip.style.display = 'block';
+                
+                const rect = badge.getBoundingClientRect();
+                const tipHeight = tooltip.offsetHeight || 120;
+                let top = rect.top - tipHeight - 10;
+                if (top < 10) {
+                    top = rect.bottom + 10;
+                }
+                let left = rect.left + (rect.width / 2) - 180;
+                if (left < 10) left = 10;
+                if (left + 400 > window.innerWidth) left = window.innerWidth - 410;
+                
+                tooltip.style.top = top + 'px';
+                tooltip.style.left = left + 'px';
+            }
+        });
+
+        document.addEventListener('mouseout', function(e) {
+            const badge = e.target.closest('.rc-hover-badge');
+            const tooltip = document.getElementById('globalTooltip');
+            if (badge && tooltip) {
+                tooltip.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
